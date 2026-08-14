@@ -184,15 +184,30 @@ public static class BattleSceneBuilder
             new Vector2(260, 260)
         );
 
-        CreateText(
-            slime.transform,
-            "SlimeLabel",
-            "슬라임\n이미지 자리",
-            32,
-            FontStyles.Bold,
-            new Vector2(0.5f, 0.5f),
-            new Vector2(220, 120)
+        // =========================
+        // 슬라임 이미지 설정
+        // =========================
+        Image slimeImage = slime.GetComponent<Image>();
+
+        Sprite slimeSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+            "Assets/Art/Sprites/Monsters/Slime/slime_idle_01.png"
         );
+
+        if (slimeSprite != null)
+        {
+            // 실제 슬라임 이미지 적용
+            slimeImage.sprite = slimeSprite;
+
+            // 원본 이미지 색상을 그대로 표시
+            slimeImage.color = Color.white;
+
+            // 가로/세로 비율 유지
+            slimeImage.preserveAspect = true;
+        }
+        else
+        {
+            Debug.LogWarning("슬라임 이미지를 찾을 수 없습니다.");
+        }
     }
 
     private static void CreateWordBattlePanel(Transform parent)
