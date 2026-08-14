@@ -316,6 +316,12 @@ public static class BattleSceneBuilder
             new Vector2(360, 35)
         );
 
+        RectTransform fillRect = fill.GetComponent<RectTransform>();
+        fillRect.pivot = new Vector2(0f, 0.5f);
+        fillRect.anchorMin = new Vector2(0f, 0.5f);
+        fillRect.anchorMax = new Vector2(0f, 0.5f);
+        fillRect.anchoredPosition = new Vector2(10f, 0f);
+
         CreateText(
             background.transform,
             "HPText",
