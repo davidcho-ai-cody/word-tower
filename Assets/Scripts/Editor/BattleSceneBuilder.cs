@@ -146,15 +146,119 @@ public static class BattleSceneBuilder
             new Vector2(260, 330)
         );
 
-        CreateText(
-            player.transform,
-            "PlayerLabel",
-            "용사\n이미지 자리",
-            32,
-            FontStyles.Bold,
-            new Vector2(0.5f, 0.5f),
-            new Vector2(220, 120)
+        // ========================================
+        // 용사 캐릭터 레이어 구성
+        // ========================================
+
+        // 기존 PlayerPlaceholder의 파란색 배경 제거
+        Image playerBackground = player.GetComponent<Image>();
+        playerBackground.color = Color.clear;
+
+        // ========================================
+        // 용사 캐릭터 레이어 구성
+        // ========================================
+
+        // 기본 캐릭터 외형
+        GameObject bodyLayer = CreateHeroLayer(player.transform, "Body");
+
+        // 현재는 사용하지 않지만 추후 확장용으로 유지
+        CreateHeroLayer(player.transform, "Hair");
+        CreateHeroLayer(player.transform, "Face");
+        CreateHeroLayer(player.transform, "Armor");
+
+        // 무기 레이어
+        GameObject weaponLayer = CreateHeroLayer(player.transform, "Weapon");
+
+        // 액세서리 레이어
+        CreateHeroLayer(player.transform, "Accessory");
+
+
+        // ========================================
+        // 기본 용사 이미지 자동 적용
+        // ========================================
+
+        Sprite heroSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+            "Assets/Art/Sprites/Hero/Body/hero_beginner_01.png"
         );
+
+        Image bodyImage = bodyLayer.GetComponent<Image>();
+
+        if (heroSprite != null)
+        {
+            bodyImage.sprite = heroSprite;
+            bodyImage.color = Color.white;
+            bodyImage.preserveAspect = true;
+        }
+        else
+        {
+            Debug.LogWarning("기본 용사 이미지를 찾을 수 없습니다.");
+        }
+
+
+        // ========================================
+        // 기본 나무검 자동 적용
+        // ========================================
+
+        Sprite weaponSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+            "Assets/Art/Sprites/Hero/Weapon/weapon_wood_sword_01.png"
+        );
+
+        Image weaponImage = weaponLayer.GetComponent<Image>();
+
+        if (weaponSprite != null)
+        {
+            weaponImage.sprite = weaponSprite;
+            weaponImage.color = Color.white;
+            weaponImage.preserveAspect = true;
+
+            // 현재 화면에서 맞춘 나무검 기준 위치
+            RectTransform weaponRect = weaponLayer.GetComponent<RectTransform>();
+
+            weaponRect.anchoredPosition = new Vector2(110f, 5f);
+            weaponRect.sizeDelta = new Vector2(150f, 150f);
+            weaponRect.localRotation = Quaternion.Euler(0f, 0f, 0f);
+        }
+        else
+        {
+            Debug.LogWarning("나무검 이미지를 찾을 수 없습니다.");
+        }
+    }
+
+    // ========================================
+    // 용사 장비/외형 레이어 생성
+    // ========================================
+    private static GameObject CreateHeroLayer(
+        Transform parent,
+        string layerName
+    )
+    {
+        GameObject layer = new GameObject(
+            layerName,
+            typeof(RectTransform),
+            typeof(Image)
+        );
+
+        layer.transform.SetParent(parent, false);
+
+        RectTransform rect = layer.GetComponent<RectTransform>();
+
+        // 모든 장비가 정확히 같은 위치에서 겹치도록 설정
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(260, 260);
+
+        Image image = layer.GetComponent<Image>();
+
+        // 원본 이미지 비율 유지
+        image.preserveAspect = true;
+
+        // Sprite가 없는 상태에서는 화면에 표시하지 않음
+        image.color = Color.clear;
+
+        return layer;
     }
 
     private static void CreateMonsterArea(Transform parent)
