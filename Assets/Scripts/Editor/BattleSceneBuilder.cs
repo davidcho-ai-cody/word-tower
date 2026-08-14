@@ -33,6 +33,13 @@ public static class BattleSceneBuilder
 
         CreateEventSystem();
 
+        ClearScene();
+
+        CreateEventSystem();
+
+        // 전투 로직 관리자 자동 생성
+        CreateBattleManager();
+
         Canvas canvas = CreateCanvas();
 
         CreateFullScreenImage(
@@ -95,6 +102,21 @@ public static class BattleSceneBuilder
             typeof(EventSystem),
             typeof(InputSystemUIInputModule)
         );
+    }
+
+    // ========================================
+    // BattleManager 자동 생성
+    // ========================================
+    private static void CreateBattleManager()
+    {
+        // 이미 있으면 중복 생성하지 않음
+        if (GameObject.Find("BattleManager") != null)
+            return;
+
+        GameObject managerObject = new GameObject("BattleManager");
+
+        // 실제 전투 로직 스크립트 연결
+        managerObject.AddComponent<BattleManager>();
     }
 
     private static Canvas CreateCanvas()
@@ -287,6 +309,56 @@ public static class BattleSceneBuilder
             new Vector2(0.75f, 0.59f),
             new Vector2(260, 260)
         );
+
+        // ========================================
+        // 타격 이펙트 생성
+        // 평상시에는 숨겨두고 공격 순간에만 표시
+        // ========================================
+
+        GameObject impact = CreatePanel(
+            parent,
+            "ImpactEffect",
+
+            // 실제 PNG를 사용하므로 배경색은 투명으로 생성
+            Color.clear,
+
+            new Vector2(0.72f, 0.59f),
+            new Vector2(300f, 220f)
+        );
+
+
+        // ========================================
+        // 기본 검격 이펙트 이미지 자동 적용
+        // ========================================
+
+        Image impactImage = impact.GetComponent<Image>();
+
+        Sprite impactSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+            "Assets/Art/Sprites/Effects/Combat/impact_slash_01.png"
+        );
+
+        if (impactSprite != null)
+        {
+            // 실제 검격 이미지 적용
+            impactImage.sprite = impactSprite;
+
+            // 원본 색상 그대로 사용
+            impactImage.color = Color.white;
+
+            // PNG 원본 비율 유지
+            impactImage.preserveAspect = true;
+        }
+        else
+        {
+            Debug.LogWarning(
+                "타격 이펙트 이미지를 찾을 수 없습니다: impact_slash_01.png"
+            );
+        }
+
+
+        // 평상시에는 숨김
+        // BattleManager가 공격 순간에 활성화한다.
+        impact.SetActive(false);
 
         // =========================
         // 슬라임 이미지 설정
