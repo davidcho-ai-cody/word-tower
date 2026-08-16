@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: bba6e8d2c1fdfbe48bb935200cb592a3
+guid: c91f5abc0f7a946458d4acea36e43122
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3944959058623003289
-    second: impact_slash_01_0
+      213: -1663321792438923641
+    second: slime_blue_idle_01_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -126,13 +126,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: impact_slash_01_0
+      name: slime_blue_idle_01_0
       rect:
         serializedVersion: 2
-        x: 64
-        y: 79
-        width: 1281
-        height: 925
+        x: 0
+        y: 0
+        width: 1536
+        height: 1024
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +141,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 765015133a0b049c0800000000000000
-      internalID: -3944959058623003289
+      spriteID: 78e038674a1bae8e0800000000000000
+      internalID: -1663321792438923641
       vertices: []
       indices: 
       edges: []
@@ -161,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      impact_slash_01_0: -3944959058623003289
+      slime_blue_idle_01_0: -1663321792438923641
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -64,6 +64,7 @@ public static class BattleSceneBuilder
         CreateWordBattlePanel(canvas.transform);
 
         CreateStatusPanel(canvas.transform);
+        CreateVictoryPanel(canvas.transform); // 승리패널
 
         Selection.activeGameObject = canvas.gameObject;
 
@@ -482,6 +483,64 @@ public static class BattleSceneBuilder
             new Vector2(0.80f, 0.65f),
             new Vector2(250, 50)
         );
+    }
+
+    // ========================================
+    // 승리 패널 생성
+    // 평상시에는 숨겨두고 승리 시 BattleManager가 표시
+    // ========================================
+    private static void CreateVictoryPanel(Transform parent)
+    {
+        GameObject panel = CreatePanel(
+            parent,
+            "VictoryPanel",
+            new Color(0.08f, 0.10f, 0.16f, 0.96f),
+            new Vector2(0.5f, 0.5f),
+            new Vector2(850f, 700f)
+        );
+
+        CreateText(
+            panel.transform,
+            "VictoryTitle",
+            "VICTORY!",
+            72,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.82f),
+            new Vector2(700f, 120f)
+        );
+
+        CreateText(
+            panel.transform,
+            "VictoryMonsterText",
+            "초록 슬라임 처치!",
+            36,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.64f),
+            new Vector2(700f, 80f)
+        );
+
+        CreateText(
+            panel.transform,
+            "VictoryRewardText",
+            "EXP +20\nGOLD +10",
+            38,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.44f),
+            new Vector2(600f, 150f)
+        );
+
+        Button nextFloorButton = CreateButton(
+            panel.transform,
+            "NextFloorButton",
+            "다음 층",
+            new Vector2(0.5f, 0.18f),
+            new Vector2(360f, 110f)
+        );
+
+        nextFloorButton.interactable = true;
+
+        // 평상시에는 숨김
+        panel.SetActive(false);
     }
 
     private static void CreateHpBar(

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System.IO;
 
 public class BattleManager : MonoBehaviour
 {
@@ -29,6 +30,9 @@ public class BattleManager : MonoBehaviour
     private TMP_Text goldText;
     private TMP_FontAsset koreanFont;
 
+    private TMP_Text floorTitleText;
+    private TMP_Text monsterNameText;
+
     private TMP_InputField wordInput;
     private Button attackButton;
 
@@ -51,10 +55,42 @@ public class BattleManager : MonoBehaviour
     private string currentWord = "사과";
     private bool battleEnded = false;
 
+    // =========================
+    // 현재 층 / 몬스터 데이터
+    // =========================
+    private int currentFloor = 1;
+
+    private FloorData currentFloorData;
+    private MonsterData currentMonsterData;
+
+    // =========================
+    // 승리 UI
+    // =========================
+    private GameObject victoryPanel;
+    private TMP_Text victoryMonsterText;
+    private TMP_Text victoryRewardText;
+    private Button nextFloorButton;
+    private Vector2 slimeOriginalPosition;
+
+    // =========================
+    // 현재 몬스터 이미지
+    // =========================
+    private Image monsterImage;
+
+    private WordService wordService;
+
     void Start()
     {
         FindUI();
+
+        // 현재 층 데이터와 몬스터 데이터 로드
+        LoadFloorAndMonsterData();
+
+        // 로드한 데이터 기준으로 전투 시작
         SetupBattle();
+
+        wordService = new WordService();
+        wordService.Initialize();
     }
 
     void FindUI()
@@ -76,6 +112,15 @@ public class BattleManager : MonoBehaviour
 
         playerVisual = GameObject.Find("PlayerPlaceholder")?.GetComponent<RectTransform>();
         slimeVisual = GameObject.Find("SlimePlaceholder")?.GetComponent<RectTransform>();
+
+        // 현재 몬스터를 표시하는 UI Image
+        if (slimeVisual != null)
+        {
+            monsterImage = slimeVisual.GetComponent<Image>();
+        }
+
+        floorTitleText = GameObject.Find("FloorTitle")?.GetComponent<TMP_Text>();
+        monsterNameText = GameObject.Find("MonsterName")?.GetComponent<TMP_Text>();
 
         // 용사의 무기 레이어
         weaponVisual = GameObject.Find("Weapon")?.GetComponent<RectTransform>();
@@ -108,10 +153,49 @@ public class BattleManager : MonoBehaviour
         if (slimeHpFill != null)
             slimeHpFullWidth = slimeHpFill.rectTransform.sizeDelta.x;
 
+        if (slimeVisual != null)
+            slimeOriginalPosition = slimeVisual.anchoredPosition;
+
         koreanFont = Resources.Load<TMP_FontAsset>("Fonts/NotoSansKR-VF SDF");
 
         if (chainHintText != null)
             koreanFont = chainHintText.font;
+
+        // =========================
+        // 승리 UI 찾기
+        // =========================
+        victoryPanel = GameObject.Find("VictoryPanel");
+
+        if (victoryPanel == null)
+        {
+            Transform canvasTransform = GameObject.Find("BattleCanvas")?.transform;
+
+            if (canvasTransform != null)
+            {
+                Transform victoryTransform = canvasTransform.Find("VictoryPanel");
+
+                if (victoryTransform != null)
+                    victoryPanel = victoryTransform.gameObject;
+            }
+        }
+
+        if (victoryPanel != null)
+        {
+            victoryMonsterText =
+                victoryPanel.transform.Find("VictoryMonsterText")
+                ?.GetComponent<TMP_Text>();
+
+            victoryRewardText =
+                victoryPanel.transform.Find("VictoryRewardText")
+                ?.GetComponent<TMP_Text>();
+
+            nextFloorButton =
+                victoryPanel.transform.Find("NextFloorButton")
+                ?.GetComponent<Button>();
+
+            if (nextFloorButton != null)
+                nextFloorButton.onClick.AddListener(OnNextFloorClicked);
+        }
     }
 
     void SetupBattle()
@@ -708,20 +792,101 @@ public class BattleManager : MonoBehaviour
         }
     }
 
+    // ========================================
+    // 전투 승리 처리
+    // ========================================
     void WinBattle()
     {
         battleEnded = true;
 
-        exp += slimeExpReward;
-        gold += slimeGoldReward;
+        // JSON 데이터 기준 보상 지급
+        exp += currentMonsterData.expReward;
+        gold += currentMonsterData.goldReward;
 
-        chainHintText.text =
-            $"슬라임 처치!\nEXP +{slimeExpReward}   GOLD +{slimeGoldReward}";
+        // 기존 하단 상태 UI 갱신
+        UpdateUI();
 
+        // 입력 잠금
         wordInput.interactable = false;
         attackButton.interactable = false;
 
+        // 승리 패널 내용 설정
+        if (victoryMonsterText != null)
+        {
+            victoryMonsterText.text =
+                $"{currentMonsterData.name} 처치!";
+        }
+
+        if (victoryRewardText != null)
+        {
+            victoryRewardText.text =
+                $"EXP +{currentMonsterData.expReward}\n" +
+                $"GOLD +{currentMonsterData.goldReward}";
+        }
+
+        // 승리 패널 표시
+        if (victoryPanel != null)
+            victoryPanel.SetActive(true);
+    }
+
+    // ========================================
+    // 다음 층 버튼 클릭
+    // ========================================
+    void OnNextFloorClicked()
+    {
+        // 승리 패널 숨김
+        if (victoryPanel != null)
+            victoryPanel.SetActive(false);
+
+        // 다음 층으로 이동
+        currentFloor++;
+
+        // 다음 층 데이터 로드
+        LoadFloorAndMonsterData();
+
+        // 새로운 전투 시작
+        ResetBattleForNextFloor();
+    }
+
+    // ========================================
+    // 다음 층 전투 초기화
+    // ========================================
+    void ResetBattleForNextFloor()
+    {
+        battleEnded = false;
+
+        // 몬스터 HP 초기화
+        slimeHp = slimeMaxHp;
+
+        // 플레이어 HP는 일단 MVP에서는 풀 회복
+        playerHp = playerMaxHp;
+
+        // 첫 단어 초기화
+        currentWord = "사과";
+
+        // 죽어서 사라졌던 슬라임 원상복구
+        if (slimeVisual != null)
+        {
+            slimeVisual.localScale = Vector3.one;
+            slimeVisual.localRotation = Quaternion.identity;
+            slimeVisual.anchoredPosition = slimeOriginalPosition;
+        }
+
+        // 입력창 복구
+        if (wordInput != null)
+        {
+            wordInput.text = "";
+            wordInput.interactable = true;
+        }
+
+        if (attackButton != null)
+            attackButton.interactable = true;
+
+        // UI 갱신
         UpdateUI();
+
+        if (wordInput != null)
+            wordInput.ActivateInputField();
     }
 
     void LoseBattle()
@@ -843,5 +1008,155 @@ public class BattleManager : MonoBehaviour
         }
 
         Destroy(rect.gameObject);
+    }
+
+    // ========================================
+    // 현재 층 및 몬스터 데이터 로드
+    // ========================================
+    void LoadFloorAndMonsterData()
+    {
+        string floorPath =
+            Path.Combine(Application.dataPath, "Data/Floors/floors.json");
+
+        string monsterPath =
+            Path.Combine(Application.dataPath, "Data/Monsters/monsters.json");
+
+
+        // =========================
+        // JSON 파일 존재 여부 확인
+        // =========================
+
+        if (!File.Exists(floorPath))
+        {
+            Debug.LogError("floors.json 파일을 찾을 수 없습니다.");
+            return;
+        }
+
+        if (!File.Exists(monsterPath))
+        {
+            Debug.LogError("monsters.json 파일을 찾을 수 없습니다.");
+            return;
+        }
+
+
+        // =========================
+        // JSON 읽기
+        // =========================
+
+        string floorJson = File.ReadAllText(floorPath);
+        string monsterJson = File.ReadAllText(monsterPath);
+
+        FloorDataList floorList =
+            JsonUtility.FromJson<FloorDataList>(floorJson);
+
+        MonsterDataList monsterList =
+            JsonUtility.FromJson<MonsterDataList>(monsterJson);
+
+
+        // =========================
+        // 현재 층 찾기
+        // =========================
+
+        currentFloorData =
+            floorList.floors.Find(f => f.floor == currentFloor);
+
+        if (currentFloorData == null)
+        {
+            Debug.LogError(
+                $"현재 층 데이터를 찾을 수 없습니다. Floor: {currentFloor}"
+            );
+
+            return;
+        }
+
+
+        // =========================
+        // 현재 층의 몬스터 찾기
+        // =========================
+
+        currentMonsterData =
+            monsterList.monsters.Find(
+                m => m.id == currentFloorData.monsterId
+            );
+
+        if (currentMonsterData == null)
+        {
+            Debug.LogError(
+                $"몬스터 데이터를 찾을 수 없습니다. ID: {currentFloorData.monsterId}"
+            );
+
+            return;
+        }
+
+
+        // =========================
+        // BattleManager 전투값 적용
+        // =========================
+
+        slimeMaxHp = currentMonsterData.maxHp;
+        slimeAttack = currentMonsterData.attack;
+
+        slimeExpReward = currentMonsterData.expReward;
+        slimeGoldReward = currentMonsterData.goldReward;
+
+        // =========================
+        // 현재 층 / 몬스터 이름 UI 적용
+        // =========================
+        if (floorTitleText != null)
+        {
+            floorTitleText.text = currentFloorData.title;
+        }
+
+        if (monsterNameText != null)
+        {
+            monsterNameText.text = currentMonsterData.name;
+        }
+
+        // JSON에 설정된 몬스터 이미지 적용
+        ApplyMonsterSprite();
+
+        Debug.Log(
+            $"Floor {currentFloor} Loaded / " +
+            $"{currentMonsterData.name} / " +
+            $"HP {slimeMaxHp} / " +
+            $"ATK {slimeAttack}"
+        );
+    }
+
+    // ========================================
+    // 현재 몬스터 이미지 적용
+    // JSON의 spritePath를 읽어 실제 Sprite 교체
+    // ========================================
+    void ApplyMonsterSprite()
+    {
+        if (monsterImage == null || currentMonsterData == null)
+            return;
+
+    #if UNITY_EDITOR
+
+        Sprite monsterSprite =
+            UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
+                currentMonsterData.spritePath
+            );
+
+        if (monsterSprite != null)
+        {
+            monsterImage.sprite = monsterSprite;
+            monsterImage.color = Color.white;
+            monsterImage.preserveAspect = true;
+
+            Debug.Log(
+                $"몬스터 이미지 변경: {currentMonsterData.spritePath}"
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"몬스터 이미지를 찾을 수 없습니다: " +
+                currentMonsterData.spritePath
+            );
+        }
+
+    #endif
     }
 }

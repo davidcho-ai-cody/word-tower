@@ -1,0 +1,26 @@
+{
+  "monsters": [
+    {
+      "id": "slime_green",
+      "name": "초록 슬라임",
+      "maxHp": 100,
+      "attack": 10,
+      "expReward": 20,
+      "goldReward": 10,
+      "wordLevelMin": 1,
+      "wordLevelMax": 1,
+      "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_green_idle_01.png"
+    },
+    {
+      "id": "slime_blue",
+      "name": "파란 슬라임",
+      "maxHp": 140,
+      "attack": 13,
+      "expReward": 30,
+      "goldReward": 15,
+      "wordLevelMin": 1,
+      "wordLevelMax": 2,
+      "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_blue_idle_01.png"
+    }
+  ]
+}
