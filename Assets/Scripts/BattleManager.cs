@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 
 public class BattleManager : MonoBehaviour
@@ -10,6 +11,9 @@ public class BattleManager : MonoBehaviour
     public int playerMaxHp = 100;
     public int playerHp = 100;
     public int playerAttack = 20;
+
+    private int currentAttackDamage;
+    private bool isCriticalAttack;
 
     [Header("Slime")]
     public int slimeMaxHp = 100;
@@ -51,6 +55,7 @@ public class BattleManager : MonoBehaviour
 
     // 슬라임이 맞는 순간 표시할 타격 이펙트
     private RectTransform impactEffect;
+    private GameObject criticalImpactEffect;
 
     private string currentWord = "사과";
     private bool battleEnded = false;
@@ -78,19 +83,22 @@ public class BattleManager : MonoBehaviour
     private Image monsterImage;
 
     private WordService wordService;
+    // 이번 전투에서 이미 사용한 단어
+    private HashSet<string> usedWords = new HashSet<string>();
 
     void Start()
     {
         FindUI();
+
+        // 단어 DB 연결
+        wordService = new WordService();
+        wordService.Initialize();
 
         // 현재 층 데이터와 몬스터 데이터 로드
         LoadFloorAndMonsterData();
 
         // 로드한 데이터 기준으로 전투 시작
         SetupBattle();
-
-        wordService = new WordService();
-        wordService.Initialize();
     }
 
     void FindUI()
@@ -131,13 +139,28 @@ public class BattleManager : MonoBehaviour
 
         if (battleCanvas != null)
         {
-            Transform impactTransform =
-                battleCanvas.Find("ImpactEffect");
+            Transform impactTransform = battleCanvas.Find("ImpactEffect");
 
             if (impactTransform != null)
             {
                 impactEffect =
                     impactTransform.GetComponent<RectTransform>();
+            }
+        }
+
+        if (battleCanvas != null)
+        {
+            Transform criticalImpactTransform =
+                battleCanvas.Find("CriticalImpactEffect");
+
+            if (criticalImpactTransform != null)
+            {
+                criticalImpactEffect = criticalImpactTransform.gameObject;
+                criticalImpactEffect.SetActive(false);
+            }
+            else
+            {
+                Debug.LogWarning("CriticalImpactEffect를 찾을 수 없습니다.");
             }
         }
 
@@ -206,6 +229,9 @@ public class BattleManager : MonoBehaviour
         currentWord = "사과";
         battleEnded = false;
 
+        usedWords.Clear();
+        usedWords.Add(currentWord);
+
         UpdateUI();
 
         if (wordInput != null)
@@ -225,16 +251,90 @@ public class BattleManager : MonoBehaviour
         if (string.IsNullOrEmpty(inputWord))
             return;
 
+
+        // ========================================
+        // 1. 끝말잇기 규칙 검사
+        // ========================================
+
         char requiredChar = currentWord[currentWord.Length - 1];
 
         if (inputWord[0] != requiredChar)
         {
-            chainHintText.text = $"'{requiredChar}'로 시작해야 합니다!";
+            chainHintText.text =
+                $"'{requiredChar}'로 시작해야 합니다!";
+
             wordInput.text = "";
             wordInput.ActivateInputField();
+
             return;
         }
 
+
+        // ========================================
+        // 2. DB에 실제 등록된 단어인지 검사
+        // ========================================
+
+        if (!wordService.IsValidWord(inputWord))
+        {
+            chainHintText.text =
+                $"'{inputWord}'은(는) 등록되지 않은 단어입니다!";
+
+            wordInput.text = "";
+            wordInput.ActivateInputField();
+
+            return;
+        }
+
+
+        // ========================================
+        // 3. 이미 사용한 단어인지 검사
+        // ========================================
+
+        if (usedWords.Contains(inputWord))
+        {
+            chainHintText.text =
+                $"'{inputWord}'은(는) 이미 사용한 단어입니다!";
+
+            wordInput.text = "";
+            wordInput.ActivateInputField();
+
+            return;
+        }
+
+        // ========================================
+        // 한방단어 판정
+        // ========================================
+
+        isCriticalAttack = wordService.IsOneShotWord(
+            inputWord,
+            currentMonsterData.wordLevelMin,
+            currentMonsterData.wordLevelMax,
+            usedWords
+        );
+
+        // 기본 데미지
+        currentAttackDamage = playerAttack;
+
+        // 한방단어라면 크리티컬 2배
+        if (isCriticalAttack)
+        {
+            currentAttackDamage = playerAttack * 2;
+
+            Debug.Log(
+                $"한방단어 크리티컬! {inputWord} / " +
+                $"Damage {currentAttackDamage}"
+            );
+        }
+
+        // ========================================
+        // 4. 정상 단어 → 사용 단어 등록
+        // ========================================
+        usedWords.Add(inputWord);
+
+
+        // ========================================
+        // 5. 기존 공격 실행
+        // ========================================
         PlayerAttack(inputWord);
     }
 
@@ -258,11 +358,98 @@ public class BattleManager : MonoBehaviour
     {
         yield return new WaitForSeconds(1f);
 
-        string slimeWord = GetSlimeWord(currentWord[currentWord.Length - 1]);
+        // ========================================
+        // DB에서 몬스터가 사용할 단어 선택
+        // ========================================
 
+        // 플레이어가 말한 단어의 마지막 글자
+        string requiredChar =
+            currentWord[currentWord.Length - 1].ToString();
+
+        // 현재 몬스터의 단어 난이도 범위에 맞춰
+        // DB에서 사용 가능한 단어를 하나 선택
+        WordData monsterWord = wordService.GetMonsterWord(
+            requiredChar,
+            currentMonsterData.wordLevelMin,
+            currentMonsterData.wordLevelMax,
+            usedWords
+        );
+
+
+        // ========================================
+        // 몬스터가 이어갈 단어가 없음
+        // = 플레이어가 한방단어 사용 성공
+        // ========================================
+        if (monsterWord == null)
+        {
+            Debug.Log(
+                $"몬스터가 사용할 단어가 없습니다. 시작 글자: {requiredChar}"
+            );
+
+            // ----------------------------------------
+            // 새로운 제시어를 DB에서 선택
+            // ----------------------------------------
+            WordData restartWord =
+                wordService.GetRandomStartWord(
+                    currentMonsterData.wordLevelMin,
+                    currentMonsterData.wordLevelMax,
+                    usedWords
+                );
+
+            if (restartWord == null)
+            {
+                Debug.LogError("새로운 제시어를 찾을 수 없습니다.");
+                yield break;
+            }
+
+
+            // 새로운 단어도 사용 단어에 등록
+            usedWords.Add(restartWord.word);
+
+            // 끝말잇기 기준 단어 변경
+            currentWord = restartWord.word;
+
+            // 화면에 새로운 제시어 표시
+            enemyWordText.text = currentWord;
+
+            chainHintText.text =
+                $"크리티컬! 새로운 제시어: {currentWord}\n" +
+                $"'{currentWord[currentWord.Length - 1]}'로 시작하세요!";
+
+
+            // ----------------------------------------
+            // 한방단어이므로 몬스터 공격은 없음
+            // 바로 플레이어 턴으로 복귀
+            // ----------------------------------------
+            wordInput.interactable = true;
+            attackButton.interactable = true;
+
+            wordInput.text = "";
+            wordInput.ActivateInputField();
+
+            yield break;
+        }
+
+
+        // ========================================
+        // 몬스터가 선택한 단어 적용
+        // ========================================
+
+        string slimeWord = monsterWord.word;
+
+        // 몬스터가 사용한 단어도 중복 방지를 위해 등록
+        usedWords.Add(slimeWord);
+
+        // 화면 표시
         enemyWordText.text = slimeWord;
 
+        // 현재 끝말잇기 기준 단어 변경
         currentWord = slimeWord;
+
+        Debug.Log(
+            $"몬스터 단어 선택: {slimeWord} " +
+            $"(난이도 Lv.{monsterWord.level})"
+        );
 
         // 슬라임 공격 연출 시작
         yield return StartCoroutine(SlimeAttackSequence());
@@ -561,20 +748,34 @@ public class BattleManager : MonoBehaviour
         // ========================================
 
         // 검이 닿는 순간 타격 이펙트!
-        if (impactEffect != null)
+        if (isCriticalAttack)
+        {
+            StartCoroutine(CriticalImpactEffect());
+        }
+        else
+        {
             StartCoroutine(ImpactEffect());
+        }
 
         // 실제 데미지
-        slimeHp -= playerAttack;
+        slimeHp -= currentAttackDamage;
         slimeHp = Mathf.Max(slimeHp, 0);
 
         UpdateUI();
 
-        chainHintText.text =
-            $"공격 성공! 슬라임에게 {playerAttack} 데미지!";
+        if (isCriticalAttack)
+        {
+            chainHintText.text =
+                $"크리티컬! 한방단어 공격! {currentAttackDamage} 데미지!";
+        }
+        else
+        {
+            chainHintText.text =
+                $"공격 성공! {currentAttackDamage} 데미지!";
+        }
 
         // -20 데미지 숫자
-        ShowDamageText(slimeVisual, playerAttack);
+        ShowDamageText(slimeVisual, currentAttackDamage);
 
         // 슬라임 피격 흔들림
         if (slimeVisual != null)
@@ -773,23 +974,46 @@ public class BattleManager : MonoBehaviour
         impactEffect.localScale = Vector3.one;
     }
 
-    string GetSlimeWord(char startChar)
+    IEnumerator CriticalImpactEffect()
     {
-        switch (startChar)
+        if (criticalImpactEffect == null)
+            yield break;
+
+        criticalImpactEffect.SetActive(true);
+
+        RectTransform rect =
+            criticalImpactEffect.GetComponent<RectTransform>();
+
+        Vector3 originalScale = rect.localScale;
+
+        // 처음에는 조금 작게
+        rect.localScale = originalScale * 0.7f;
+
+        // 빠르게 크게 터지는 느낌
+        float duration = 0.10f;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
         {
-            case '자': return "자동차";
-            case '차': return "차표";
-            case '표': return "표범";
-            case '범': return "범인";
-            case '인': return "인형";
-            case '형': return "형광등";
-            case '등': return "등산";
-            case '산': return "산책";
-            case '책': return "책상";
-            case '상': return "상자";
-            case '과': return "과자";
-            default: return "사과";
+            elapsed += Time.deltaTime;
+
+            float t = elapsed / duration;
+
+            rect.localScale = Vector3.Lerp(
+                originalScale * 0.7f,
+                originalScale * 1.25f,
+                t
+            );
+
+            yield return null;
         }
+
+        // 아주 잠깐 유지
+        yield return new WaitForSeconds(0.10f);
+
+        rect.localScale = originalScale;
+
+        criticalImpactEffect.SetActive(false);
     }
 
     // ========================================
@@ -863,6 +1087,10 @@ public class BattleManager : MonoBehaviour
 
         // 첫 단어 초기화
         currentWord = "사과";
+
+        // 새로운 층이므로 사용 단어 기록 초기화
+        usedWords.Clear();
+        usedWords.Add(currentWord);
 
         // 죽어서 사라졌던 슬라임 원상복구
         if (slimeVisual != null)

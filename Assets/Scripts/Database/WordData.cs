@@ -1,8 +1,9 @@
 using SQLite;
 
 // ========================================
-// words.db 의 words 테이블 매핑
+// words.db 의 "words" 테이블과 매핑
 // ========================================
+[Table("words")]
 public class WordData
 {
     [PrimaryKey]

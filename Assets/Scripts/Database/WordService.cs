@@ -101,6 +101,78 @@ public class WordService
         return candidates[index];
     }
 
+    // ========================================
+    // 한방단어 여부 확인
+    //
+    // 입력 단어의 마지막 글자로 시작하는
+    // 유효한 후속 단어가 DB에 하나도 없으면 true
+    // ========================================
+    public bool IsOneShotWord(
+        string word,
+        int minLevel,
+        int maxLevel,
+        HashSet<string> usedWords
+    )
+    {
+        if (db == null || string.IsNullOrEmpty(word))
+            return false;
+
+        string lastChar = word[word.Length - 1].ToString();
+
+        int candidateCount =
+            db.Table<WordData>()
+            .Where(
+                w =>
+                    w.first_char == lastChar &&
+                    w.level >= minLevel &&
+                    w.level <= maxLevel &&
+                    w.is_active == 1
+            )
+            .ToList()
+            .Count(
+                w => !usedWords.Contains(w.word)
+            );
+
+        return candidateCount == 0;
+    }
+
+    // ========================================
+    // 한방단어 발생 후 새로운 제시어 선택
+    //
+    // 이미 사용한 단어는 제외하고
+    // DB에서 새로운 시작 단어를 하나 랜덤 선택
+    // ========================================
+    public WordData GetRandomStartWord(
+        int minLevel,
+        int maxLevel,
+        HashSet<string> usedWords
+    )
+    {
+        if (db == null)
+            return null;
+
+        List<WordData> candidates =
+            db.Table<WordData>()
+            .Where(
+                w =>
+                    w.level >= minLevel &&
+                    w.level <= maxLevel &&
+                    w.is_active == 1
+            )
+            .ToList();
+
+        // 이미 사용한 단어 제외
+        candidates = candidates
+            .Where(w => !usedWords.Contains(w.word))
+            .ToList();
+
+        if (candidates.Count == 0)
+            return null;
+
+        int index = Random.Range(0, candidates.Count);
+
+        return candidates[index];
+    }
 
     // ========================================
     // DB 종료

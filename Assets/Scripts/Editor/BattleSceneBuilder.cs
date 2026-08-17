@@ -361,6 +361,54 @@ public static class BattleSceneBuilder
         // BattleManager가 공격 순간에 활성화한다.
         impact.SetActive(false);
 
+        // ========================================
+        // 크리티컬 타격 이펙트 생성
+        // 한방단어 크리티컬 공격 시에만 표시
+        // ========================================
+
+        GameObject criticalImpact = CreatePanel(
+            parent,
+            "CriticalImpactEffect",
+
+            // 실제 PNG를 사용하므로 배경색은 투명
+            Color.clear,
+
+            new Vector2(0.72f, 0.59f),
+            new Vector2(380f, 300f)
+        );
+
+
+        // ========================================
+        // 크리티컬 검격 이미지 자동 적용
+        // ========================================
+
+        Image criticalImpactImage =
+            criticalImpact.GetComponent<Image>();
+
+        Sprite criticalImpactSprite =
+            AssetDatabase.LoadAssetAtPath<Sprite>(
+                "Assets/Art/Sprites/Effects/Combat/impact_slash_critical_01.png"
+            );
+
+        if (criticalImpactSprite != null)
+        {
+            criticalImpactImage.sprite = criticalImpactSprite;
+            criticalImpactImage.color = Color.white;
+            criticalImpactImage.preserveAspect = true;
+        }
+        else
+        {
+            Debug.LogWarning(
+                "크리티컬 타격 이펙트 이미지를 찾을 수 없습니다: " +
+                "impact_slash_critical_01.png"
+            );
+        }
+
+
+        // 평상시에는 숨김
+        // BattleManager가 크리티컬 공격 순간에 활성화한다.
+        criticalImpact.SetActive(false);
+
         // =========================
         // 슬라임 이미지 설정
         // =========================
