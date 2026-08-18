@@ -52,6 +52,7 @@ public class BattleManager : MonoBehaviour
     // 공격 / 타격 연출
     // =========================
     private RectTransform weaponVisual;
+    private TMP_Text criticalText;
 
     // 슬라임이 맞는 순간 표시할 타격 이펙트
     private RectTransform impactEffect;
@@ -161,6 +162,17 @@ public class BattleManager : MonoBehaviour
             else
             {
                 Debug.LogWarning("CriticalImpactEffect를 찾을 수 없습니다.");
+            }
+        }
+
+        if (battleCanvas != null)
+        {
+            Transform criticalTextTransform = battleCanvas.Find("CriticalText");
+
+            if (criticalTextTransform != null)
+            {
+                criticalText = criticalTextTransform.GetComponent<TMP_Text>();
+                criticalText.gameObject.SetActive(false);
             }
         }
 
@@ -751,6 +763,7 @@ public class BattleManager : MonoBehaviour
         if (isCriticalAttack)
         {
             StartCoroutine(CriticalImpactEffect());
+            StartCoroutine(CriticalTextEffect());
         }
         else
         {
@@ -1014,6 +1027,98 @@ public class BattleManager : MonoBehaviour
         rect.localScale = originalScale;
 
         criticalImpactEffect.SetActive(false);
+    }
+
+    // ========================================
+    // CRITICAL! 텍스트 연출
+    // 1. 크게 등장
+    // 2. 살짝 확대
+    // 3. 위로 떠오르며 사라짐
+    // ========================================
+    IEnumerator CriticalTextEffect()
+    {
+        if (criticalText == null)
+            yield break;
+
+        RectTransform rect =
+            criticalText.GetComponent<RectTransform>();
+
+        Vector2 originalPosition = rect.anchoredPosition;
+        Vector3 originalScale = Vector3.one;
+
+        criticalText.gameObject.SetActive(true);
+
+        // 시작 상태
+        rect.anchoredPosition = originalPosition;
+        rect.localScale = new Vector3(0.6f, 0.6f, 1f);
+
+        Color startColor = Color.white;
+        criticalText.color = startColor;
+
+        // -------------------------
+        // 1. 팡! 하고 크게 등장
+        // -------------------------
+        float popDuration = 0.12f;
+        float elapsed = 0f;
+
+        while (elapsed < popDuration)
+        {
+            elapsed += Time.deltaTime;
+
+            float t = elapsed / popDuration;
+
+            rect.localScale =
+                Vector3.Lerp(
+                    new Vector3(0.6f, 0.6f, 1f),
+                    new Vector3(1.25f, 1.25f, 1f),
+                    t
+                );
+
+            yield return null;
+        }
+
+        // 잠깐 유지
+        yield return new WaitForSeconds(0.12f);
+
+        // -------------------------
+        // 2. 위로 떠오르며 사라짐
+        // -------------------------
+        Vector2 endPosition =
+            originalPosition + new Vector2(0f, 90f);
+
+        float fadeDuration = 0.45f;
+        elapsed = 0f;
+
+        while (elapsed < fadeDuration)
+        {
+            elapsed += Time.deltaTime;
+
+            float t = elapsed / fadeDuration;
+
+            rect.anchoredPosition =
+                Vector2.Lerp(
+                    originalPosition,
+                    endPosition,
+                    t
+                );
+
+            criticalText.color =
+                new Color(
+                    startColor.r,
+                    startColor.g,
+                    startColor.b,
+                    1f - t
+                );
+
+            yield return null;
+        }
+
+        // 초기화
+        rect.anchoredPosition = originalPosition;
+        rect.localScale = originalScale;
+        criticalText.color = startColor;
+
+        criticalText.gameObject.SetActive(false);
     }
 
     // ========================================

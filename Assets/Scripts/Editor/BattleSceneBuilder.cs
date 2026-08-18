@@ -20,7 +20,7 @@ public static class BattleSceneBuilder
     {
 
         KoreanFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
-            "Assets/Fonts/NotoSansKR-VF SDF.asset"
+            "Assets/Fonts/NotoSansKR-Regular SDF.asset"
         );
 
         if (KoreanFont == null)
@@ -408,6 +408,24 @@ public static class BattleSceneBuilder
         // 평상시에는 숨김
         // BattleManager가 크리티컬 공격 순간에 활성화한다.
         criticalImpact.SetActive(false);
+
+        // ========================================
+        // 크리티컬 텍스트 생성
+        // 한방단어 공격 순간에만 표시
+        // ========================================
+
+        TextMeshProUGUI criticalText = CreateText(
+            parent,
+            "CriticalText",
+            "CRITICAL!",
+            72,
+            FontStyles.Bold,
+            new Vector2(0.72f, 0.70f),
+            new Vector2(500f, 120f)
+        );
+
+        // 처음에는 숨김
+        criticalText.gameObject.SetActive(false);
 
         // =========================
         // 슬라임 이미지 설정
