@@ -47,6 +47,19 @@ public class BattleManager : MonoBehaviour
     private TMP_InputField wordInput;
     private Button attackButton;
 
+    private Button shopButton;
+    private GameObject shopPanel;
+    private TMP_Text shopCurrentGoldText;
+    private TMP_Text shopMessageText;
+    private RectTransform shopItemListContent;
+    private Button shopCloseButton;
+    private Button shopWeaponTabButton;
+    private Button shopArmorTabButton;
+    private Button shopAccessoryTabButton;
+    private Button shopEtcTabButton;
+    private bool isShopOpen = false;
+    private ItemType currentShopTab = ItemType.Weapon;
+
     private Image playerHpFill;
     private Image slimeHpFill;
     private float playerHpFullWidth;
@@ -220,6 +233,9 @@ public class BattleManager : MonoBehaviour
             }
         }
 
+        if (battleCanvas != null)
+            FindShopUI(battleCanvas);
+
         if (attackButton != null)
             attackButton.onClick.AddListener(OnAttackButtonClicked);
 
@@ -320,6 +336,58 @@ public class BattleManager : MonoBehaviour
         if (floorDebugPanel != null)
             floorDebugPanel.SetActive(false);
 #endif
+    }
+
+    void FindShopUI(Transform battleCanvas)
+    {
+        shopButton = battleCanvas.Find("ShopButton")?.GetComponent<Button>();
+        shopPanel = battleCanvas.Find("ShopPanel")?.gameObject;
+
+        Transform shopPanelTransform = shopPanel != null
+            ? shopPanel.transform
+            : null;
+
+        if (shopPanelTransform != null)
+        {
+            shopCurrentGoldText = shopPanelTransform
+                .Find("ShopCurrentGold")?.GetComponent<TMP_Text>();
+            shopMessageText = shopPanelTransform
+                .Find("ShopMessage")?.GetComponent<TMP_Text>();
+            shopItemListContent = shopPanelTransform
+                .Find("ShopItemListContent")?.GetComponent<RectTransform>();
+            shopCloseButton = shopPanelTransform
+                .Find("ShopCloseButton")?.GetComponent<Button>();
+            shopWeaponTabButton = shopPanelTransform
+                .Find("ShopTabWeapon")?.GetComponent<Button>();
+            shopArmorTabButton = shopPanelTransform
+                .Find("ShopTabArmor")?.GetComponent<Button>();
+            shopAccessoryTabButton = shopPanelTransform
+                .Find("ShopTabAccessory")?.GetComponent<Button>();
+            shopEtcTabButton = shopPanelTransform
+                .Find("ShopTabEtc")?.GetComponent<Button>();
+        }
+
+        if (shopButton != null)
+            shopButton.onClick.AddListener(OpenShop);
+
+        if (shopCloseButton != null)
+            shopCloseButton.onClick.AddListener(CloseShop);
+
+        if (shopWeaponTabButton != null)
+            shopWeaponTabButton.onClick.AddListener(
+                () => SelectShopTab(ItemType.Weapon)
+            );
+
+        if (shopArmorTabButton != null)
+            shopArmorTabButton.onClick.AddListener(
+                () => SelectShopTab(ItemType.Armor)
+            );
+
+        if (shopAccessoryTabButton != null)
+            shopAccessoryTabButton.interactable = false;
+
+        if (shopEtcTabButton != null)
+            shopEtcTabButton.interactable = false;
     }
 
     void SetupBattle()
@@ -433,9 +501,337 @@ public class BattleManager : MonoBehaviour
         Debug.LogWarning($"아이템 데이터를 찾을 수 없습니다: {itemId}");
     }
 
+    bool CanOpenShop()
+    {
+        return !battleEnded &&
+            !isShopOpen &&
+            wordInput != null &&
+            attackButton != null &&
+            wordInput.interactable &&
+            attackButton.interactable &&
+            (victoryPanel == null || !victoryPanel.activeSelf);
+    }
+
+    void OpenShop()
+    {
+        if (!CanOpenShop())
+            return;
+
+        isShopOpen = true;
+
+        if (shopPanel != null)
+            shopPanel.SetActive(true);
+
+        if (wordInput != null)
+            wordInput.interactable = false;
+
+        if (attackButton != null)
+            attackButton.interactable = false;
+
+        UpdateShopButtonState();
+        RefreshShopUI("");
+    }
+
+    void CloseShop()
+    {
+        isShopOpen = false;
+
+        if (shopPanel != null)
+            shopPanel.SetActive(false);
+
+        if (!battleEnded)
+        {
+            if (wordInput != null)
+            {
+                wordInput.interactable = true;
+                wordInput.ActivateInputField();
+            }
+
+            if (attackButton != null)
+                attackButton.interactable = true;
+        }
+
+        UpdateShopButtonState();
+    }
+
+    void SelectShopTab(ItemType itemType)
+    {
+        currentShopTab = itemType;
+        RefreshShopUI("");
+    }
+
+    void RefreshShopUI(string message)
+    {
+        if (shopCurrentGoldText != null)
+            shopCurrentGoldText.text = $"GOLD {gold}";
+
+        if (shopMessageText != null)
+            shopMessageText.text = message;
+
+        ClearShopItemList();
+
+        if (shopItemListContent == null || itemService == null)
+            return;
+
+        List<ItemData> items = itemService.GetItemsByType(currentShopTab);
+
+        if (items.Count == 0)
+        {
+            CreateShopText(
+                shopItemListContent,
+                "ShopEmptyText",
+                "표시할 아이템이 없습니다.",
+                28,
+                FontStyles.Bold,
+                new Vector2(0.5f, 0.5f),
+                new Vector2(700f, 80f)
+            );
+
+            return;
+        }
+
+        for (int i = 0; i < items.Count; i++)
+            CreateShopItemRow(items[i], i);
+    }
+
+    void ClearShopItemList()
+    {
+        if (shopItemListContent == null)
+            return;
+
+        for (int i = shopItemListContent.childCount - 1; i >= 0; i--)
+            Destroy(shopItemListContent.GetChild(i).gameObject);
+    }
+
+    void CreateShopItemRow(ItemData item, int index)
+    {
+        float y = 0.86f - (index * 0.22f);
+
+        GameObject row = CreateShopPanel(
+            shopItemListContent,
+            $"ShopItem_{item.id}",
+            new Color(0.16f, 0.18f, 0.25f, 0.95f),
+            new Vector2(0.5f, y),
+            new Vector2(760f, 125f)
+        );
+
+        string statText = GetItemStatText(item);
+        string stateText = GetItemStateText(item);
+
+        CreateShopText(
+            row.transform,
+            "Name",
+            item.name,
+            28,
+            FontStyles.Bold,
+            new Vector2(0.18f, 0.66f),
+            new Vector2(230f, 45f)
+        );
+
+        CreateShopText(
+            row.transform,
+            "Description",
+            item.description,
+            20,
+            FontStyles.Normal,
+            new Vector2(0.33f, 0.29f),
+            new Vector2(430f, 50f)
+        );
+
+        CreateShopText(
+            row.transform,
+            "Stat",
+            statText,
+            22,
+            FontStyles.Bold,
+            new Vector2(0.51f, 0.66f),
+            new Vector2(180f, 45f)
+        );
+
+        bool ownsItem = playerProgress.OwnsItem(item.id);
+
+        if (ownsItem)
+        {
+            CreateShopText(
+                row.transform,
+                "State",
+                stateText,
+                24,
+                FontStyles.Bold,
+                new Vector2(0.82f, 0.50f),
+                new Vector2(230f, 70f)
+            );
+
+            return;
+        }
+
+        Button buyButton = CreateShopButton(
+            row.transform,
+            "BuyButton",
+            $"구매 {item.price}G",
+            new Vector2(0.82f, 0.50f),
+            new Vector2(210f, 70f)
+        );
+
+        buyButton.onClick.AddListener(() => TryBuyItem(item.id));
+    }
+
+    string GetItemStatText(ItemData item)
+    {
+        ItemType itemType = item.GetItemType();
+
+        if (itemType == ItemType.Weapon)
+            return $"ATK +{item.attackBonus}";
+
+        if (itemType == ItemType.Armor)
+            return $"DMG -{Mathf.RoundToInt(item.defenseRate * 100f)}%";
+
+        return "";
+    }
+
+    string GetItemStateText(ItemData item)
+    {
+        if (item.id == playerProgress.EquippedWeaponId ||
+            item.id == playerProgress.EquippedArmorId)
+        {
+            return "장착 중";
+        }
+
+        return "보유 중";
+    }
+
+    void TryBuyItem(string itemId)
+    {
+        ItemData item = itemService.GetItem(itemId);
+
+        if (item == null)
+        {
+            RefreshShopUI("아이템을 찾을 수 없습니다.");
+            return;
+        }
+
+        if (playerProgress.OwnsItem(item.id))
+        {
+            RefreshShopUI("이미 보유한 아이템입니다.");
+            return;
+        }
+
+        if (!playerProgress.TrySpendGold(item.price))
+        {
+            RefreshShopUI("Gold가 부족합니다.");
+            return;
+        }
+
+        playerProgress.AddOwnedItem(item.id);
+        SaveGame();
+        UpdateUI();
+        RefreshShopUI($"{item.name} 구매 완료!");
+    }
+
+    void UpdateShopButtonState()
+    {
+        if (shopButton != null)
+            shopButton.interactable = CanOpenShop();
+    }
+
+    GameObject CreateShopPanel(
+        Transform parent,
+        string name,
+        Color color,
+        Vector2 anchor,
+        Vector2 size
+    )
+    {
+        GameObject obj = new GameObject(
+            name,
+            typeof(RectTransform),
+            typeof(Image)
+        );
+
+        obj.transform.SetParent(parent, false);
+
+        RectTransform rect = obj.GetComponent<RectTransform>();
+        rect.anchorMin = anchor;
+        rect.anchorMax = anchor;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = size;
+
+        obj.GetComponent<Image>().color = color;
+
+        return obj;
+    }
+
+    TMP_Text CreateShopText(
+        Transform parent,
+        string name,
+        string value,
+        float fontSize,
+        FontStyles style,
+        Vector2 anchor,
+        Vector2 size
+    )
+    {
+        GameObject obj = new GameObject(
+            name,
+            typeof(RectTransform),
+            typeof(TextMeshProUGUI)
+        );
+
+        obj.transform.SetParent(parent, false);
+
+        RectTransform rect = obj.GetComponent<RectTransform>();
+        rect.anchorMin = anchor;
+        rect.anchorMax = anchor;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = size;
+
+        TextMeshProUGUI text = obj.GetComponent<TextMeshProUGUI>();
+        text.font = koreanFont;
+        text.text = value;
+        text.fontSize = fontSize;
+        text.fontStyle = style;
+        text.color = Color.white;
+        text.alignment = TextAlignmentOptions.Center;
+
+        return text;
+    }
+
+    Button CreateShopButton(
+        Transform parent,
+        string name,
+        string label,
+        Vector2 anchor,
+        Vector2 size
+    )
+    {
+        GameObject obj = CreateShopPanel(
+            parent,
+            name,
+            new Color(0.90f, 0.32f, 0.18f),
+            anchor,
+            size
+        );
+
+        Button button = obj.AddComponent<Button>();
+
+        CreateShopText(
+            obj.transform,
+            "Label",
+            label,
+            22,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.5f),
+            size
+        );
+
+        return button;
+    }
+
     public void OnAttackButtonClicked()
     {
-        if (battleEnded || wordInput == null)
+        if (battleEnded || isShopOpen || wordInput == null)
             return;
 
         string inputWord = wordInput.text.Trim();
@@ -541,6 +937,7 @@ public class BattleManager : MonoBehaviour
         wordInput.text = "";
         wordInput.interactable = false;
         attackButton.interactable = false;
+        UpdateShopButtonState();
 
         // 돌진 + 검 공격 연출 시작
         StartCoroutine(PlayerAttackSequence());
@@ -613,6 +1010,7 @@ public class BattleManager : MonoBehaviour
             // ----------------------------------------
             wordInput.interactable = true;
             attackButton.interactable = true;
+            UpdateShopButtonState();
 
             wordInput.text = "";
             wordInput.ActivateInputField();
@@ -690,6 +1088,7 @@ public class BattleManager : MonoBehaviour
 
         wordInput.interactable = true;
         attackButton.interactable = true;
+        UpdateShopButtonState();
 
         wordInput.ActivateInputField();
     }
@@ -1437,6 +1836,7 @@ public class BattleManager : MonoBehaviour
         // 입력 잠금
         wordInput.interactable = false;
         attackButton.interactable = false;
+        UpdateShopButtonState();
 
         // 승리 패널 내용 설정
         if (victoryMonsterText != null)
@@ -1669,6 +2069,8 @@ public class BattleManager : MonoBehaviour
 
         if (goldText != null)
             goldText.text = $"GOLD {gold}";
+
+        UpdateShopButtonState();
     }
 
     void ShowDamageText(RectTransform target, int damage)

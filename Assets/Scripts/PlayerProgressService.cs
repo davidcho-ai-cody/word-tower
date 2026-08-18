@@ -75,6 +75,30 @@ public class PlayerProgressService
         Data.gold += amount;
     }
 
+    public bool TrySpendGold(int amount)
+    {
+        if (amount < 0)
+            return false;
+
+        if (Data.gold < amount)
+            return false;
+
+        Data.gold -= amount;
+        return true;
+    }
+
+    public bool AddOwnedItem(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId))
+            return false;
+
+        if (OwnsItem(itemId))
+            return false;
+
+        EnsureOwnedItem(itemId);
+        return true;
+    }
+
     public void EnsureOwnedItem(string itemId)
     {
         if (string.IsNullOrEmpty(itemId))

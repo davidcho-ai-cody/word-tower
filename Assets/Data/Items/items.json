@@ -6,7 +6,7 @@
       "type": "Weapon",
       "price": 0,
       "attackBonus": 0,
-      "maxHpBonus": 0,
+      "defenseRate": 0,
       "spritePath": "Assets/Art/Sprites/Hero/Weapon/weapon_wood_sword_01.png",
       "characterSpritePath": "",
       "description": "처음부터 가지고 있는 기본 나무검."
@@ -17,7 +17,7 @@
       "type": "Armor",
       "price": 0,
       "attackBonus": 0,
-      "maxHpBonus": 0,
+      "defenseRate": 0,
       "spritePath": "",
       "characterSpritePath": "Assets/Art/Sprites/Hero/Body/hero_beginner_01.png",
       "description": "처음부터 착용하는 기본 방어구."
@@ -28,7 +28,7 @@
       "type": "Weapon",
       "price": 100,
       "attackBonus": 5,
-      "maxHpBonus": 0,
+      "defenseRate": 0,
       "spritePath": "",
       "characterSpritePath": "",
       "description": "상점 테스트용 무기 데이터. 실제 이미지는 아직 없다."
@@ -39,7 +39,7 @@
       "type": "Armor",
       "price": 120,
       "attackBonus": 0,
-      "maxHpBonus": 20,
+      "defenseRate": 0.10,
       "spritePath": "",
       "characterSpritePath": "",
       "description": "상점 테스트용 방어구 데이터. 실제 이미지는 아직 없다."

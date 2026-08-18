@@ -16,7 +16,7 @@ public class ItemData
     public string type;
     public int price;
     public int attackBonus;
-    public int maxHpBonus;
+    public float defenseRate;
     public string spritePath;
     public string characterSpritePath;
     public string description;

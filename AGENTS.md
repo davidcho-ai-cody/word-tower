@@ -323,7 +323,7 @@ ItemData — Assets/Scripts/Data/ItemData.cs:
 - type
 - price
 - attackBonus
-- maxHpBonus
+- defenseRate
 - spritePath
 - characterSpritePath
 - description
@@ -350,12 +350,12 @@ BattleManager는 items.json을 직접 읽지 않고 ItemService를 초기화한�
 
 현재 등록 아이템:
 
-| id | 이름 | 타입 | 가격 | ATK 보너스 | Max HP 보너스 | 아트 상태 |
+| id | 이름 | 타입 | 가격 | ATK 보너스 | defenseRate | 아트 상태 |
 |---|---|---|---:|---:|---:|---|
 | wood_sword_01 | 나무검 | Weapon | 0 | 0 | 0 | 실제 weapon_wood_sword_01.png 사용 |
 | beginner_armor_01 | 초보자 방어구 | Armor | 0 | 0 | 0 | 실제 hero_beginner_01.png 사용 |
 | iron_sword_01 | 철검 | Weapon | 100 | 5 | 0 | 테스트 데이터, 실제 이미지 없음 |
-| leather_armor_01 | 가죽 갑옷 | Armor | 120 | 0 | 20 | 테스트 데이터, 실제 이미지 없음 |
+| leather_armor_01 | 가죽 갑옷 | Armor | 120 | 0 | 0.10 | 테스트 데이터, 실제 이미지 없음 |
 
 기본 장비:
 
@@ -365,9 +365,67 @@ BattleManager는 items.json을 직접 읽지 않고 ItemService를 초기화한�
 
 PlayerProgressService는 로드된 진행 데이터에서 장착 장비 ID가 비어 있으면 기본 장비로 보정하고, ownedItemIds에 기본 장비와 장착 장비가 포함되도록 보정한다. ownedItemIds 중복은 제거한다.
 
-현재 장비 보너스는 실제 전투 스탯에 아직 반영하지 않는다. 기존 레벨업 기반 playerAttack/playerMaxHp 동작을 유지하고, 다음 Shop/Equipment 작업에서 baseAttack + equippedWeapon.attackBonus, baseMaxHp + equippedArmor.maxHpBonus 구조로 확장한다.
+스탯 역할:
 
-상점 UI, 구매, Gold 차감, 장착 UI, 인벤토리 화면은 아직 TODO다.
+- 레벨업은 기본 Max HP와 기본 Attack을 성장시킨다.
+- Weapon은 attackBonus로 플레이어 공격력을 증가시킨다.
+- Armor는 Max HP를 증가시키지 않고 defenseRate로 몬스터에게 받는 최종 Damage를 비율 감소시킨다.
+
+현재 장비 보너스와 defenseRate는 실제 전투에 아직 반영하지 않는다. 기존 레벨업 기반 playerAttack/playerMaxHp 동작을 유지하고, 다음 Equipment 작업에서 finalAttack = baseAttack + equippedWeapon.attackBonus, finalDamage = monsterDamage * (1 - equippedArmor.defenseRate) 구조로 확장한다.
+
+Shop 1단계에서 상점 UI와 Gold 구매는 구현됐다. 장착 UI, 인벤토리 화면, 장비 스탯/외형 반영은 아직 TODO다.
+
+---
+
+## 8.2 Shop System 1단계 — 구현 완료
+
+구현:
+
+- BattleScene 위에 Modal Shop Panel을 띄운다.
+- BattleSceneBuilder가 ShopButton / ShopPanel / 탭 / 아이템 목록 컨테이너를 생성한다.
+- BattleManager가 ItemService와 PlayerProgressService를 사용해 아이템 목록과 구매 상태를 표시한다.
+
+Shop UI 구조:
+
+- ShopButton
+- ShopPanel
+- ShopTitle
+- ShopCloseButton
+- ShopCurrentGold
+- ShopMessage
+- ShopTabWeapon
+- ShopTabArmor
+- ShopTabAccessory
+- ShopTabEtc
+- ShopItemListContent
+
+탭:
+
+- Weapon: 현재 데이터 있음
+- Armor: 현재 데이터 있음
+- Accessory: 향후 확장용, 현재 비활성
+- Etc: 향후 확장용, 현재 비활성
+
+Shop을 열 수 있는 상태:
+
+- battleEnded가 false
+- Shop이 이미 열려 있지 않음
+- WordInput과 AttackButton이 interactable
+- VictoryPanel이 표시 중이 아님
+
+공격 애니메이션, 몬스터 턴, 사망 연출, Victory 처리 중에는 입력 버튼이 잠겨 있으므로 ShopButton도 비활성화된다. Time.timeScale은 사용하지 않는다.
+
+Shop이 열리면 WordInput과 AttackButton을 잠그고, 닫으면 전투가 종료되지 않은 경우 플레이어 입력 상태로 복구한다.
+
+구매 규칙:
+
+- ItemService.GetItem(id)로 아이템 존재 확인
+- 이미 ownedItemIds에 있으면 재구매 불가
+- Gold가 부족하면 구매하지 않고 ShopMessage에 안내
+- Gold가 충분하면 Gold 차감, ownedItemIds 추가, UI 즉시 갱신, SaveGame() 호출
+- price = 0인 기본 장비는 기본 ownedItemIds에 포함되므로 구매 대상이 아니다.
+
+구매와 장착은 분리한다. Shop 1단계에서는 구매해도 자동 장착하지 않고, Weapon attackBonus / Armor defenseRate / 외형 변경도 아직 전투에 반영하지 않는다.
 
 ---
 
@@ -527,6 +585,8 @@ Assets/Scripts/Editor/BattleSceneBuilder.cs가 전투 UI의 소스 오브 트루
 - VictoryPanel
 - ImpactEffect / CriticalImpactEffect / CriticalText
 - LevelUpText
+- ShopButton
+- ShopPanel
 - FloorDebugPanel
 - DebugSaveResetButton
 
@@ -590,6 +650,7 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 - JSON 기반 Save/Load와 Save Reset
 - ItemData / items.json / ItemService 기반 아이템 데이터 구조
 - PlayerProgress 기반 장착 장비 ID와 ownedItemIds 저장
+- BattleScene Modal Shop 1단계와 Gold 구매
 - LV/EXP UI와 LEVEL UP 연출
 - JSON 기반 Floor/Monster 로딩
 - 1~10층 슬라임 챕터
@@ -606,10 +667,9 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 
 - 10층 클리어 후 존재하지 않는 11층 이동 방어와 챕터 완료 처리
 - 보스 전용 패턴 및 isBoss 기반 전투 분기
-- 상점 UI와 구매 처리
 - 인벤토리 UI
 - 장비 장착/교체 UI
-- 장비 보너스 스탯/외형 적용
+- 장비 보너스 스탯/방어율/외형 적용
 - 11층 이후 확정 콘텐츠
 - 운영용 대규모 한국어 단어 DB
 - 단어 뜻/도감/부적절 단어 관리
@@ -622,13 +682,13 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 
 ## 20. 현재 권장 다음 작업
 
-가장 가까운 큰 구조 작업은 Shop System이다. 아이템 데이터, 기본 장비 ID, 보유 아이템 저장 구조는 준비되어 있다.
+가장 가까운 큰 구조 작업은 Equipment System이다. Shop 1단계로 아이템 구매와 ownedItemIds 저장은 준비되어 있다.
 
 권장 순서:
 
-1. 상점 UI와 아이템 목록 표시
-2. Gold 차감 구매와 ownedItemIds 저장
-3. 장비 장착 UI와 Attack / Max HP 보너스 적용
+1. 장비 장착 UI
+2. Weapon Attack 보너스 적용
+3. Armor defenseRate 적용
 4. 10층 Victory 챕터 완료 UI
 5. isBoss를 활용한 최소 보스 연출/분기
 
