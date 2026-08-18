@@ -17,6 +17,12 @@
       "monsterId": "slime_blue",
       "title": "마왕성 3층",
       "isBoss": false
+    },
+    {
+      "floor": 4,
+      "monsterId": "slime_blue",
+      "title": "마왕성 4층",
+      "isBoss": false
     }
   ]
 }

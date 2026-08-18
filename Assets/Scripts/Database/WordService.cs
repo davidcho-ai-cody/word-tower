@@ -107,6 +107,31 @@ public class WordService
     // 입력 단어의 마지막 글자로 시작하는
     // 유효한 후속 단어가 DB에 하나도 없으면 true
     // ========================================
+    public bool IsOneShotForPlayer(
+        string word,
+        HashSet<string> usedWords
+    )
+    {
+        if (db == null || string.IsNullOrEmpty(word))
+            return false;
+
+        string lastChar = word[word.Length - 1].ToString();
+
+        int candidateCount =
+            db.Table<WordData>()
+            .Where(
+                w =>
+                    w.first_char == lastChar &&
+                    w.is_active == 1
+            )
+            .ToList()
+            .Count(
+                w => !usedWords.Contains(w.word)
+            );
+
+        return candidateCount == 0;
+    }
+
     public bool IsOneShotWord(
         string word,
         int minLevel,
@@ -164,6 +189,38 @@ public class WordService
         // 이미 사용한 단어 제외
         candidates = candidates
             .Where(w => !usedWords.Contains(w.word))
+            .ToList();
+
+        if (candidates.Count == 0)
+            return null;
+
+        int index = Random.Range(0, candidates.Count);
+
+        return candidates[index];
+    }
+
+    public WordData GetRandomStartWordForPlayer(
+        HashSet<string> usedWords
+    )
+    {
+        if (db == null)
+            return null;
+
+        List<WordData> availableWords =
+            db.Table<WordData>()
+            .Where(w => w.is_active == 1)
+            .ToList()
+            .Where(w => !usedWords.Contains(w.word))
+            .ToList();
+
+        List<WordData> candidates = availableWords
+            .Where(
+                startWord => availableWords.Any(
+                    nextWord =>
+                        nextWord.word != startWord.word &&
+                        nextWord.first_char == startWord.last_char
+                )
+            )
             .ToList();
 
         if (candidates.Count == 0)

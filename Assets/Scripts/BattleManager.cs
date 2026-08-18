@@ -21,7 +21,9 @@ public class BattleManager : MonoBehaviour
     public int slimeAttack = 10;
 
     [Header("Reward")]
+    public int playerLevel = 1;
     public int exp = 0;
+    public int requiredExp = 100;
     public int gold = 0;
     public int slimeExpReward = 20;
     public int slimeGoldReward = 10;
@@ -30,6 +32,7 @@ public class BattleManager : MonoBehaviour
     private TMP_Text slimeHpText;
     private TMP_Text enemyWordText;
     private TMP_Text chainHintText;
+    private TMP_Text levelText;
     private TMP_Text expText;
     private TMP_Text goldText;
     private TMP_FontAsset koreanFont;
@@ -53,6 +56,7 @@ public class BattleManager : MonoBehaviour
     // =========================
     private RectTransform weaponVisual;
     private TMP_Text criticalText;
+    private TMP_Text levelUpText;
 
     // 슬라임이 맞는 순간 표시할 타격 이펙트
     private RectTransform impactEffect;
@@ -110,6 +114,7 @@ public class BattleManager : MonoBehaviour
         enemyWordText = GameObject.Find("EnemyWord")?.GetComponent<TMP_Text>();
         chainHintText = GameObject.Find("ChainHint")?.GetComponent<TMP_Text>();
 
+        levelText = GameObject.Find("LevelText")?.GetComponent<TMP_Text>();
         expText = GameObject.Find("ExpText")?.GetComponent<TMP_Text>();
         goldText = GameObject.Find("GoldText")?.GetComponent<TMP_Text>();
 
@@ -173,6 +178,17 @@ public class BattleManager : MonoBehaviour
             {
                 criticalText = criticalTextTransform.GetComponent<TMP_Text>();
                 criticalText.gameObject.SetActive(false);
+            }
+        }
+
+        if (battleCanvas != null)
+        {
+            Transform levelUpTextTransform = battleCanvas.Find("LevelUpText");
+
+            if (levelUpTextTransform != null)
+            {
+                levelUpText = levelUpTextTransform.GetComponent<TMP_Text>();
+                levelUpText.gameObject.SetActive(false);
             }
         }
 
@@ -402,9 +418,7 @@ public class BattleManager : MonoBehaviour
             // 새로운 제시어를 DB에서 선택
             // ----------------------------------------
             WordData restartWord =
-                wordService.GetRandomStartWord(
-                    currentMonsterData.wordLevelMin,
-                    currentMonsterData.wordLevelMax,
+                wordService.GetRandomStartWordForPlayer(
                     usedWords
                 );
 
@@ -452,6 +466,17 @@ public class BattleManager : MonoBehaviour
         // 몬스터가 사용한 단어도 중복 방지를 위해 등록
         usedWords.Add(slimeWord);
 
+        bool isMonsterCritical =
+            wordService.IsOneShotForPlayer(
+                slimeWord,
+                usedWords
+            );
+
+        int monsterAttackDamage =
+            isMonsterCritical
+                ? slimeAttack * 2
+                : slimeAttack;
+
         // 화면 표시
         enemyWordText.text = slimeWord;
 
@@ -464,12 +489,39 @@ public class BattleManager : MonoBehaviour
         );
 
         // 슬라임 공격 연출 시작
-        yield return StartCoroutine(SlimeAttackSequence());
+        yield return StartCoroutine(
+            SlimeAttackSequence(
+                monsterAttackDamage,
+                isMonsterCritical
+            )
+        );
 
         if (playerHp <= 0)
         {
             LoseBattle();
             yield break;
+        }
+
+        if (isMonsterCritical)
+        {
+            WordData restartWord =
+                wordService.GetRandomStartWordForPlayer(
+                    usedWords
+                );
+
+            if (restartWord == null)
+            {
+                Debug.LogError("몬스터 크리티컬 후 새로운 제시어를 찾을 수 없습니다.");
+                yield break;
+            }
+
+            usedWords.Add(restartWord.word);
+            currentWord = restartWord.word;
+            enemyWordText.text = currentWord;
+
+            chainHintText.text =
+                $"몬스터 크리티컬! 새로운 제시어: {currentWord}\n" +
+                $"'{currentWord[currentWord.Length - 1]}'로 시작하세요!";
         }
 
         wordInput.interactable = true;
@@ -485,7 +537,10 @@ public class BattleManager : MonoBehaviour
     // 3. 플레이어 피격
     // 4. 슬라임 원위치 복귀
     // ========================================
-    IEnumerator SlimeAttackSequence()
+    IEnumerator SlimeAttackSequence(
+        int attackDamage,
+        bool isMonsterCritical
+    )
     {
         if (slimeVisual == null)
             yield break;
@@ -523,17 +578,25 @@ public class BattleManager : MonoBehaviour
         // -------------------------
         // 2. 실제 데미지 적용
         // -------------------------
-        playerHp -= slimeAttack;
+        playerHp -= attackDamage;
         playerHp = Mathf.Max(playerHp, 0);
 
         UpdateUI();
 
-        chainHintText.text =
-            $"슬라임의 공격! {slimeAttack} 데미지\n" +
-            $"'{currentWord[currentWord.Length - 1]}'로 시작하는 단어를 입력하세요!";
+        if (isMonsterCritical)
+        {
+            chainHintText.text =
+                $"몬스터 크리티컬 공격! {attackDamage} 데미지!";
+        }
+        else
+        {
+            chainHintText.text =
+                $"슬라임의 공격! {attackDamage} 데미지\n" +
+                $"'{currentWord[currentWord.Length - 1]}'로 시작하는 단어를 입력하세요!";
+        }
 
         // 플레이어 머리 위 데미지 숫자
-        ShowDamageText(playerVisual, slimeAttack);
+        ShowDamageText(playerVisual, attackDamage);
 
         // 플레이어는 왼쪽으로 밀리며 피격
         if (playerVisual != null)
@@ -1121,6 +1184,72 @@ public class BattleManager : MonoBehaviour
         criticalText.gameObject.SetActive(false);
     }
 
+    IEnumerator LevelUpTextEffect()
+    {
+        if (levelUpText == null)
+            yield break;
+
+        RectTransform rect = levelUpText.GetComponent<RectTransform>();
+        Vector2 originalPosition = rect.anchoredPosition;
+        Vector3 originalScale = Vector3.one;
+        Color originalColor = new Color(1f, 0.82f, 0.20f, 1f);
+
+        levelUpText.text = $"LEVEL UP!\nLV.{playerLevel}";
+        levelUpText.gameObject.SetActive(true);
+        rect.anchoredPosition = originalPosition;
+        rect.localScale = new Vector3(0.55f, 0.55f, 1f);
+        levelUpText.color = originalColor;
+
+        float popDuration = 0.18f;
+        float elapsed = 0f;
+
+        while (elapsed < popDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / popDuration;
+
+            rect.localScale = Vector3.Lerp(
+                new Vector3(0.55f, 0.55f, 1f),
+                new Vector3(1.15f, 1.15f, 1f),
+                t
+            );
+
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(0.45f);
+
+        Vector2 endPosition = originalPosition + new Vector2(0f, 100f);
+        float fadeDuration = 0.55f;
+        elapsed = 0f;
+
+        while (elapsed < fadeDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / fadeDuration;
+
+            rect.anchoredPosition = Vector2.Lerp(
+                originalPosition,
+                endPosition,
+                t
+            );
+
+            levelUpText.color = new Color(
+                originalColor.r,
+                originalColor.g,
+                originalColor.b,
+                1f - t
+            );
+
+            yield return null;
+        }
+
+        rect.anchoredPosition = originalPosition;
+        rect.localScale = originalScale;
+        levelUpText.color = originalColor;
+        levelUpText.gameObject.SetActive(false);
+    }
+
     // ========================================
     // 전투 승리 처리
     // ========================================
@@ -1131,6 +1260,8 @@ public class BattleManager : MonoBehaviour
         // JSON 데이터 기준 보상 지급
         exp += currentMonsterData.expReward;
         gold += currentMonsterData.goldReward;
+
+        CheckLevelUp();
 
         // 기존 하단 상태 UI 갱신
         UpdateUI();
@@ -1161,6 +1292,34 @@ public class BattleManager : MonoBehaviour
     // ========================================
     // 다음 층 버튼 클릭
     // ========================================
+    void CheckLevelUp()
+    {
+        bool didLevelUp = false;
+
+        while (exp >= requiredExp)
+        {
+            exp -= requiredExp;
+            playerLevel++;
+            didLevelUp = true;
+
+            playerMaxHp += 10;
+            playerAttack += 2;
+
+            // Lv.1 -> 2: 100, Lv.2 -> 3: 140,
+            // Lv.3 -> 4: 190, Lv.4 -> 5: 250
+            requiredExp += 20 + (playerLevel * 10);
+
+            Debug.Log(
+                $"LEVEL UP! Lv.{playerLevel} / " +
+                $"Max HP {playerMaxHp} / ATK {playerAttack} / " +
+                $"Next EXP {requiredExp}"
+            );
+        }
+
+        if (didLevelUp)
+            StartCoroutine(LevelUpTextEffect());
+    }
+
     void OnNextFloorClicked()
     {
         // 승리 패널 숨김
@@ -1269,8 +1428,11 @@ public class BattleManager : MonoBehaviour
             chainHintText.text = $"『 {requiredChar} 』로 시작하는 단어를 입력하세요!";
         }
 
+        if (levelText != null)
+            levelText.text = $"LV.{playerLevel}";
+
         if (expText != null)
-            expText.text = $"EXP {exp} / 100";
+            expText.text = $"EXP {exp} / {requiredExp}";
 
         if (goldText != null)
             goldText.text = $"GOLD {gold}";

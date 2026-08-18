@@ -65,6 +65,7 @@ public static class BattleSceneBuilder
 
         CreateStatusPanel(canvas.transform);
         CreateVictoryPanel(canvas.transform); // 승리패널
+        CreateLevelUpText(canvas.transform);
 
         Selection.activeGameObject = canvas.gameObject;
 
@@ -95,7 +96,7 @@ public static class BattleSceneBuilder
 
     private static void CreateEventSystem()
     {
-        if (Object.FindFirstObjectByType<EventSystem>() != null)
+        if (Object.FindAnyObjectByType<EventSystem>() != null)
             return;
 
         GameObject eventSystem = new GameObject(
@@ -433,7 +434,7 @@ public static class BattleSceneBuilder
         Image slimeImage = slime.GetComponent<Image>();
 
         Sprite slimeSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
-            "Assets/Art/Sprites/Monsters/Slime/slime_idle_01.png"
+            "Assets/Art/Sprites/Monsters/Slime/slime_green_idle_01.png"
         );
 
         if (slimeSprite != null)
@@ -607,6 +608,22 @@ public static class BattleSceneBuilder
 
         // 평상시에는 숨김
         panel.SetActive(false);
+    }
+
+    private static void CreateLevelUpText(Transform parent)
+    {
+        TextMeshProUGUI levelUpText = CreateText(
+            parent,
+            "LevelUpText",
+            "LEVEL UP!",
+            76,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.58f),
+            new Vector2(700f, 180f)
+        );
+
+        levelUpText.color = new Color(1f, 0.82f, 0.20f, 1f);
+        levelUpText.gameObject.SetActive(false);
     }
 
     private static void CreateHpBar(
