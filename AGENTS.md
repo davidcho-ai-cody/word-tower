@@ -122,8 +122,53 @@ UI:
 
 - 레벨업 시 Max HP는 증가하지만 현재 HP를 즉시 추가 회복하지는 않는다.
 - 다음 층 초기화에서 새 Max HP까지 완전 회복한다.
-- 저장/불러오기는 미구현이다.
 - playerHp는 현재 전투 중 변하는 값이므로 BattleManager에 남아 있다.
+
+---
+
+## 4.1 Save / Load 시스템 — 구현 완료
+
+구현:
+
+- Assets/Scripts/Data/SaveData.cs
+- Assets/Scripts/SaveService.cs
+
+저장 방식:
+
+- JSON 파일 기반
+- 경로: Application.persistentDataPath / wordtower_save.json
+- PlayerPrefs는 주요 진행 데이터 저장에 사용하지 않는다.
+- saveVersion = 1을 저장하지만 마이그레이션 시스템은 아직 없다.
+
+SaveData 저장 항목:
+
+- playerProgress: playerLevel, exp, requiredExp, gold, playerMaxHp, playerAttack
+- currentFloor: 현재 이어서 시작할 층
+- highestFloor: 정상 플레이로 도달한 최고 층
+
+저장하지 않는 항목:
+
+- playerHp
+- 몬스터 현재 HP
+- currentWord
+- usedWords
+- 공격/피격/코루틴/애니메이션 진행 상태
+- VictoryPanel 표시 상태
+
+게임 시작 시 Save 파일이 있으면 PlayerProgressData와 currentFloor/highestFloor를 불러온 뒤 해당 층의 새 전투로 시작한다. Save 파일이 없거나 손상되면 기본 PlayerProgressData와 1층으로 시작한다.
+
+자동 저장 시점:
+
+- Victory 보상 지급과 레벨업 판정 완료 후
+- 정상 다음 층 진입 후 currentFloor/highestFloor 갱신 완료 후
+
+Debug Floor 이동은 EXP/Gold/Level/highestFloor를 변경하지 않고 Save 파일도 덮어쓰지 않는다. 개발 테스트 중 10층으로 이동해도 실제 진행도가 오염되지 않아야 한다.
+
+Save Reset:
+
+- SaveService.DeleteSave()
+- 개발용 FloorDebugPanel의 DebugSaveResetButton에서 호출
+- 저장 파일 삭제, PlayerProgress 기본값 복구, currentFloor/highestFloor 1로 복구, 1층 새 전투 시작
 
 ---
 
@@ -344,6 +389,7 @@ MonsterData.visualScale과 monsters.json으로 관리한다.
 - 이전 층
 - 다음 층
 - 10층 바로가기
+- Save Reset
 
 런타임 조건:
 
@@ -365,6 +411,8 @@ Debug 이동 시:
 
 - EXP/Gold 보상 없음
 - 누적 EXP, Gold, Level 유지
+- highestFloor 갱신 없음
+- Save 파일 덮어쓰기 없음
 - 플레이어 HP는 Max HP까지 회복
 - usedWords와 제시어 초기화
 - 몬스터 HP, 이미지, 스탯, 위치, 회전, 배율 복구
@@ -423,6 +471,7 @@ Assets/Scripts/Editor/BattleSceneBuilder.cs가 전투 UI의 소스 오브 트루
 - ImpactEffect / CriticalImpactEffect / CriticalText
 - LevelUpText
 - FloorDebugPanel
+- DebugSaveResetButton
 
 Builder 수정 후 반드시 실행:
 
@@ -481,6 +530,7 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 - 레벨, 필요 EXP 증가, 초과 EXP 이월
 - 레벨업 Max HP/Attack 증가
 - PlayerProgressData / PlayerProgressService 기반 플레이어 진행 데이터 분리
+- JSON 기반 Save/Load와 Save Reset
 - LV/EXP UI와 LEVEL UP 연출
 - JSON 기반 Floor/Monster 로딩
 - 1~10층 슬라임 챕터
@@ -497,7 +547,6 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 
 - 10층 클리어 후 존재하지 않는 11층 이동 방어와 챕터 완료 처리
 - 보스 전용 패턴 및 isBoss 기반 전투 분기
-- 저장/불러오기
 - 아이템 데이터, 인벤토리, 상점
 - 장비 구매/스탯/외형 적용
 - 11층 이후 확정 콘텐츠
@@ -512,15 +561,15 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 
 ## 20. 현재 권장 다음 작업
 
-가장 가까운 큰 구조 작업은 Save/Load 시스템이다. 플레이어 진행 데이터가 PlayerProgressData로 분리되어 저장 대상으로 삼기 쉬운 상태다.
+가장 가까운 큰 구조 작업은 아이템/상점/장비 시스템이다. SaveData는 이후 장비와 인벤토리 데이터를 추가하기 쉬운 형태로 유지한다.
 
 권장 순서:
 
-1. PlayerProgressData 저장/불러오기
-2. 10층 Victory에서 존재하지 않는 11층 이동 방어
-3. 슬라임 챕터 완료 UI 또는 임시 완료 상태
-4. isBoss를 활용한 최소 보스 연출/분기
-5. 저장/불러오기 기반 후 아이템/상점 확장
+1. 아이템 JSON과 보상/상점 데이터 구조
+2. 인벤토리와 구매 상태 저장 구조
+3. 무기/방어구 장착에 따른 Attack / Max HP 계산
+4. 10층 Victory 챕터 완료 UI
+5. isBoss를 활용한 최소 보스 연출/분기
 
 ---
 

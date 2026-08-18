@@ -11,7 +11,39 @@ public class PlayerProgressService
 
     public PlayerProgressService(PlayerProgressData data = null)
     {
+        SetData(data);
+    }
+
+    public void SetData(PlayerProgressData data)
+    {
         Data = data ?? new PlayerProgressData();
+        NormalizeData();
+    }
+
+    public void Reset()
+    {
+        Data = new PlayerProgressData();
+    }
+
+    private void NormalizeData()
+    {
+        if (Data.playerLevel <= 0)
+            Data.playerLevel = 1;
+
+        if (Data.requiredExp <= 0)
+            Data.requiredExp = 100;
+
+        if (Data.playerMaxHp <= 0)
+            Data.playerMaxHp = 100;
+
+        if (Data.playerAttack <= 0)
+            Data.playerAttack = 20;
+
+        if (Data.exp < 0)
+            Data.exp = 0;
+
+        if (Data.gold < 0)
+            Data.gold = 0;
     }
 
     public bool AddExp(int amount)

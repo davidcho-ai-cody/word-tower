@@ -23,6 +23,7 @@ public class BattleManager : MonoBehaviour
     public int slimeGoldReward = 10;
 
     private PlayerProgressService playerProgress;
+    private SaveService saveService;
 
     private int playerLevel => playerProgress.PlayerLevel;
     private int exp => playerProgress.Exp;
@@ -72,6 +73,7 @@ public class BattleManager : MonoBehaviour
     // 현재 층 / 몬스터 데이터
     // =========================
     private int currentFloor = 1;
+    private int highestFloor = 1;
 
     private FloorData currentFloorData;
     private MonsterData currentMonsterData;
@@ -101,6 +103,7 @@ public class BattleManager : MonoBehaviour
     private Button debugPreviousFloorButton;
     private Button debugNextFloorButton;
     private Button debugFloorTenButton;
+    private Button debugSaveResetButton;
     private Vector2 debugPlayerOriginalPosition;
     private Quaternion debugWeaponOriginalRotation;
 #endif
@@ -110,6 +113,10 @@ public class BattleManager : MonoBehaviour
         FindUI();
 
         playerProgress = new PlayerProgressService();
+        saveService = new SaveService();
+
+        Debug.Log("Save Path: " + saveService.GetSavePath());
+        LoadGame();
 
         // 단어 DB 연결
         wordService = new WordService();
@@ -277,6 +284,8 @@ public class BattleManager : MonoBehaviour
                 .Find("DebugNextFloorButton")?.GetComponent<Button>();
             debugFloorTenButton = floorDebugPanel.transform
                 .Find("DebugFloorTenButton")?.GetComponent<Button>();
+            debugSaveResetButton = floorDebugPanel.transform
+                .Find("DebugSaveResetButton")?.GetComponent<Button>();
 
             if (debugPreviousFloorButton != null)
                 debugPreviousFloorButton.onClick.AddListener(
@@ -292,6 +301,9 @@ public class BattleManager : MonoBehaviour
                 debugFloorTenButton.onClick.AddListener(
                     () => DebugMoveToFloor(10)
                 );
+
+            if (debugSaveResetButton != null)
+                debugSaveResetButton.onClick.AddListener(ResetSaveData);
         }
 
         if (playerVisual != null)
@@ -327,6 +339,76 @@ public class BattleManager : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         RefreshFloorDebugUI();
 #endif
+    }
+
+    SaveData CreateSaveData()
+    {
+        return new SaveData
+        {
+            currentFloor = currentFloor,
+            highestFloor = highestFloor,
+            playerProgress = playerProgress.Data
+        };
+    }
+
+    void LoadGame()
+    {
+        if (saveService == null || !saveService.HasSave())
+            return;
+
+        if (!saveService.TryLoad(out SaveData saveData))
+            return;
+
+        playerProgress.SetData(saveData.playerProgress);
+
+        int savedFloor = Mathf.Max(1, saveData.currentFloor);
+        currentFloor = FloorDataExists(savedFloor)
+            ? savedFloor
+            : 1;
+
+        highestFloor = Mathf.Max(
+            Mathf.Max(1, saveData.highestFloor),
+            currentFloor
+        );
+    }
+
+    void SaveGame()
+    {
+        saveService?.Save(CreateSaveData());
+    }
+
+    void ResetSaveData()
+    {
+        saveService?.DeleteSave();
+
+        playerProgress.Reset();
+        currentFloor = 1;
+        highestFloor = 1;
+
+        StopAllCoroutines();
+
+        if (victoryPanel != null)
+            victoryPanel.SetActive(false);
+
+        if (impactEffect != null)
+        {
+            impactEffect.gameObject.SetActive(false);
+            impactEffect.localScale = Vector3.one;
+        }
+
+        if (criticalImpactEffect != null)
+            criticalImpactEffect.SetActive(false);
+
+        if (criticalText != null)
+            criticalText.gameObject.SetActive(false);
+
+        if (levelUpText != null)
+            levelUpText.gameObject.SetActive(false);
+
+        LoadFloorAndMonsterData();
+        ResetBattleForNextFloor();
+
+        Debug.Log("Save 데이터 초기화 완료");
     }
 
     public void OnAttackButtonClicked()
@@ -1325,6 +1407,8 @@ public class BattleManager : MonoBehaviour
         if (didLevelUp)
             StartCoroutine(LevelUpTextEffect());
 
+        SaveGame();
+
         // 기존 하단 상태 UI 갱신
         UpdateUI();
 
@@ -1353,18 +1437,31 @@ public class BattleManager : MonoBehaviour
 
     void OnNextFloorClicked()
     {
+        int nextFloor = currentFloor + 1;
+
+        if (!FloorDataExists(nextFloor))
+        {
+            Debug.LogWarning(
+                $"다음 층 데이터가 없어 이동하지 않습니다. Floor: {nextFloor}"
+            );
+            return;
+        }
+
         // 승리 패널 숨김
         if (victoryPanel != null)
             victoryPanel.SetActive(false);
 
         // 다음 층으로 이동
-        currentFloor++;
+        currentFloor = nextFloor;
+        highestFloor = Mathf.Max(highestFloor, currentFloor);
 
         // 다음 층 데이터 로드
         LoadFloorAndMonsterData();
 
         // 새로운 전투 시작
         ResetBattleForNextFloor();
+
+        SaveGame();
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -1411,23 +1508,6 @@ public class BattleManager : MonoBehaviour
         Debug.Log($"Debug Floor 이동 완료: {currentFloor}층");
     }
 
-    bool FloorDataExists(int targetFloor)
-    {
-        string floorPath =
-            Path.Combine(Application.dataPath, "Data/Floors/floors.json");
-
-        if (!File.Exists(floorPath))
-            return false;
-
-        string floorJson = File.ReadAllText(floorPath);
-        FloorDataList floorList =
-            JsonUtility.FromJson<FloorDataList>(floorJson);
-
-        return floorList != null &&
-            floorList.floors != null &&
-            floorList.floors.Exists(f => f.floor == targetFloor);
-    }
-
     void RefreshFloorDebugUI()
     {
         if (debugFloorText != null)
@@ -1445,6 +1525,23 @@ public class BattleManager : MonoBehaviour
             debugFloorTenButton.interactable = FloorDataExists(10);
     }
 #endif
+
+    bool FloorDataExists(int targetFloor)
+    {
+        string floorPath =
+            Path.Combine(Application.dataPath, "Data/Floors/floors.json");
+
+        if (!File.Exists(floorPath))
+            return false;
+
+        string floorJson = File.ReadAllText(floorPath);
+        FloorDataList floorList =
+            JsonUtility.FromJson<FloorDataList>(floorJson);
+
+        return floorList != null &&
+            floorList.floors != null &&
+            floorList.floors.Exists(f => f.floor == targetFloor);
+    }
 
     // ========================================
     // 다음 층 전투 초기화

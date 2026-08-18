@@ -634,7 +634,7 @@ public static class BattleSceneBuilder
             "FloorDebugPanel",
             new Color(0.05f, 0.06f, 0.09f, 0.88f),
             new Vector2(0.84f, 0.90f),
-            new Vector2(300f, 130f)
+            new Vector2(300f, 185f)
         );
 
         CreateText(
@@ -643,7 +643,7 @@ public static class BattleSceneBuilder
             "DEBUG FLOOR 1",
             22,
             FontStyles.Bold,
-            new Vector2(0.5f, 0.72f),
+            new Vector2(0.5f, 0.78f),
             new Vector2(270f, 45f)
         );
 
@@ -651,7 +651,7 @@ public static class BattleSceneBuilder
             panel.transform,
             "DebugPreviousFloorButton",
             "이전",
-            new Vector2(0.17f, 0.27f),
+            new Vector2(0.17f, 0.45f),
             new Vector2(82f, 48f)
         );
 
@@ -659,7 +659,7 @@ public static class BattleSceneBuilder
             panel.transform,
             "DebugNextFloorButton",
             "다음",
-            new Vector2(0.50f, 0.27f),
+            new Vector2(0.50f, 0.45f),
             new Vector2(82f, 48f)
         );
 
@@ -667,8 +667,16 @@ public static class BattleSceneBuilder
             panel.transform,
             "DebugFloorTenButton",
             "10층",
-            new Vector2(0.83f, 0.27f),
+            new Vector2(0.83f, 0.45f),
             new Vector2(82f, 48f)
+        );
+
+        Button saveResetButton = CreateButton(
+            panel.transform,
+            "DebugSaveResetButton",
+            "Save Reset",
+            new Vector2(0.5f, 0.16f),
+            new Vector2(260f, 44f)
         );
 
         previousButton.transform.Find("Label")
@@ -676,6 +684,8 @@ public static class BattleSceneBuilder
         nextButton.transform.Find("Label")
             .GetComponent<TMP_Text>().fontSize = 20;
         floorTenButton.transform.Find("Label")
+            .GetComponent<TMP_Text>().fontSize = 20;
+        saveResetButton.transform.Find("Label")
             .GetComponent<TMP_Text>().fontSize = 20;
     }
 
