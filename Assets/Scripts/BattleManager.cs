@@ -93,6 +93,7 @@ public class BattleManager : MonoBehaviour
     private Image monsterImage;
 
     private WordService wordService;
+    private ItemService itemService;
     // 이번 전투에서 이미 사용한 단어
     private HashSet<string> usedWords = new HashSet<string>();
 
@@ -121,6 +122,10 @@ public class BattleManager : MonoBehaviour
         // 단어 DB 연결
         wordService = new WordService();
         wordService.Initialize();
+
+        itemService = new ItemService();
+        itemService.Initialize();
+        ValidateStartingItems();
 
         // 현재 층 데이터와 몬스터 데이터 로드
         LoadFloorAndMonsterData();
@@ -409,6 +414,23 @@ public class BattleManager : MonoBehaviour
         ResetBattleForNextFloor();
 
         Debug.Log("Save 데이터 초기화 완료");
+    }
+
+    void ValidateStartingItems()
+    {
+        if (itemService == null)
+            return;
+
+        ValidateItemExists(playerProgress.EquippedWeaponId);
+        ValidateItemExists(playerProgress.EquippedArmorId);
+    }
+
+    void ValidateItemExists(string itemId)
+    {
+        if (itemService.GetItem(itemId) != null)
+            return;
+
+        Debug.LogWarning($"아이템 데이터를 찾을 수 없습니다: {itemId}");
     }
 
     public void OnAttackButtonClicked()

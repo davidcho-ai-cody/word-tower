@@ -8,6 +8,8 @@ public class PlayerProgressService
     public int Gold => Data.gold;
     public int PlayerMaxHp => Data.playerMaxHp;
     public int PlayerAttack => Data.playerAttack;
+    public string EquippedWeaponId => Data.equippedWeaponId;
+    public string EquippedArmorId => Data.equippedArmorId;
 
     public PlayerProgressService(PlayerProgressData data = null)
     {
@@ -22,7 +24,7 @@ public class PlayerProgressService
 
     public void Reset()
     {
-        Data = new PlayerProgressData();
+        SetData(new PlayerProgressData());
     }
 
     private void NormalizeData()
@@ -44,6 +46,16 @@ public class PlayerProgressService
 
         if (Data.gold < 0)
             Data.gold = 0;
+
+        if (string.IsNullOrEmpty(Data.equippedWeaponId))
+            Data.equippedWeaponId = PlayerProgressData.DefaultWeaponId;
+
+        if (string.IsNullOrEmpty(Data.equippedArmorId))
+            Data.equippedArmorId = PlayerProgressData.DefaultArmorId;
+
+        EnsureOwnedItem(Data.equippedWeaponId);
+        EnsureOwnedItem(Data.equippedArmorId);
+        RemoveDuplicateOwnedItems();
     }
 
     public bool AddExp(int amount)
@@ -61,6 +73,37 @@ public class PlayerProgressService
             return;
 
         Data.gold += amount;
+    }
+
+    public void EnsureOwnedItem(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId))
+            return;
+
+        if (Data.ownedItemIds == null)
+            Data.ownedItemIds = new System.Collections.Generic.List<string>();
+
+        if (!Data.ownedItemIds.Contains(itemId))
+            Data.ownedItemIds.Add(itemId);
+    }
+
+    public bool OwnsItem(string itemId)
+    {
+        return Data.ownedItemIds != null &&
+            Data.ownedItemIds.Contains(itemId);
+    }
+
+    private void RemoveDuplicateOwnedItems()
+    {
+        if (Data.ownedItemIds == null)
+            return;
+
+        Data.ownedItemIds =
+            new System.Collections.Generic.List<string>(
+                new System.Collections.Generic.HashSet<string>(
+                    Data.ownedItemIds
+                )
+            );
     }
 
     private bool CheckLevelUp()

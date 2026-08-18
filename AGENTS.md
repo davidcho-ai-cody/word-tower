@@ -77,6 +77,9 @@ PlayerProgressData 필드:
     public int gold = 0;
     public int playerMaxHp = 100;
     public int playerAttack = 20;
+    public string equippedWeaponId = "wood_sword_01";
+    public string equippedArmorId = "beginner_armor_01";
+    public List<string> ownedItemIds;
 
 PlayerProgressService 역할:
 
@@ -142,7 +145,7 @@ UI:
 
 SaveData 저장 항목:
 
-- playerProgress: playerLevel, exp, requiredExp, gold, playerMaxHp, playerAttack
+- playerProgress: playerLevel, exp, requiredExp, gold, playerMaxHp, playerAttack, equippedWeaponId, equippedArmorId, ownedItemIds
 - currentFloor: 현재 이어서 시작할 층
 - highestFloor: 정상 플레이로 도달한 최고 층
 
@@ -313,6 +316,59 @@ MonsterData — Assets/Scripts/Data/MonsterData.cs:
 
 몬스터 스탯, 보상, 난이도, 이미지, 배율을 BattleManager에 하드코딩하지 않는다.
 
+ItemData — Assets/Scripts/Data/ItemData.cs:
+
+- id
+- name
+- type
+- price
+- attackBonus
+- maxHpBonus
+- spritePath
+- characterSpritePath
+- description
+
+데이터: Assets/Data/Items/items.json
+
+현재 지원 ItemType:
+
+- Weapon
+- Armor
+
+ItemService — Assets/Scripts/ItemService.cs:
+
+- items.json 로드
+- GetItem(string id)
+- GetItemsByType(ItemType itemType)
+- GetAllItems()
+
+BattleManager는 items.json을 직접 읽지 않고 ItemService를 초기화한다.
+
+---
+
+## 8.1 아이템 / 장비 데이터 — 기반 구현 완료
+
+현재 등록 아이템:
+
+| id | 이름 | 타입 | 가격 | ATK 보너스 | Max HP 보너스 | 아트 상태 |
+|---|---|---|---:|---:|---:|---|
+| wood_sword_01 | 나무검 | Weapon | 0 | 0 | 0 | 실제 weapon_wood_sword_01.png 사용 |
+| beginner_armor_01 | 초보자 방어구 | Armor | 0 | 0 | 0 | 실제 hero_beginner_01.png 사용 |
+| iron_sword_01 | 철검 | Weapon | 100 | 5 | 0 | 테스트 데이터, 실제 이미지 없음 |
+| leather_armor_01 | 가죽 갑옷 | Armor | 120 | 0 | 20 | 테스트 데이터, 실제 이미지 없음 |
+
+기본 장비:
+
+- equippedWeaponId = wood_sword_01
+- equippedArmorId = beginner_armor_01
+- ownedItemIds 기본값에는 위 두 기본 장비가 포함된다.
+
+PlayerProgressService는 로드된 진행 데이터에서 장착 장비 ID가 비어 있으면 기본 장비로 보정하고, ownedItemIds에 기본 장비와 장착 장비가 포함되도록 보정한다. ownedItemIds 중복은 제거한다.
+
+현재 장비 보너스는 실제 전투 스탯에 아직 반영하지 않는다. 기존 레벨업 기반 playerAttack/playerMaxHp 동작을 유지하고, 다음 Shop/Equipment 작업에서 baseAttack + equippedWeapon.attackBonus, baseMaxHp + equippedArmor.maxHpBonus 구조로 확장한다.
+
+상점 UI, 구매, Gold 차감, 장착 UI, 인벤토리 화면은 아직 TODO다.
+
 ---
 
 ## 9. 1~10층 슬라임 챕터 — 구현 완료
@@ -454,6 +510,7 @@ Debug 이동 시:
     Pos X 110 / Pos Y 5 / Width 150 / Height 150 / Rotation 0
 
 장비 구매, 인벤토리, 외형 교체 로직은 TODO다.
+현재 장비 ID와 보유 아이템 ID 저장 구조는 구현되어 있다.
 
 ---
 
@@ -531,6 +588,8 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 - 레벨업 Max HP/Attack 증가
 - PlayerProgressData / PlayerProgressService 기반 플레이어 진행 데이터 분리
 - JSON 기반 Save/Load와 Save Reset
+- ItemData / items.json / ItemService 기반 아이템 데이터 구조
+- PlayerProgress 기반 장착 장비 ID와 ownedItemIds 저장
 - LV/EXP UI와 LEVEL UP 연출
 - JSON 기반 Floor/Monster 로딩
 - 1~10층 슬라임 챕터
@@ -547,8 +606,10 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 
 - 10층 클리어 후 존재하지 않는 11층 이동 방어와 챕터 완료 처리
 - 보스 전용 패턴 및 isBoss 기반 전투 분기
-- 아이템 데이터, 인벤토리, 상점
-- 장비 구매/스탯/외형 적용
+- 상점 UI와 구매 처리
+- 인벤토리 UI
+- 장비 장착/교체 UI
+- 장비 보너스 스탯/외형 적용
 - 11층 이후 확정 콘텐츠
 - 운영용 대규모 한국어 단어 DB
 - 단어 뜻/도감/부적절 단어 관리
@@ -561,13 +622,13 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 
 ## 20. 현재 권장 다음 작업
 
-가장 가까운 큰 구조 작업은 아이템/상점/장비 시스템이다. SaveData는 이후 장비와 인벤토리 데이터를 추가하기 쉬운 형태로 유지한다.
+가장 가까운 큰 구조 작업은 Shop System이다. 아이템 데이터, 기본 장비 ID, 보유 아이템 저장 구조는 준비되어 있다.
 
 권장 순서:
 
-1. 아이템 JSON과 보상/상점 데이터 구조
-2. 인벤토리와 구매 상태 저장 구조
-3. 무기/방어구 장착에 따른 Attack / Max HP 계산
+1. 상점 UI와 아이템 목록 표시
+2. Gold 차감 구매와 ownedItemIds 저장
+3. 장비 장착 UI와 Attack / Max HP 보너스 적용
 4. 10층 Victory 챕터 완료 UI
 5. isBoss를 활용한 최소 보스 연출/분기
 
