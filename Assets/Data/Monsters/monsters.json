@@ -9,6 +9,7 @@
       "goldReward": 10,
       "wordLevelMin": 1,
       "wordLevelMax": 1,
+      "visualScale": 1.0,
       "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_green_idle_01.png"
     },
     {
@@ -20,6 +21,7 @@
       "goldReward": 15,
       "wordLevelMin": 1,
       "wordLevelMax": 2,
+      "visualScale": 1.0,
       "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_blue_idle_01.png"
     },
     {
@@ -31,6 +33,7 @@
       "goldReward": 18,
       "wordLevelMin": 1,
       "wordLevelMax": 2,
+      "visualScale": 1.0,
       "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_red_idle_01.png"
     },
     {
@@ -42,6 +45,7 @@
       "goldReward": 20,
       "wordLevelMin": 2,
       "wordLevelMax": 2,
+      "visualScale": 1.0,
       "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_yellow_idle_01.png"
     },
     {
@@ -53,6 +57,7 @@
       "goldReward": 22,
       "wordLevelMin": 2,
       "wordLevelMax": 3,
+      "visualScale": 1.0,
       "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_poison_idle_01.png"
     },
     {
@@ -64,6 +69,7 @@
       "goldReward": 25,
       "wordLevelMin": 2,
       "wordLevelMax": 3,
+      "visualScale": 1.0,
       "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_armor_idle_01.png"
     },
     {
@@ -75,6 +81,7 @@
       "goldReward": 30,
       "wordLevelMin": 2,
       "wordLevelMax": 3,
+      "visualScale": 1.15,
       "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_elite_idle_01.png"
     },
     {
@@ -86,6 +93,7 @@
       "goldReward": 60,
       "wordLevelMin": 2,
       "wordLevelMax": 4,
+      "visualScale": 1.35,
       "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_king_idle_01.png"
     }
   ]

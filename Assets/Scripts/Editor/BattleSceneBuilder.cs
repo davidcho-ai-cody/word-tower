@@ -66,6 +66,7 @@ public static class BattleSceneBuilder
         CreateStatusPanel(canvas.transform);
         CreateVictoryPanel(canvas.transform); // 승리패널
         CreateLevelUpText(canvas.transform);
+        CreateFloorDebugPanel(canvas.transform);
 
         Selection.activeGameObject = canvas.gameObject;
 
@@ -624,6 +625,58 @@ public static class BattleSceneBuilder
 
         levelUpText.color = new Color(1f, 0.82f, 0.20f, 1f);
         levelUpText.gameObject.SetActive(false);
+    }
+
+    private static void CreateFloorDebugPanel(Transform parent)
+    {
+        GameObject panel = CreatePanel(
+            parent,
+            "FloorDebugPanel",
+            new Color(0.05f, 0.06f, 0.09f, 0.88f),
+            new Vector2(0.84f, 0.90f),
+            new Vector2(300f, 130f)
+        );
+
+        CreateText(
+            panel.transform,
+            "DebugFloorText",
+            "DEBUG FLOOR 1",
+            22,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.72f),
+            new Vector2(270f, 45f)
+        );
+
+        Button previousButton = CreateButton(
+            panel.transform,
+            "DebugPreviousFloorButton",
+            "이전",
+            new Vector2(0.17f, 0.27f),
+            new Vector2(82f, 48f)
+        );
+
+        Button nextButton = CreateButton(
+            panel.transform,
+            "DebugNextFloorButton",
+            "다음",
+            new Vector2(0.50f, 0.27f),
+            new Vector2(82f, 48f)
+        );
+
+        Button floorTenButton = CreateButton(
+            panel.transform,
+            "DebugFloorTenButton",
+            "10층",
+            new Vector2(0.83f, 0.27f),
+            new Vector2(82f, 48f)
+        );
+
+        previousButton.transform.Find("Label")
+            .GetComponent<TMP_Text>().fontSize = 20;
+        nextButton.transform.Find("Label")
+            .GetComponent<TMP_Text>().fontSize = 20;
+        floorTenButton.transform.Find("Label")
+            .GetComponent<TMP_Text>().fontSize = 20;
     }
 
     private static void CreateHpBar(

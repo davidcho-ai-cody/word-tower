@@ -91,6 +91,17 @@ public class BattleManager : MonoBehaviour
     // 이번 전투에서 이미 사용한 단어
     private HashSet<string> usedWords = new HashSet<string>();
 
+    private GameObject floorDebugPanel;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private TMP_Text debugFloorText;
+    private Button debugPreviousFloorButton;
+    private Button debugNextFloorButton;
+    private Button debugFloorTenButton;
+    private Vector2 debugPlayerOriginalPosition;
+    private Quaternion debugWeaponOriginalRotation;
+#endif
+
     void Start()
     {
         FindUI();
@@ -247,6 +258,46 @@ public class BattleManager : MonoBehaviour
             if (nextFloorButton != null)
                 nextFloorButton.onClick.AddListener(OnNextFloorClicked);
         }
+
+        floorDebugPanel = GameObject.Find("FloorDebugPanel");
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (floorDebugPanel != null)
+        {
+            debugFloorText = floorDebugPanel.transform
+                .Find("DebugFloorText")?.GetComponent<TMP_Text>();
+            debugPreviousFloorButton = floorDebugPanel.transform
+                .Find("DebugPreviousFloorButton")?.GetComponent<Button>();
+            debugNextFloorButton = floorDebugPanel.transform
+                .Find("DebugNextFloorButton")?.GetComponent<Button>();
+            debugFloorTenButton = floorDebugPanel.transform
+                .Find("DebugFloorTenButton")?.GetComponent<Button>();
+
+            if (debugPreviousFloorButton != null)
+                debugPreviousFloorButton.onClick.AddListener(
+                    () => DebugMoveToFloor(currentFloor - 1)
+                );
+
+            if (debugNextFloorButton != null)
+                debugNextFloorButton.onClick.AddListener(
+                    () => DebugMoveToFloor(currentFloor + 1)
+                );
+
+            if (debugFloorTenButton != null)
+                debugFloorTenButton.onClick.AddListener(
+                    () => DebugMoveToFloor(10)
+                );
+        }
+
+        if (playerVisual != null)
+            debugPlayerOriginalPosition = playerVisual.anchoredPosition;
+
+        if (weaponVisual != null)
+            debugWeaponOriginalRotation = weaponVisual.localRotation;
+#else
+        if (floorDebugPanel != null)
+            floorDebugPanel.SetActive(false);
+#endif
     }
 
     void SetupBattle()
@@ -267,6 +318,10 @@ public class BattleManager : MonoBehaviour
             wordInput.text = "";
             wordInput.ActivateInputField();
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        RefreshFloorDebugUI();
+#endif
     }
 
     public void OnAttackButtonClicked()
@@ -1336,6 +1391,85 @@ public class BattleManager : MonoBehaviour
         ResetBattleForNextFloor();
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    void DebugMoveToFloor(int targetFloor)
+    {
+        if (!FloorDataExists(targetFloor))
+        {
+            Debug.LogWarning(
+                $"Debug Floor 이동 취소: {targetFloor}층 데이터가 없습니다."
+            );
+            return;
+        }
+
+        StopAllCoroutines();
+
+        if (victoryPanel != null)
+            victoryPanel.SetActive(false);
+
+        if (impactEffect != null)
+        {
+            impactEffect.gameObject.SetActive(false);
+            impactEffect.localScale = Vector3.one;
+        }
+
+        if (criticalImpactEffect != null)
+            criticalImpactEffect.SetActive(false);
+
+        if (criticalText != null)
+            criticalText.gameObject.SetActive(false);
+
+        if (levelUpText != null)
+            levelUpText.gameObject.SetActive(false);
+
+        if (playerVisual != null)
+            playerVisual.anchoredPosition = debugPlayerOriginalPosition;
+
+        if (weaponVisual != null)
+            weaponVisual.localRotation = debugWeaponOriginalRotation;
+
+        currentFloor = targetFloor;
+        LoadFloorAndMonsterData();
+        ResetBattleForNextFloor();
+
+        Debug.Log($"Debug Floor 이동 완료: {currentFloor}층");
+    }
+
+    bool FloorDataExists(int targetFloor)
+    {
+        string floorPath =
+            Path.Combine(Application.dataPath, "Data/Floors/floors.json");
+
+        if (!File.Exists(floorPath))
+            return false;
+
+        string floorJson = File.ReadAllText(floorPath);
+        FloorDataList floorList =
+            JsonUtility.FromJson<FloorDataList>(floorJson);
+
+        return floorList != null &&
+            floorList.floors != null &&
+            floorList.floors.Exists(f => f.floor == targetFloor);
+    }
+
+    void RefreshFloorDebugUI()
+    {
+        if (debugFloorText != null)
+            debugFloorText.text = $"DEBUG FLOOR {currentFloor}";
+
+        if (debugPreviousFloorButton != null)
+            debugPreviousFloorButton.interactable =
+                FloorDataExists(currentFloor - 1);
+
+        if (debugNextFloorButton != null)
+            debugNextFloorButton.interactable =
+                FloorDataExists(currentFloor + 1);
+
+        if (debugFloorTenButton != null)
+            debugFloorTenButton.interactable = FloorDataExists(10);
+    }
+#endif
+
     // ========================================
     // 다음 층 전투 초기화
     // ========================================
@@ -1359,7 +1493,7 @@ public class BattleManager : MonoBehaviour
         // 죽어서 사라졌던 슬라임 원상복구
         if (slimeVisual != null)
         {
-            slimeVisual.localScale = Vector3.one;
+            ApplyMonsterVisualScale();
             slimeVisual.localRotation = Quaternion.identity;
             slimeVisual.anchoredPosition = slimeOriginalPosition;
         }
@@ -1376,6 +1510,10 @@ public class BattleManager : MonoBehaviour
 
         // UI 갱신
         UpdateUI();
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        RefreshFloorDebugUI();
+#endif
 
         if (wordInput != null)
             wordInput.ActivateInputField();
@@ -1609,6 +1747,7 @@ public class BattleManager : MonoBehaviour
 
         // JSON에 설정된 몬스터 이미지 적용
         ApplyMonsterSprite();
+        ApplyMonsterVisualScale();
 
         Debug.Log(
             $"Floor {currentFloor} Loaded / " +
@@ -1653,5 +1792,17 @@ public class BattleManager : MonoBehaviour
         }
 
     #endif
+    }
+
+    void ApplyMonsterVisualScale()
+    {
+        if (slimeVisual == null || currentMonsterData == null)
+            return;
+
+        float scale = currentMonsterData.visualScale > 0f
+            ? currentMonsterData.visualScale
+            : 1f;
+
+        slimeVisual.localScale = Vector3.one * scale;
     }
 }

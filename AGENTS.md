@@ -1,1606 +1,595 @@
 # AGENTS.md — WordTower Development Guide
 
-> This file is the persistent project context for Codex and other coding agents working on **WordTower**.
-> Read this file before making changes. Preserve existing working behavior unless the task explicitly asks to change it.
+> WordTower의 지속 프로젝트 컨텍스트다. 새 Codex 세션이나 다른 PC에서 작업할 때 먼저 읽는다.
+> 문서와 실제 코드/데이터가 충돌하면 실제 구현이 우선이다.
 
 ---
 
-## 1. Project Overview
+## 1. 프로젝트 개요
 
-**Project name:** WordTower  
-**Genre:** 2D mobile word-chain RPG  
-**Core mechanic:** Korean 끝말잇기 (word-chain battle)  
-**Target platform:** Mobile first  
-**Screen orientation:** Portrait, 9:16  
-**Engine:** Unity 2D  
-**Primary language:** C#  
-**Development style:** Production-first / vibe coding. The user can read C# reasonably well but does not want line-by-line programming lessons unless requested.
+- 프로젝트: WordTower
+- 장르: 2D 모바일 끝말잇기 RPG
+- 엔진/언어: Unity 2D / C#
+- 화면: 모바일 우선, 세로 9:16
+- 목표: 100층 마왕성을 한국어 끝말잇기 전투로 공략
+- 현재 확정·구현 콘텐츠: 1~10층 슬라임 챕터
+- 메인 씬: Assets/Scenes/BattleScene.unity
+- 초기 런타임은 AI/API 없이 SQLite 단어 DB로 동작
 
-The game concept is:
-
-- The player climbs a **100-floor demon tower**.
-- Each floor contains a monster.
-- Battles are resolved through Korean word-chain gameplay.
-- Successful words trigger attacks and reduce HP.
-- Monsters answer using words from the word database.
-- Defeating monsters rewards EXP and Gold.
-- Gold will later be spent in shops for weapons and armor.
-- Equipment should visibly change the hero’s appearance.
-- The game should initially work without AI/API calls to avoid token/API cost and simplify launch.
-- AI features may be added later if the game gets traction.
-
-The current MVP focuses on making the first few floors fully playable before scaling toward 100 floors.
+WordTower는 단순 단어 퀴즈가 아니라 전투 언어가 끝말잇기인 RPG를 지향한다. 전투 손맛, 보이는 성장, 단어 선택의 전략성을 보존한다.
 
 ---
 
-## 2. Core Game Philosophy
+## 2. 현재 핵심 게임 루프
 
-WordTower should feel like a **real RPG whose combat language happens to be 끝말잇기**, not merely a vocabulary quiz.
+1. floors.json에서 현재 FloorData를 찾는다.
+2. monsterId로 monsters.json의 MonsterData를 찾는다.
+3. 이름, HP, 공격력, 보상, 단어 난이도, 이미지, 표시 배율을 적용한다.
+4. currentWord = "사과"로 전투를 시작한다.
+5. 플레이어 단어의 시작 글자, DB 등록/활성 상태, 미사용 여부를 검증한다.
+6. 플레이어 공격과 몬스터 반격을 진행한다.
+7. 양쪽 모두 한방단어 크리티컬을 사용할 수 있다.
+8. 몬스터 HP가 0이면 사망 연출 후 Victory 보상을 지급한다.
+9. 다음 층에서 새 데이터를 로드하고 전투 상태를 초기화한다.
 
-Important design values:
+새 층 초기화:
 
-1. **Fast and satisfying combat**
-   - Player attack animation
-   - Weapon swing
-   - Hit effects
-   - Knockback
-   - Damage numbers
-   - Critical effects
-   - Monster counterattacks
-   - Death animation
-
-2. **Visible progression**
-   - EXP
-   - Level
-   - Gold
-   - Weapons
-   - Armor
-   - Stronger monsters
-   - Increasing word difficulty
-
-3. **Words should matter mechanically**
-   - Valid words are checked against SQLite.
-   - Used words cannot be reused.
-   - Monster vocabulary difficulty depends on monster data.
-   - “One-shot words” are rewarded as critical attacks rather than instant wins.
-
-4. **Do not trivialize the RPG system**
-   - One-shot words must NOT instantly defeat monsters.
-   - Otherwise children could memorize a few one-shot words and bypass HP, gear, progression, and combat systems.
+- 플레이어/몬스터 HP 완전 회복
+- currentWord를 "사과"로 초기화
+- usedWords 초기화 후 "사과" 등록
+- 몬스터 위치, 회전, 데이터 배율 복구
+- 입력창과 공격 버튼 활성화
+- EXP, Gold, Level 유지
 
 ---
 
-## 3. Current Working Gameplay Loop
+## 3. 플레이어 기본값과 데미지
 
-Current intended gameplay loop:
+- Level: 1
+- Max HP / HP: 100 / 100
+- Attack: 20
+- EXP / 필요 EXP: 0 / 100
+- Gold: 0
+- 플레이어 일반 데미지: playerAttack
+- 플레이어 한방단어: playerAttack * 2
+- 몬스터 일반 데미지: 현재 몬스터 attack
+- 몬스터 한방단어: 현재 몬스터 attack * 2
 
-1. Floor data loads from JSON.
-2. Monster data loads from JSON.
-3. Current monster image, name, HP, attack, reward, and word difficulty are applied.
-4. Battle starts with the starting word `"사과"`.
-5. Player enters a Korean word.
-6. System validates:
-   - correct starting character
-   - word exists in SQLite DB
-   - word is active
-   - word was not already used
-7. System checks whether the player word is a one-shot word.
-8. Player attacks.
-9. If normal word:
-   - normal damage
-   - normal slash effect
-   - monster selects a valid word from DB
-   - monster counterattacks
-10. If one-shot word:
-   - critical damage x2
-   - critical slash effect
-   - `CRITICAL!` text effect
-   - monster does NOT counterattack
-   - DB selects a new random starting word
-   - battle continues
-11. If monster HP reaches 0:
-   - monster death animation
-   - Victory panel
-   - EXP and Gold reward
-12. Player presses “다음 층”.
-13. `currentFloor++`
-14. Next floor JSON data is loaded.
-15. Next battle begins.
+플레이어 한방단어는 Critical Impact 이미지와 CRITICAL! 텍스트 연출을 사용한다.
 
 ---
 
-## 4. Current Combat Values
+## 4. 플레이어 레벨업 시스템 — 구현 완료
 
-Current baseline values:
+구현: Assets/Scripts/BattleManager.cs
 
-### Player
-- Max HP: `100`
-- Base Attack: `20`
+현재 필드:
 
-### Normal attack
-- Damage: `20`
+    public int playerLevel = 1;
+    public int exp = 0;
+    public int requiredExp = 100;
+    public int playerMaxHp = 100;
+    public int playerAttack = 20;
 
-### One-shot / Critical attack
-- Damage multiplier: `2x`
-- Current critical damage: `40`
+Victory 연결 흐름:
 
-### Green Slime
-- EXP reward: `20`
-- Gold reward: `10`
-- Current word level range: typically Lv.1 only
+    WinBattle()
+    → currentMonsterData.expReward / goldReward 지급
+    → CheckLevelUp()
+    → UpdateUI()
+    → VictoryPanel 표시
 
-### Blue Slime
-- EXP reward: `30`
-- Gold reward: `15`
-- Current word range: Lv.1–2
+CheckLevelUp() 규칙:
 
-Current floor plan in the prototype:
+- while (exp >= requiredExp)로 여러 레벨 상승 가능
+- exp -= requiredExp이므로 초과 EXP 이월
+- 레벨업마다 playerLevel +1, playerMaxHp +10, playerAttack +2
+- 다음 필요 EXP: requiredExp += 20 + (playerLevel * 10)
 
-- Floor 1: Green Slime
-- Floor 2: Green Slime
-- Floor 3: Blue Slime
-- Floor 4 was discussed as likely Blue Slime for early progression testing
+초기 EXP 곡선:
 
-With current rewards:
+- Lv.1 → 2: 100
+- Lv.2 → 3: 140
+- Lv.3 → 4: 190
+- Lv.4 → 5: 250
+- Lv.5 → 6: 320
 
-- Floor 1: +20 EXP
-- Floor 2: +20 EXP
-- Floor 3: +30 EXP
-- Floor 4: +30 EXP
-- Total = 100 EXP
+UI:
 
-Therefore the first level-up is naturally expected around Floor 4 if Lv.1 → Lv.2 requires 100 EXP.
+- LevelText: LV.{playerLevel}
+- ExpText: EXP {exp} / {requiredExp}
+- LevelUpTextEffect(): LEVEL UP!과 도달 레벨을 팝업으로 표시하고 상승/페이드아웃
+- LevelUpText는 BattleSceneBuilder가 생성
 
----
+주의:
 
-## 5. Planned Level-Up Direction
-
-Level-up logic is NOT fully implemented yet.
-
-Recommended initial rules:
-
-- Lv.1 → Lv.2: 100 EXP
-- Later required EXP should increase gradually.
-- Suggested early curve:
-  - Lv.1 → Lv.2: 100
-  - Lv.2 → Lv.3: 140
-  - Lv.3 → Lv.4: 190
-  - Lv.4 → Lv.5: 250
-
-Suggested initial level-up bonuses:
-
-- Max HP +10
-- Attack +2
-- Overflow EXP should carry over
-- Display a `LEVEL UP!` effect
-
-Do not hardcode long-term progression prematurely. Start with a simple, testable formula.
+- 레벨업 시 Max HP는 증가하지만 현재 HP를 즉시 추가 회복하지는 않는다.
+- 다음 층 초기화에서 새 Max HP까지 완전 회복한다.
+- 저장/불러오기는 미구현이다.
 
 ---
 
-## 6. One-Shot Word / Critical System
+## 5. Word Engine과 SQLite
 
-This design decision is IMPORTANT.
+구조:
 
-A one-shot word is a valid word whose final character has no valid continuation available to the current monster under its allowed difficulty range.
+    BattleManager
+      → WordService
+        → sqlite-net / SQLite.cs
+          → words.db
 
-Example:
+주요 파일:
 
-- Monster: `오리`
-- Player: `리튬`
-- Monster would need a word starting with `튬`
-- If none exists, it is a one-shot word
+- DB: Assets/StreamingAssets/Data/Words/words.db
+- 생성 도구: Tools/create_word_db.py
+- 서비스: Assets/Scripts/Database/WordService.cs
+- 매핑: Assets/Scripts/Database/WordData.cs
+- sqlite-net: Assets/Scripts/Database/SQLite.cs
+- Windows Editor DLL: Assets/Plugins/x86_64/sqlite3.dll
 
-### Final design decision
+WordData는 [Table("words")]로 실제 words 테이블과 매핑한다.
 
-One-shot words do **NOT** cause instant victory.
+현재 WordService 메서드:
 
-Instead:
+    IsValidWord(string word)
+    GetWord(string word)
+    GetMonsterWord(string startChar, int minLevel, int maxLevel, HashSet<string> usedWords)
+    IsOneShotWord(string word, int minLevel, int maxLevel, HashSet<string> usedWords)
+    IsOneShotForPlayer(string word, HashSet<string> usedWords)
+    GetRandomStartWord(int minLevel, int maxLevel, HashSet<string> usedWords)
+    GetRandomStartWordForPlayer(HashSet<string> usedWords)
 
-- Deal critical damage: base attack x2
-- Show critical slash effect
-- Show `CRITICAL!`
-- Monster counterattack is skipped
-- A new starting word is selected from DB
-- Battle continues
+몬스터 단어 선택 조건:
 
-Reason:
-- Prevent abuse by repeatedly memorizing elemental-symbol style one-shot words
-- Preserve HP, weapons, armor, progression, and RPG balance
-- Still reward player knowledge strongly
+- first_char == requiredChar
+- level >= wordLevelMin
+- level <= wordLevelMax
+- is_active == 1
+- usedWords에 없음
 
-Current implemented behavior:
-- `isCriticalAttack`
-- `currentAttackDamage`
-- critical = `playerAttack * 2`
-- new word is selected with `GetRandomStartWord(...)`
-
----
-
-## 7. Word Engine Architecture
-
-The word system is the core engine.
-
-Architecture:
-
-```text
-BattleManager
-    ↓
-WordService
-    ↓
-SQLite.cs / sqlite-net
-    ↓
-words.db
-```
-
-### SQLite database location
-
-Source database:
-
-```text
-Assets/StreamingAssets/Data/Words/words.db
-```
-
-### DB generation tool
-
-```text
-Tools/create_word_db.py
-```
-
-Current development workflow recreates the test DB from seed words in the Python script.
-
-When the script prints:
-
-```text
-Inserted words: 32
-```
-
-that means the DB was rebuilt and contains 32 total words — not 32 additional words.
-
-Run:
-
-```powershell
-cd D:\Projects\WordTower
-python .\Tools\create_word_db.py
-```
+플레이어 입력에는 단어 난이도 제한을 적용하지 않는다. 현재 words.db는 엔진 검증용 소규모 테스트 데이터이며 운영용 어휘 DB가 아니다.
 
 ---
 
-## 8. Word Database Schema
+## 6. 사용 단어 규칙
 
-Current `words` table concept:
+각 전투는 HashSet<string> usedWords를 사용한다.
 
-```sql
-CREATE TABLE words (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    word TEXT NOT NULL UNIQUE,
-    first_char TEXT NOT NULL,
-    last_char TEXT NOT NULL,
-    meaning TEXT,
-    level INTEGER NOT NULL DEFAULT 1,
-    category TEXT,
-    is_active INTEGER NOT NULL DEFAULT 1
-);
-```
-
-Indexes currently planned/used:
-
-```sql
-CREATE INDEX idx_words_first_char
-ON words(first_char);
-
-CREATE INDEX idx_words_level
-ON words(level);
-```
-
-### WordData mapping
-
-`WordData.cs` must map to the actual SQLite table:
-
-```csharp
-[Table("words")]
-public class WordData
-```
-
-This is required because sqlite-net otherwise tries to query a table named `WordData`.
+- 시작 단어 "사과" 즉시 등록
+- 검증을 통과한 플레이어 단어 등록
+- 몬스터 단어 등록
+- 한방단어 후 새 제시어 등록
+- 같은 전투에서 재사용 불가
+- 새 층과 Floor Debug 이동 시 초기화
 
 ---
 
-## 9. WordService Responsibilities
+## 7. 양방향 한방단어 — 구현 완료
 
-`WordService` currently handles / should handle:
+한방단어는 즉시 승리/패배가 아니다. 양쪽 모두 2배 크리티컬 데미지를 주고 안전한 새 제시어로 전투를 계속한다.
 
-- DB initialization
-- DB close
-- Check if a word is valid
-- Retrieve word information
-- Select monster word
-- Respect monster word difficulty
-- Exclude already-used words
-- Detect one-shot words
-- Select a random restart word after a one-shot
+### 7.1 플레이어 한방단어
 
-Important methods include conceptually:
+판정:
 
-```csharp
-IsValidWord(string word)
+    WordService.IsOneShotWord(
+        word,
+        currentMonsterData.wordLevelMin,
+        currentMonsterData.wordLevelMax,
+        usedWords
+    )
 
-GetWord(string word)
+판정 조건:
 
-GetMonsterWord(
-    string startChar,
-    int minLevel,
-    int maxLevel,
-    HashSet<string> usedWords
-)
+- 플레이어 단어의 마지막 글자로 시작
+- 활성/미사용 단어
+- 현재 몬스터의 wordLevelMin~wordLevelMax 범위
 
-IsOneShotWord(
-    string word,
-    int minLevel,
-    int maxLevel,
-    HashSet<string> usedWords
-)
+흐름:
 
-GetRandomStartWord(
-    int minLevel,
-    int maxLevel,
-    HashSet<string> usedWords
-)
-```
+    플레이어 단어
+    → 몬스터 난이도 범위에서 후속 단어 없음
+    → playerAttack * 2
+    → Critical VFX / CRITICAL! 표시
+    → 몬스터 반격 없음
+    → GetRandomStartWordForPlayer()로 새 제시어 선택
+    → 플레이어 턴으로 계속
 
-Monster word selection MUST filter:
+### 7.2 몬스터 한방단어
 
-```text
-first_char == requiredChar
-level >= minLevel
-level <= maxLevel
-is_active == 1
-not already used
-```
+판정:
 
-Do not remove difficulty filtering unless explicitly requested.
+    WordService.IsOneShotForPlayer(monsterWord, usedWords)
 
----
+판정 조건:
 
-## 10. Used Word Rules
+- 몬스터 단어의 마지막 글자로 시작
+- DB 전체 활성 단어
+- 미사용 단어
+- 플레이어 단어 난이도 제한 없음
 
-Each battle tracks:
+흐름:
 
-```csharp
-HashSet<string> usedWords
-```
+    몬스터 단어 선택 및 usedWords 등록
+    → 플레이어가 이어갈 활성/미사용 단어 없음
+    → slimeAttack * 2
+    → 플레이어 피격
+    → 막힌 마지막 글자를 입력하도록 두지 않음
+    → GetRandomStartWordForPlayer()로 새 제시어 선택
+    → 추가 몬스터 공격 없이 플레이어 턴
 
-Rules:
-
-- Starting word `"사과"` is added immediately.
-- Player words are added after validation.
-- Monster words are added after selection.
-- Used words cannot be reused.
-- When advancing to a new floor, `usedWords` is reset.
-- New floor starts again with `"사과"` for now.
-
-This may later be changed to randomized floor start words, but currently preserve this behavior unless asked.
+GetRandomStartWordForPlayer()는 활성·미사용 단어 중 마지막 글자로 실제 후속 활성·미사용 단어가 있는 후보만 선택한다. 능력 → 력처럼 새 제시어 자체가 전투를 막는 상황을 방지한다.
 
 ---
 
-## 11. Test Word Chain Examples
+## 8. 데이터 구조
 
-Current small test DB has been expanded specifically to verify chaining.
+FloorData — Assets/Scripts/Data/FloorData.cs:
 
-Known test flow:
+- floor
+- monsterId
+- title
+- isBoss
 
-```text
-사과
-→ 과자
-→ 자동차
-→ 차표
-→ 표지
-→ 지갑
-```
+데이터: Assets/Data/Floors/floors.json
 
-At one point `갑` had no continuation, which was intentionally useful for testing one-shot logic.
+MonsterData — Assets/Scripts/Data/MonsterData.cs:
 
-Some words added during testing include:
+- id
+- name
+- maxHp
+- attack
+- expReward
+- goldReward
+- wordLevelMin
+- wordLevelMax
+- visualScale
+- spritePath
 
-- 표지
-- 지갑
+데이터: Assets/Data/Monsters/monsters.json
 
-There are also early seed words such as:
-
-- 사과
-- 과자
-- 자동차
-- 차표
-- 표범
-- 범인
-- 인사
-- 사슴
-- 슴새
-- 새우
-- 우산
-- 산책
-- 책상
-- 상자
-- 자전거
-- 거울
-- 울음
-- 음악
-- 악기
-- 기차
-- 학교
-- 교실
-- 실내
-- 내일
-- 일기
-- 바다
-- 다리
-- 리본
-- 본능
-- 능력
-
-Do NOT treat the current 30–40 word DB as production vocabulary. It exists only to validate engine behavior.
-
-Long term, the word list may grow toward tens of thousands or more, likely generated from structured external word data into SQLite rather than hardcoded Python lists.
+몬스터 스탯, 보상, 난이도, 이미지, 배율을 BattleManager에 하드코딩하지 않는다.
 
 ---
 
-## 12. Monster / Floor Data Architecture
+## 9. 1~10층 슬라임 챕터 — 구현 완료
 
-Game content is data-driven.
+| 층 | monsterId | 이름 | HP | ATK | EXP | Gold | 단어 Lv. | 배율 | isBoss | spritePath |
+|---:|---|---|---:|---:|---:|---:|---|---:|---|---|
+| 1 | slime_green | 초록 슬라임 | 100 | 10 | 20 | 10 | 1~1 | 1.0 | false | Assets/Art/Sprites/Monsters/Slime/slime_green_idle_01.png |
+| 2 | slime_green | 초록 슬라임 | 100 | 10 | 20 | 10 | 1~1 | 1.0 | false | 동일 |
+| 3 | slime_blue | 파란 슬라임 | 140 | 13 | 30 | 15 | 1~2 | 1.0 | false | Assets/Art/Sprites/Monsters/Slime/slime_blue_idle_01.png |
+| 4 | slime_blue | 파란 슬라임 | 140 | 13 | 30 | 15 | 1~2 | 1.0 | false | 동일 |
+| 5 | slime_red | 빨간 슬라임 | 160 | 16 | 35 | 18 | 1~2 | 1.0 | false | Assets/Art/Sprites/Monsters/Slime/slime_red_idle_01.png |
+| 6 | slime_yellow | 노란 슬라임 | 150 | 15 | 40 | 20 | 2~2 | 1.0 | false | Assets/Art/Sprites/Monsters/Slime/slime_yellow_idle_01.png |
+| 7 | slime_poison | 독 슬라임 | 180 | 17 | 45 | 22 | 2~3 | 1.0 | false | Assets/Art/Sprites/Monsters/Slime/slime_poison_idle_01.png |
+| 8 | slime_armor | 철갑 슬라임 | 220 | 16 | 50 | 25 | 2~3 | 1.0 | false | Assets/Art/Sprites/Monsters/Slime/slime_armor_idle_01.png |
+| 9 | slime_elite | 엘리트 슬라임 | 240 | 20 | 60 | 30 | 2~3 | 1.15 | false | Assets/Art/Sprites/Monsters/Slime/slime_elite_idle_01.png |
+| 10 | slime_king | 슬라임 킹 | 350 | 24 | 100 | 60 | 2~4 | 1.35 | true | Assets/Art/Sprites/Monsters/Slime/slime_king_idle_01.png |
 
-### Folder structure
+슬라임 킹은 첫 보스로 확정됐지만 isBoss 기반 보스 전용 전투 패턴은 아직 없다.
 
-```text
-Assets/Data/
-├─ Monsters/
-│  └─ monsters.json
-└─ Floors/
-   └─ floors.json
-```
+### 10층 이후 방향 — 미확정 후보
 
-### MonsterData fields
+- 11~20층: 스켈레톤 계열 후보
+- 이후: 머드맨, 골렘, 고블린, 오크 계열 검토
 
-Conceptually:
-
-```text
-id
-name
-maxHp
-attack
-expReward
-goldReward
-wordLevelMin
-wordLevelMax
-spritePath
-```
-
-### FloorData fields
-
-Conceptually:
-
-```text
-floor
-monsterId
-title
-isBoss
-```
-
-### Relationship
-
-```text
-FloorData
-   ↓ monsterId
-MonsterData
-   ↓
-HP / Attack / Reward / Word Level / Sprite
-```
-
-Do not hardcode monster stats inside BattleManager if the value belongs in `monsters.json`.
-
-Do not hardcode floor-specific monster assignments inside BattleManager if they belong in `floors.json`.
+아직 JSON에 확정 구현된 콘텐츠가 아니다.
 
 ---
 
-## 13. Current Monster Art Organization
+## 10. 슬라임 이미지와 폴더 원칙
 
-Preferred folder rule:
+색상별 폴더를 만들지 않고 아래 폴더에서 파일명으로 구분한다.
 
-**Folder = monster species/type**  
-**Filename = variation**
+    Assets/Art/Sprites/Monsters/Slime/
+    ├─ slime_green_idle_01.png
+    ├─ slime_blue_idle_01.png
+    ├─ slime_red_idle_01.png
+    ├─ slime_yellow_idle_01.png
+    ├─ slime_poison_idle_01.png
+    ├─ slime_armor_idle_01.png
+    ├─ slime_elite_idle_01.png
+    └─ slime_king_idle_01.png
 
-Example:
+Editor에서는 BattleManager.ApplyMonsterSprite()가 JSON spritePath를 UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>()로 로드한다.
 
-```text
-Assets/Art/Sprites/Monsters/
-└─ Slime/
-   ├─ slime_green_idle_01.png
-   └─ slime_blue_idle_01.png
-```
-
-Future examples:
-
-```text
-Monsters/
-├─ Slime/
-│  ├─ slime_green_idle_01.png
-│  ├─ slime_blue_idle_01.png
-│  └─ slime_king_idle_01.png
-├─ Goblin/
-├─ Skeleton/
-└─ Orc/
-```
-
-Avoid creating a separate folder for every color variant such as `SlimeBlue` unless there is a strong reason.
+이 방식은 Android 런타임에서 작동하지 않는다. Resources, Addressables 또는 직렬화 참조로 교체하는 작업이 TODO다.
 
 ---
 
-## 14. Current Hero Art Structure
+## 11. 몬스터 표시 배율
 
-Hero initially used a layered concept:
+MonsterData.visualScale과 monsters.json으로 관리한다.
 
-```text
-PlayerPlaceholder
-├─ Body
-├─ Hair
-├─ Face
-├─ Armor
-├─ Weapon
-└─ Accessory
-```
+- 1~8층: 1.0
+- 9층 엘리트 슬라임: 1.15
+- 10층 슬라임 킹: 1.35
 
-However, AI-generated armor overlays did not align pixel-perfectly with the base body.
+구현:
 
-### Final practical decision
+- BattleManager.ApplyMonsterVisualScale()
+- LoadFloorAndMonsterData()에서 이미지 로드 후 적용
+- ResetBattleForNextFloor()에서 사망/층 이동 후 해당 몬스터 배율 복구
 
-Use:
-
-- Full-character sprite for body/armor state
-- Separate Weapon layer
-- Separate Accessory layer where useful
-
-Current hero assets:
-
-```text
-Assets/Art/Sprites/Hero/Body/
-├─ hero_body_base.png
-└─ hero_beginner_01.png
-```
-
-Current weapon:
-
-```text
-Assets/Art/Sprites/Hero/Weapon/
-└─ weapon_wood_sword_01.png
-```
-
-The hero faces slightly toward the monster on the right, NOT straight toward the camera.
-
-This pose is important and should remain consistent in future character art.
+공격/피격 애니메이션은 배율을 덮어쓰지 않는다. 사망 시 축소되지만 새 전투 초기화에서 데이터 배율로 복구한다.
 
 ---
 
-## 15. Hero Equipment Design Direction
+## 12. 개발용 Floor Debug — 구현 완료
 
-The game should visually reward equipment purchases.
+생성: BattleSceneBuilder.CreateFloorDebugPanel()
 
-Planned progression:
+기능:
 
-```text
-Base / beginner
-→ leather gear
-→ iron gear
-→ knight gear
-→ magic gear
-→ legendary gear
-```
+- 현재 Debug 층 표시
+- 이전 층
+- 다음 층
+- 10층 바로가기
 
-Current approach:
+런타임 조건:
 
-- Armor/body state = full hero sprite swap
-- Weapon = separate sprite layer
-- Accessory = separate layer
+    #if UNITY_EDITOR || DEVELOPMENT_BUILD
 
-Example future equipment logic:
+일반 Release 빌드에서는 FloorDebugPanel을 숨긴다.
 
-```text
-Character sprite:
-hero_beginner_01
-→ hero_iron_01
-→ hero_knight_01
+DebugMoveToFloor(int targetFloor):
 
-Weapon sprite:
-wood sword
-→ iron sword
-→ steel sword
-→ magic sword
-→ legendary sword
-```
+1. FloorDataExists()로 층 존재 확인
+2. 없는 층으로 이동하지 않음
+3. 진행 중 코루틴 중단
+4. VictoryPanel과 잔여 Critical/Impact/LevelUp 효과 숨김
+5. 플레이어 위치와 무기 회전 복구
+6. currentFloor 변경 및 Floor/Monster 재로드
+7. ResetBattleForNextFloor()로 새 전투 초기화
 
-Do not return to AI-generated body-part overlays unless there is a reliable pixel-perfect production pipeline.
+Debug 이동 시:
+
+- EXP/Gold 보상 없음
+- 누적 EXP, Gold, Level 유지
+- 플레이어 HP는 Max HP까지 회복
+- usedWords와 제시어 초기화
+- 몬스터 HP, 이미지, 스탯, 위치, 회전, 배율 복구
+- 9/10층 배율, 보스 표시, 레벨업/전투 연출 반복 테스트에 사용
 
 ---
 
-## 16. Current Weapon Position
+## 13. 전투 연출 — 구현 완료
 
-Current wooden sword visual alignment was manually tuned.
+- 플레이어 전진 공격: +110f X 기준
+- 무기 스윙: 20° → -55° 기준
+- 몬스터 돌진: -85f X 기준
+- 일반/크리티컬 타격 이미지
+- 피격 넉백과 흔들림
+- 데미지 숫자 상승/페이드아웃
+- 몬스터 사망: 점프, 회전, 축소, 드리프트
+- 플레이어 한방단어 CRITICAL! 텍스트
+- LEVEL UP! 텍스트
 
-Known reference values:
-
-```text
-Pos X: 110
-Pos Y: 5
-Width: 150
-Height: 150
-Rotation: 0
-```
-
-Treat this as the current weapon placement baseline.
-
-Future weapon assets should preferably be created to fit this placement rather than requiring different transforms for every weapon.
+시각 테스트된 타이밍과 공용 오브젝트 이름은 관련 작업이 아니면 변경하지 않는다.
 
 ---
 
-## 17. Combat Animation System
+## 14. Hero 및 장비 아트 방향
 
-Existing combat animations should NOT be removed casually.
+- 방어구/몸: 부위별 AI 오버레이 대신 완성된 전신 스프라이트 교체
+- 무기: 별도 레이어
+- 액세서리: 필요할 때 별도 레이어
+- 캐릭터는 오른쪽 몬스터 방향을 보는 포즈 유지
 
-### Player attack
+현재 주요 파일:
 
-Current behavior:
+    Assets/Art/Sprites/Hero/Body/hero_body_base.png
+    Assets/Art/Sprites/Hero/Body/hero_beginner_01.png
+    Assets/Art/Sprites/Hero/Weapon/weapon_wood_sword_01.png
 
-1. Player moves toward monster
-2. Weapon swings
-3. Impact effect appears
-4. Damage is applied
-5. Monster knockback / shake
-6. Player returns to original position
-7. If monster survives, monster turn begins
+나무검 기준 배치:
 
-Player attack movement distance was tuned to:
+    Pos X 110 / Pos Y 5 / Width 150 / Height 150 / Rotation 0
 
-```text
-+110f X
-```
-
-This was visually tested and considered good.
-
-### Weapon swing
-
-Current approximate swing:
-
-```text
-20 degrees
-→ -55 degrees
-```
-
-### Monster attack
-
-Monster moves left toward player, attacks, then returns.
-
-Current approximate rush:
-
-```text
--85f X
-```
-
-### Hit knockback
-
-- Monster is knocked to the right.
-- Player is knocked to the left.
-
-Direction is determined from target.
+장비 구매, 인벤토리, 외형 교체 로직은 TODO다.
 
 ---
 
-## 18. Monster Death Animation
+## 15. BattleSceneBuilder 규칙
 
-Current monster death behavior:
+Assets/Scripts/Editor/BattleSceneBuilder.cs가 전투 UI의 소스 오브 트루스다.
 
-1. Small upward jump
-2. Rotate
-3. Shrink
-4. Drift slightly downward/right
-5. Scale reaches zero
-6. Victory handling begins
-
-This effect was visually tested and liked.
-
-Do not replace it unless asked.
-
----
-
-## 19. Damage Text
-
-Damage text already exists.
-
-Behavior:
-
-- Appears above target
-- Shows negative damage such as `-20`, `-40`
-- Floats upward
-- Fades out
-
-Do not create another duplicate damage-number system.
-
----
-
-## 20. Normal Hit Effect
-
-Current file:
-
-```text
-Assets/Art/Sprites/Effects/Combat/impact_slash_01.png
-```
-
-Current approximate UI size:
-
-```text
-300 x 220
-```
-
-The first effect generated was too flashy for a wooden sword, so the normal effect was intentionally simplified.
-
-Normal hit effect should feel appropriate for a low-level wooden sword.
-
----
-
-## 21. Critical Hit Effect
-
-Current file:
-
-```text
-Assets/Art/Sprites/Effects/Combat/impact_slash_critical_01.png
-```
-
-The earlier “too flashy” hit artwork was repurposed as the critical effect.
-
-Current behavior:
-
-- Critical visual is separate from normal impact
-- Bigger / brighter effect
-- Critical effect is only used for one-shot-word critical attacks
-
-Builder creates:
-
-```text
-CriticalImpactEffect
-```
-
-BattleManager selects:
-
-```text
-normal → ImpactEffect
-critical → CriticalImpactEffect
-```
-
-Do not show both simultaneously unless intentionally redesigning the effect.
-
----
-
-## 22. CRITICAL Text Effect
-
-Current Builder creates:
-
-```text
-CriticalText
-```
-
-Value:
-
-```text
-CRITICAL!
-```
-
-Behavior:
-
-1. Initially hidden
-2. Appears on critical
-3. Pops from smaller scale
-4. Enlarges
-5. Moves upward
-6. Fades out
-7. Returns to hidden state
-
-Important workflow reminder:
-
-> If `BattleSceneBuilder.cs` is changed to create a new UI object, the user must run:
->
-> `WordTower → Build Battle Scene`
->
-> before expecting the new object to exist in Hierarchy.
-
-This has already caused confusion once. Always check this first when newly-added Builder UI does not appear.
-
----
-
-## 23. BattleSceneBuilder Is the Scene Source of Truth
-
-This is one of the most important project rules.
-
-`BattleSceneBuilder.cs` automatically constructs much of the battle scene.
-
-Do NOT manually add important persistent UI objects only in Hierarchy if they are expected to survive scene rebuilds.
-
-Instead:
-
-1. Add creation logic to `BattleSceneBuilder.cs`
-2. Build via:
-   ```text
-   WordTower → Build Battle Scene
-   ```
-3. BattleManager finds and controls the generated object
-
-Examples already managed by Builder:
+주요 생성 오브젝트:
 
 - BattleCanvas
-- PlayerPlaceholder
-- Hero layers
-- Monster
-- HP UI
-- Word battle UI
-- Status panel
-- Victory panel
-- ImpactEffect
-- CriticalImpactEffect
-- CriticalText
-- Hero sprite
-- Wooden sword sprite
+- PlayerPlaceholder / Hero 레이어 / SlimePlaceholder
+- HP UI / WordBattlePanel
+- StatusPanel / LevelText / ExpText / GoldText
+- VictoryPanel
+- ImpactEffect / CriticalImpactEffect / CriticalText
+- LevelUpText
+- FloorDebugPanel
+
+Builder 수정 후 반드시 실행:
 
-If something manually added disappears after Build, that is expected.
-
----
-
-## 24. Important Builder Cleanup Note
-
-Current `BattleSceneBuilder.cs` had duplicate early calls observed in a prior version:
-
-```csharp
-ClearScene();
-CreateEventSystem();
-
-ClearScene();
-CreateEventSystem();
-```
-
-If this duplication still exists in the working branch, clean it carefully when convenient, but only after verifying it does not affect behavior.
-
-Do not perform broad refactoring while implementing unrelated gameplay features.
-
----
-
-## 25. Victory / Floor Progression
-
-Victory system is already implemented.
-
-When monster dies:
-
-- battle ends
-- EXP reward is added
-- Gold reward is added
-- Victory panel appears
-- reward text appears
-- next-floor button is enabled
-
-Next Floor:
-
-```text
-currentFloor++
-→ LoadFloorAndMonsterData()
-→ ResetBattleForNextFloor()
-```
-
-On new floor:
-
-- monster HP resets
-- player HP currently fully restores for MVP
-- current word resets to `"사과"`
-- usedWords resets
-- dead monster scale/rotation/position restores
-- UI updates
-- input re-enables
-
-Do NOT suggest implementing these again unless checking or extending them.
-
----
-
-## 26. Current Floor Data Testing
-
-The prototype successfully tested:
-
-```text
-Floor 1 → Green Slime
-Floor 2 → Green Slime
-Floor 3 → Blue Slime
-```
-
-Blue Slime successfully loaded:
-
-- different name
-- different HP
-- different attack
-- different EXP / Gold
-- different image
-- different word difficulty range
-
-This validated data-driven monster switching.
-
----
-
-## 27. Monster Sprite Loading
-
-Current prototype uses a JSON `spritePath` and loads assets in the Unity Editor.
-
-This works for editor testing.
-
-However, code using:
-
-```csharp
-UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>()
-```
-
-will NOT work in final Android runtime.
-
-This is a known future task.
-
-Possible later solutions:
-
-- Resources
-- Addressables
-- serialized references / ScriptableObjects
-
-Do not prematurely rewrite this unless the task concerns mobile build/runtime asset loading.
-
----
-
-## 28. Sprite Import Automation
-
-A Sprite importer automation script was created/planned:
-
-```text
-Assets/Scripts/Editor/SpriteImportProcessor.cs
-```
-
-Target folder:
-
-```text
-Assets/Art/Sprites/
-```
-
-Desired automatic import defaults:
-
-- Texture Type: Sprite (2D and UI)
-- Sprite Mode: Single
-- Pixels Per Unit: 100
-- Alpha Is Transparency: enabled
-- Wrap Mode: Clamp
-- Compression: None
-
-Filter Mode was discussed:
-- Point can be used for crisp sprites
-- Bilinear may look better because the current art is smooth SD illustration rather than true pixel art
-
-If visuals become jagged, prefer Bilinear.
-
----
-
-## 29. Font Setup
-
-Old font:
-
-```text
-NotoSansKR-VF SDF
-```
-
-This variable-font-based setup produced missing Korean glyph boxes for characters such as `슴`.
-
-It was replaced.
-
-### Current preferred font
-
-Source:
-
-```text
-NotoSansKR-Regular.otf
-```
-
-TMP font asset:
-
-```text
-NotoSansKR-Regular SDF.asset
-```
-
-Recommended/current settings:
-
-- Atlas Population Mode: Dynamic
-- Multi Atlas Textures: ON
-- Atlas: 2048 x 2048
-- Source Font File: NotoSansKR-Regular
-- Regular static font, not variable font
-
-`BattleSceneBuilder.cs` should load:
-
-```text
-Assets/Fonts/NotoSansKR-Regular SDF.asset
-```
-
-Font issue was tested and considered resolved.
-
-Do not revert to `NotoSansKR-VF SDF`.
-
----
-
-## 30. SQLite Integration
-
-Library source:
-
-```text
-Assets/Scripts/Database/SQLite.cs
-```
-
-Downloaded from official `praeclarum/sqlite-net`.
-
-Native Windows DLL:
-
-```text
-Assets/Plugins/x86_64/sqlite3.dll
-```
-
-Unity Plugin settings were configured for:
-
-- Editor
-- Standalone
-- Windows x64
-
-This fixed:
-
-```text
-DllNotFoundException: sqlite3
-```
-
-Successful log:
-
-```text
-Word DB Connected : .../Assets/StreamingAssets/Data/Words/words.db
-```
-
-Current integration is confirmed working in the Windows Unity Editor.
-
----
-
-## 31. Mobile SQLite Caveat
-
-Current Windows Editor DB connection works directly from StreamingAssets.
-
-Final Android behavior needs additional handling.
-
-On Android:
-- StreamingAssets may be inside APK/JAR
-- Direct filesystem SQLite connection may not work the same way
-- Database should likely be copied to `Application.persistentDataPath` before use
-- Android native SQLite library setup must be verified
-
-This is a future deployment task.
-
-Do not assume the current Windows `sqlite3.dll` setup is Android-ready.
-
----
-
-## 32. Current Project Structure
-
-Approximate important structure:
-
-```text
-Assets/
-├─ Art/
-│  └─ Sprites/
-│     ├─ Hero/
-│     │  ├─ Body/
-│     │  ├─ Hair/
-│     │  ├─ Face/
-│     │  ├─ Armor/
-│     │  ├─ Weapon/
-│     │  └─ Accessory/
-│     ├─ Monsters/
-│     │  └─ Slime/
-│     └─ Effects/
-│        └─ Combat/
-├─ Animations/
-├─ Data/
-│  ├─ Floors/
-│  └─ Monsters/
-├─ Fonts/
-├─ Plugins/
-│  └─ x86_64/
-├─ Prefabs/
-├─ Scenes/
-├─ Scripts/
-│  ├─ Data/
-│  ├─ Database/
-│  └─ Editor/
-└─ StreamingAssets/
-   └─ Data/
-      └─ Words/
-
-Tools/
-└─ create_word_db.py
-```
-
-Main scene:
-
-```text
-Assets/Scenes/BattleScene.unity
-```
-
----
-
-## 33. Key Code Files
-
-### BattleManager.cs
-
-Responsible for:
-
-- input validation
-- HP
-- player attack
-- monster turn
-- word chaining
-- DB validation
-- used word tracking
-- one-shot detection
-- critical damage
-- hit effects
-- damage numbers
-- monster death
-- victory
-- floor progression
-- monster data application
-- sprite switching
-
-This file is already large (well over 1000 lines).
-
-### BattleSceneBuilder.cs
-
-Responsible for generating battle UI and battle scene objects.
-
-### WordService.cs
-
-Responsible for SQLite word queries.
-
-### WordData.cs
-
-Maps SQLite `words` table.
-
-### MonsterData.cs
-
-Monster JSON model.
-
-### FloorData.cs
-
-Floor JSON model.
-
----
-
-## 34. Refactoring Policy
-
-BattleManager is large, but do NOT aggressively refactor simply because it is large.
-
-Current priority is getting the game playable.
-
-Refactoring should happen incrementally and only when there is a clear benefit.
-
-Possible future extraction candidates:
-
-```text
-BattleManager
-├─ BattleFlowController
-├─ WordBattleService
-├─ CombatAnimationController
-├─ RewardService
-├─ FloorManager
-└─ PlayerProgressionService
-```
-
-Do not split everything at once.
-
-When refactoring:
-
-- preserve current animation timings
-- preserve JSON behavior
-- preserve DB behavior
-- preserve object names relied upon by `GameObject.Find`
-- test before and after
-
----
-
-## 35. Git / Multi-PC Workflow
-
-The project is developed on both company and home PCs.
-
-Repository:
-
-```text
-https://github.com/davidcho-ai-cody/word-tower.git
-```
-
-Typical local path:
-
-```text
-D:\Projects\WordTower
-```
-
-Normal workflow:
-
-### Before starting on another PC
-
-```powershell
-cd D:\Projects\WordTower
-git status
-git pull
-```
-
-### Save work
-
-```powershell
-git status
-git add .
-git commit -m "Meaningful commit message"
-git push
-```
-
-### Verify
-
-```powershell
-git status
-```
-
-Expected:
-
-```text
-On branch main
-Your branch is up to date with 'origin/main'.
-
-nothing to commit, working tree clean
-```
-
-Unity `.meta` files MUST be committed with assets.
-
-Do not ignore `.meta`.
-
----
-
-## 36. Known Git Issue: Font Asset Local Changes
-
-Unity may modify TMP font `.asset` files locally.
-
-This previously blocked pull with:
-
-```text
-Your local changes would be overwritten by merge:
-Assets/Fonts/NotoSansKR-VF SDF.asset
-```
-
-If the local change is disposable:
-
-```powershell
-git restore "Assets/Fonts/<font asset>.asset"
-git pull
-```
-
-Always inspect `git status` before discarding meaningful changes.
-
----
-
-## 37. Unity Build Scene Workflow
-
-When working with `BattleSceneBuilder.cs`:
-
-1. Modify builder code
-2. Save
-3. Return to Unity
-4. Wait for compile
-5. Confirm zero compile errors
-6. Run:
-   ```text
-   WordTower → Build Battle Scene
-   ```
-7. Test in Play Mode
-
-If a newly created Builder object does not appear, FIRST ask:
-> “Did we run Build Battle Scene after modifying the Builder?”
-
-Do not immediately debug the animation code before checking this.
-
----
-
-## 38. User Development Preferences
-
-Important collaboration preferences:
-
-- Focus on **building**, not teaching programming theory.
-- The user can read C# and follow file/position instructions.
-- Give:
-  - exact file path
-  - exact method/location
-  - code block
-  - short explanation
-- Avoid explaining every C# syntax detail unless asked.
-- Use PowerShell commands, not CMD.
-- Prefer step-by-step checkpoints.
-- Push to Git at meaningful milestones.
-- The user likes to test visually after small changes.
-- Collaborate on design decisions rather than blindly coding.
-- The user calls the assistant “코디”.
-- The development style is intentionally “바이브코딩”.
-
-When unsure about current source, inspect the actual file before proposing code instead of guessing.
-
----
-
-## 39. Do Not Re-Implement Existing Features
-
-Before suggesting a “next feature”, verify whether it already exists.
-
-Already implemented / tested:
-
-- HP reduction
-- Hero attack animation
-- Weapon swing
-- Normal hit VFX
-- Critical VFX
-- CRITICAL text
-- Damage numbers
-- Monster knockback
-- Player knockback
-- Monster attack motion
-- Monster death animation
-- Victory panel
-- EXP reward
-- Gold reward
-- Next floor
-- JSON floor loading
-- JSON monster loading
-- Green → Blue slime swapping
-- SQLite connection
-- Word DB validation
-- Used word rejection
-- Monster DB word selection
-- Monster word difficulty filtering
-- One-shot detection
-- One-shot critical x2 damage
-- Monster counterattack skip on one-shot
-- Random restart word after one-shot
-- Korean font fix
-
-Currently NOT confirmed complete:
-
-- player level-up logic
-- EXP requirement progression
-- persistent save/load
-- shop system
-- equipment purchase
-- armor/body progression
-- item data implementation
-- full 100-floor content
-- large production word DB
-- Android SQLite deployment
-- runtime-safe monster asset loading for Android
-- boss mechanics
-- title/menu screen
-- audio/BGM/SFX
-- production UI polish
-
----
-
-## 40. Current Recommended Next Feature
-
-The next logical feature is:
-
-# Player Level-Up System
-
-Suggested first implementation:
-
-- `playerLevel`
-- `currentExp`
-- `requiredExp`
-- first requirement = 100
-- level-up when currentExp >= requiredExp
-- carry overflow EXP
-- Max HP +10
-- Attack +2
-- display `LEVEL UP!`
-- update `LV.1` labels
-- gradually increase required EXP
-
-Potential formula should remain simple initially.
-
-Example:
-
-```text
-Lv.1 → 2 = 100
-Lv.2 → 3 = 140
-Lv.3 → 4 = 190
-Lv.4 → 5 = 250
-```
-
-Before implementing, inspect current `BattleManager.cs` and `BattleSceneBuilder.cs` because they may have changed since this file was written.
-
----
-
-## 41. Future Systems Roadmap
-
-Suggested broad progression:
-
-### Phase 1 — Core Battle MVP
-- [x] Word battle
-- [x] HP combat
-- [x] word DB
-- [x] monster DB AI
-- [x] battle animations
-- [x] critical one-shot words
-- [x] rewards
-- [x] floor progression
-- [ ] level up
-
-### Phase 2 — RPG Growth
-- [ ] player stat model
-- [ ] level-up
-- [ ] item JSON
-- [ ] inventory
-- [ ] shop
-- [ ] weapon upgrades
-- [ ] armor upgrades
-- [ ] visible equipment changes
-
-### Phase 3 — Tower Content
-- [ ] floors 1–10
-- [ ] more monster types
-- [ ] floor 10 boss
-- [ ] difficulty balancing
-- [ ] boss word mechanics
-
-### Phase 4 — Vocabulary Expansion
-- [ ] large Korean word source
-- [ ] meanings
-- [ ] categories
-- [ ] level scoring
-- [ ] blocked/inappropriate words
-- [ ] one-shot-word balance
-- [ ] word encyclopedia
-
-### Phase 5 — Productization
-- [ ] persistent save
-- [ ] Android build
-- [ ] mobile SQLite bootstrap
-- [ ] audio
-- [ ] title scene
-- [ ] tutorial
-- [ ] UI polish
-- [ ] app store readiness
-
----
-
-## 42. Gameplay Balance Notes
-
-Current early-game balance is intentionally lightweight.
-
-Do not over-balance before the loop is fun.
-
-Important observations:
-
-- First level-up around Floor 4 feels acceptable for early reward.
-- One-shot words should feel powerful but not bypass the whole game.
-- Monster word levels should rise with floors.
-- Player should be free to enter higher-level words; difficulty limits mainly affect monster vocabulary.
-- Later, player word difficulty may provide bonuses:
-  - Lv.1 word → normal damage
-  - Lv.2 → +10%
-  - Lv.3 → +20%
-  - Lv.4 → critical chance
-  - Lv.5 → special effect
-- This is an idea, not currently implemented.
-
----
-
-## 43. Word Content Design Notes
-
-The final vocabulary DB must not simply contain “many words”.
-
-It must also support good chain connectivity.
-
-For each `first_char`, analyze:
-
-- number of candidate words
-- difficulty distribution
-- whether the chain leads to dead ends
-- possible abuse of rare one-shot characters
-- appropriateness for children
-- whether technical/scientific/element names are allowed
-
-Potential problematic endings include rare Korean syllables such as:
-
-```text
-튬
-늄
-슘
-릇
-쁨
-```
-
-Do not automatically ban them. They are part of the one-shot-word mechanic, but balance may later require rules.
-
----
-
-## 44. Coding Agent Working Rules
-
-When Codex receives a task:
-
-1. Read this `AGENTS.md`.
-2. Inspect relevant existing files before editing.
-3. Do not guess current method names.
-4. Prefer minimal, targeted changes.
-5. Preserve all working combat effects.
-6. Keep comments readable in Korean where the project already uses Korean comments.
-7. Do not rename public scene object names casually.
-8. Do not remove Builder-generated objects without updating both Builder and BattleManager.
-9. Do not introduce a framework/library unless clearly needed.
-10. Do not rewrite SQLite architecture without discussing Android implications.
-11. Do not use AI/API calls for game runtime unless explicitly requested.
-12. After code changes, explain:
-    - files changed
-    - behavior changed
-    - how to test
-13. If Builder changed, explicitly remind:
-    ```text
     WordTower → Build Battle Scene
-    ```
-14. If changing assets, preserve `.meta`.
-15. Avoid destructive Git operations unless explicitly approved.
+
+Hierarchy에만 수동 추가한 중요 UI는 Builder 재실행 시 사라질 수 있다.
+
+알려진 정리 항목:
+
+- BuildBattleScene() 초반 ClearScene() / CreateEventSystem() 호출이 두 번 반복된다. 현재 동작을 깨지는 않지만 추후 작은 정리 대상이다.
 
 ---
 
-## 45. Definition of Done for Small Changes
+## 16. 폰트와 Sprite Import
 
-A feature is not considered done just because it compiles.
+현재 한글 TMP 폰트:
 
-For gameplay changes, verify:
+    Assets/Fonts/NotoSansKR-Regular.otf
+    Assets/Fonts/NotoSansKR-Regular SDF.asset
 
-- zero compile errors
-- no runtime exceptions
-- visual behavior works
-- battle can continue afterward
-- next turn works
-- victory still works
-- next floor still works
-- DB still connects
-- no missing Korean glyphs
-- Builder rebuild does not remove required behavior
-
-For data changes, verify:
-
-- JSON parses
-- correct monster/floor loads
-- DB regenerates if needed
-- IDs and sprite paths match
-- no duplicate word problems
+- Variable Font 기반 NotoSansKR-VF SDF로 되돌리지 않는다.
+- Builder는 NotoSansKR-Regular SDF.asset을 로드한다.
+- SpriteImportProcessor는 Assets/Art/Sprites 아래 PNG에 Sprite/Single, PPU 100, Alpha, Point, Clamp, Compression None을 적용한다.
+- 현재 실제 필터는 Point다. 부드러운 아트가 거칠면 Bilinear를 별도로 검토한다.
 
 ---
 
-## 46. Final Reminder
+## 17. 플랫폼 주의사항
 
-This project is being built iteratively with a strong emphasis on **fun, visible progress, and low-friction development**.
+현재 확인:
 
-Do not sacrifice working gameplay for “perfect architecture”.
+- Windows Unity Editor에서 sqlite3 연결
+- Editor에서 JSON spritePath 기반 이미지 교체
 
-Preferred order:
+Android TODO:
 
-```text
-Make it work
-→ Test it
-→ Make it fun
-→ Commit it
-→ Refactor only when useful
-```
+- StreamingAssets DB를 Application.persistentDataPath로 복사
+- Android SQLite 네이티브 설정 검증
+- UnityEditor.AssetDatabase 없는 런타임 이미지 로딩
 
-The immediate project state is already beyond a static prototype: it has working SQLite-driven word battles, data-driven monsters/floors, combat animations, critical one-shot words, rewards, and floor progression.
+Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 
-The next major milestone is **player level-up and RPG progression**.
+---
+
+## 18. 현재 구현 완료 기능
+
+- SQLite 단어 DB 연결과 유효 단어 검사
+- 사용 단어 중복 방지
+- 몬스터 단어 난이도 필터
+- 플레이어 일반 공격과 몬스터 반격
+- 플레이어/몬스터 양방향 한방단어 크리티컬
+- 양방향 한방단어 후 안전한 새 제시어
+- HP, 데미지, 공격/피격/넉백/사망 연출
+- 일반/크리티컬 VFX와 데미지 숫자
+- VictoryPanel, EXP, Gold 보상
+- 레벨, 필요 EXP 증가, 초과 EXP 이월
+- 레벨업 Max HP/Attack 증가
+- LV/EXP UI와 LEVEL UP 연출
+- JSON 기반 Floor/Monster 로딩
+- 1~10층 슬라임 챕터
+- 10층 슬라임 킹 보스 플래그
+- 몬스터별 이미지와 표시 배율
+- 다음 층 전투 초기화
+- Editor/Development Build용 Floor Debug UI
+- 정적 한글 폰트 기반 TMP 표시
+- Sprite 자동 Import
+
+---
+
+## 19. 현재 미구현 / TODO
+
+- 10층 클리어 후 존재하지 않는 11층 이동 방어와 챕터 완료 처리
+- 보스 전용 패턴 및 isBoss 기반 전투 분기
+- 플레이어 데이터 모델 분리
+- 저장/불러오기
+- 아이템 데이터, 인벤토리, 상점
+- 장비 구매/스탯/외형 적용
+- 11층 이후 확정 콘텐츠
+- 운영용 대규모 한국어 단어 DB
+- 단어 뜻/도감/부적절 단어 관리
+- Android SQLite와 런타임 이미지 로딩
+- 타이틀/메뉴/튜토리얼
+- BGM/SFX
+- 프로덕션 UI 폴리시
+
+---
+
+## 20. 현재 권장 다음 작업
+
+가장 가까운 다음 작업은 10층 챕터 완료 처리다.
+
+1. 10층 Victory에서 존재하지 않는 11층 이동 방어
+2. 슬라임 챕터 완료 UI 또는 임시 완료 상태
+3. isBoss를 활용한 최소 보스 연출/분기
+4. Player Progression 데이터를 BattleManager 밖으로 점진적 분리
+5. 저장/불러오기 기반 후 아이템/상점 확장
+
+---
+
+## 21. Git 및 작업 규칙
+
+- 작업 전 git status 확인
+- 사용자의 기존 변경 보존
+- Unity .meta를 에셋과 함께 커밋
+- 의미 있는 마일스톤에서 commit/push
+- 파괴적인 Git 명령 금지
+- TMP Font Asset은 Unity가 바꿀 수 있으므로 discard 전 확인
+
+다른 PC에서 시작:
+
+    cd D:\Projects\WordTower
+    git status
+    git pull
+
+저장:
+
+    git status
+    git add .
+    git commit -m "Meaningful commit message"
+    git push
+
+---
+
+## 22. Codex 작업 원칙
+
+1. 이 문서를 먼저 읽는다.
+2. 관련 실제 파일을 확인한 뒤 수정한다.
+3. 메서드명과 데이터 구조를 추측하지 않는다.
+4. 작고 검증 가능한 변경을 선호한다.
+5. 전투 연출, DB 필터, JSON 흐름을 보존한다.
+6. 공용 씬 오브젝트 이름을 함부로 변경하지 않는다.
+7. Builder UI 변경 시 Builder와 BattleManager를 함께 확인한다.
+8. 불필요한 런타임 프레임워크/API를 도입하지 않는다.
+9. 변경 파일, 동작, 테스트 방법을 설명한다.
+10. 컴파일뿐 아니라 다음 턴, Victory, 다음 층, DB 연결까지 확인한다.
+
+협업 선호:
+
+- 이론보다 실제 빌드 진행 중심
+- 정확한 파일/메서드/테스트 체크포인트
+- PowerShell 사용
+- 작은 단위 시각 테스트
+- 과도한 일괄 리팩터링 금지
+
+---
+
+## 23. AGENTS.md 관리 원칙
+
+다음 변화가 발생하면 같은 작업에서 AGENTS.md도 업데이트한다.
+
+- 새로운 핵심 시스템 구현
+- 게임 핵심 규칙 변경
+- 데이터 구조 변경
+- 주요 폴더 구조 변경
+- 챕터/몬스터 구성 확정
+- 중요한 밸런스 규칙 확정
+- 기존 TODO 기능 구현 완료
+- 다른 Codex 세션이 반드시 알아야 하는 설계 결정
+
+과도하게 기록하지 않는 항목:
+
+- 단순 버그 수정
+- 사소한 위치/크기 조정
+- 일시적인 테스트 값
+- 작업 과정의 세부 로그
+
+이 문서는 작업 일지가 아니라 현재 구조, 확정 규칙, 구현 상태, 중요한 TODO를 빠르게 이해하기 위한 지속 컨텍스트로 유지한다.
+
+---
+
+## 24. Definition of Done
+
+- Unity 컴파일 오류와 런타임 예외 없음
+- DB 연결 정상
+- 입력과 다음 턴 정상
+- 일반/크리티컬 공격 정상
+- Victory와 보상 정상
+- 레벨업/UI 정상
+- 다음 층 또는 Debug 이동 정상
+- 몬스터 이미지/배율 정상
+- 한글 글리프 누락 없음
+- Builder 재생성 후 필요한 UI 유지
+
+    Make it work
+    → Test it
+    → Make it fun
+    → Commit it
+    → Refactor only when useful

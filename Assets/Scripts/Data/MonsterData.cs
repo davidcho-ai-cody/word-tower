@@ -16,6 +16,7 @@ public class MonsterData
     public int wordLevelMin;
     public int wordLevelMax;
 
+    public float visualScale = 1f;
     public string spritePath;
 }
 
