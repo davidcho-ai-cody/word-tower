@@ -8,9 +8,7 @@ using System.IO;
 public class BattleManager : MonoBehaviour
 {
     [Header("Player")]
-    public int playerMaxHp = 100;
     public int playerHp = 100;
-    public int playerAttack = 20;
 
     private int currentAttackDamage;
     private bool isCriticalAttack;
@@ -21,12 +19,17 @@ public class BattleManager : MonoBehaviour
     public int slimeAttack = 10;
 
     [Header("Reward")]
-    public int playerLevel = 1;
-    public int exp = 0;
-    public int requiredExp = 100;
-    public int gold = 0;
     public int slimeExpReward = 20;
     public int slimeGoldReward = 10;
+
+    private PlayerProgressService playerProgress;
+
+    private int playerLevel => playerProgress.PlayerLevel;
+    private int exp => playerProgress.Exp;
+    private int requiredExp => playerProgress.RequiredExp;
+    private int gold => playerProgress.Gold;
+    private int playerMaxHp => playerProgress.PlayerMaxHp;
+    private int playerAttack => playerProgress.PlayerAttack;
 
     private TMP_Text playerHpText;
     private TMP_Text slimeHpText;
@@ -105,6 +108,8 @@ public class BattleManager : MonoBehaviour
     void Start()
     {
         FindUI();
+
+        playerProgress = new PlayerProgressService();
 
         // 단어 DB 연결
         wordService = new WordService();
@@ -1313,10 +1318,12 @@ public class BattleManager : MonoBehaviour
         battleEnded = true;
 
         // JSON 데이터 기준 보상 지급
-        exp += currentMonsterData.expReward;
-        gold += currentMonsterData.goldReward;
+        bool didLevelUp =
+            playerProgress.AddExp(currentMonsterData.expReward);
+        playerProgress.AddGold(currentMonsterData.goldReward);
 
-        CheckLevelUp();
+        if (didLevelUp)
+            StartCoroutine(LevelUpTextEffect());
 
         // 기존 하단 상태 UI 갱신
         UpdateUI();
@@ -1342,37 +1349,6 @@ public class BattleManager : MonoBehaviour
         // 승리 패널 표시
         if (victoryPanel != null)
             victoryPanel.SetActive(true);
-    }
-
-    // ========================================
-    // 다음 층 버튼 클릭
-    // ========================================
-    void CheckLevelUp()
-    {
-        bool didLevelUp = false;
-
-        while (exp >= requiredExp)
-        {
-            exp -= requiredExp;
-            playerLevel++;
-            didLevelUp = true;
-
-            playerMaxHp += 10;
-            playerAttack += 2;
-
-            // Lv.1 -> 2: 100, Lv.2 -> 3: 140,
-            // Lv.3 -> 4: 190, Lv.4 -> 5: 250
-            requiredExp += 20 + (playerLevel * 10);
-
-            Debug.Log(
-                $"LEVEL UP! Lv.{playerLevel} / " +
-                $"Max HP {playerMaxHp} / ATK {playerAttack} / " +
-                $"Next EXP {requiredExp}"
-            );
-        }
-
-        if (didLevelUp)
-            StartCoroutine(LevelUpTextEffect());
     }
 
     void OnNextFloorClicked()

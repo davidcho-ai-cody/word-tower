@@ -55,31 +55,48 @@ WordTower는 단순 단어 퀴즈가 아니라 전투 언어가 끝말잇기인 
 - 몬스터 일반 데미지: 현재 몬스터 attack
 - 몬스터 한방단어: 현재 몬스터 attack * 2
 
+Level, EXP, Gold, Max HP, Attack은 PlayerProgressData / PlayerProgressService에서 관리한다. BattleManager는 전투 중 현재 HP(playerHp)를 별도로 들고, 공격력과 Max HP는 PlayerProgressService에서 조회해 사용한다.
+
 플레이어 한방단어는 Critical Impact 이미지와 CRITICAL! 텍스트 연출을 사용한다.
 
 ---
 
-## 4. 플레이어 레벨업 시스템 — 구현 완료
+## 4. 플레이어 진행/레벨업 시스템 — 구현 완료
 
-구현: Assets/Scripts/BattleManager.cs
+구현:
 
-현재 필드:
+- Assets/Scripts/Data/PlayerProgressData.cs
+- Assets/Scripts/PlayerProgressService.cs
+- BattleManager.cs는 현재 전투와 UI 연결만 담당
+
+PlayerProgressData 필드:
 
     public int playerLevel = 1;
     public int exp = 0;
     public int requiredExp = 100;
+    public int gold = 0;
     public int playerMaxHp = 100;
     public int playerAttack = 20;
+
+PlayerProgressService 역할:
+
+- EXP 추가
+- Gold 추가
+- 레벨업 판정
+- 필요 경험치 증가
+- 레벨업 시 Max HP / Attack 증가
+- 현재 진행 상태 조회
 
 Victory 연결 흐름:
 
     WinBattle()
-    → currentMonsterData.expReward / goldReward 지급
-    → CheckLevelUp()
+    → PlayerProgressService.AddExp(currentMonsterData.expReward)
+    → PlayerProgressService.AddGold(currentMonsterData.goldReward)
+    → 레벨업 발생 시 LevelUpTextEffect()
     → UpdateUI()
     → VictoryPanel 표시
 
-CheckLevelUp() 규칙:
+레벨업 규칙:
 
 - while (exp >= requiredExp)로 여러 레벨 상승 가능
 - exp -= requiredExp이므로 초과 EXP 이월
@@ -106,6 +123,7 @@ UI:
 - 레벨업 시 Max HP는 증가하지만 현재 HP를 즉시 추가 회복하지는 않는다.
 - 다음 층 초기화에서 새 Max HP까지 완전 회복한다.
 - 저장/불러오기는 미구현이다.
+- playerHp는 현재 전투 중 변하는 값이므로 BattleManager에 남아 있다.
 
 ---
 
@@ -264,8 +282,8 @@ MonsterData — Assets/Scripts/Data/MonsterData.cs:
 | 6 | slime_yellow | 노란 슬라임 | 150 | 15 | 40 | 20 | 2~2 | 1.0 | false | Assets/Art/Sprites/Monsters/Slime/slime_yellow_idle_01.png |
 | 7 | slime_poison | 독 슬라임 | 180 | 17 | 45 | 22 | 2~3 | 1.0 | false | Assets/Art/Sprites/Monsters/Slime/slime_poison_idle_01.png |
 | 8 | slime_armor | 철갑 슬라임 | 220 | 16 | 50 | 25 | 2~3 | 1.0 | false | Assets/Art/Sprites/Monsters/Slime/slime_armor_idle_01.png |
-| 9 | slime_elite | 엘리트 슬라임 | 240 | 20 | 60 | 30 | 2~3 | 1.15 | false | Assets/Art/Sprites/Monsters/Slime/slime_elite_idle_01.png |
-| 10 | slime_king | 슬라임 킹 | 350 | 24 | 100 | 60 | 2~4 | 1.35 | true | Assets/Art/Sprites/Monsters/Slime/slime_king_idle_01.png |
+| 9 | slime_elite | 엘리트 슬라임 | 240 | 20 | 60 | 30 | 2~3 | 1.20 | false | Assets/Art/Sprites/Monsters/Slime/slime_elite_idle_01.png |
+| 10 | slime_king | 슬라임 킹 | 350 | 24 | 100 | 60 | 2~4 | 1.70 | true | Assets/Art/Sprites/Monsters/Slime/slime_king_idle_01.png |
 
 슬라임 킹은 첫 보스로 확정됐지만 isBoss 기반 보스 전용 전투 패턴은 아직 없다.
 
@@ -303,8 +321,8 @@ Editor에서는 BattleManager.ApplyMonsterSprite()가 JSON spritePath를 UnityEd
 MonsterData.visualScale과 monsters.json으로 관리한다.
 
 - 1~8층: 1.0
-- 9층 엘리트 슬라임: 1.15
-- 10층 슬라임 킹: 1.35
+- 9층 엘리트 슬라임: 1.20
+- 10층 슬라임 킹: 1.70
 
 구현:
 
@@ -462,6 +480,7 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 - VictoryPanel, EXP, Gold 보상
 - 레벨, 필요 EXP 증가, 초과 EXP 이월
 - 레벨업 Max HP/Attack 증가
+- PlayerProgressData / PlayerProgressService 기반 플레이어 진행 데이터 분리
 - LV/EXP UI와 LEVEL UP 연출
 - JSON 기반 Floor/Monster 로딩
 - 1~10층 슬라임 챕터
@@ -478,7 +497,6 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 
 - 10층 클리어 후 존재하지 않는 11층 이동 방어와 챕터 완료 처리
 - 보스 전용 패턴 및 isBoss 기반 전투 분기
-- 플레이어 데이터 모델 분리
 - 저장/불러오기
 - 아이템 데이터, 인벤토리, 상점
 - 장비 구매/스탯/외형 적용
@@ -494,12 +512,14 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 
 ## 20. 현재 권장 다음 작업
 
-가장 가까운 다음 작업은 10층 챕터 완료 처리다.
+가장 가까운 큰 구조 작업은 Save/Load 시스템이다. 플레이어 진행 데이터가 PlayerProgressData로 분리되어 저장 대상으로 삼기 쉬운 상태다.
 
-1. 10층 Victory에서 존재하지 않는 11층 이동 방어
-2. 슬라임 챕터 완료 UI 또는 임시 완료 상태
-3. isBoss를 활용한 최소 보스 연출/분기
-4. Player Progression 데이터를 BattleManager 밖으로 점진적 분리
+권장 순서:
+
+1. PlayerProgressData 저장/불러오기
+2. 10층 Victory에서 존재하지 않는 11층 이동 방어
+3. 슬라임 챕터 완료 UI 또는 임시 완료 상태
+4. isBoss를 활용한 최소 보스 연출/분기
 5. 저장/불러오기 기반 후 아이템/상점 확장
 
 ---
