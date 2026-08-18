@@ -21,6 +21,72 @@
       "wordLevelMin": 1,
       "wordLevelMax": 2,
       "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_blue_idle_01.png"
+    },
+    {
+      "id": "slime_red",
+      "name": "빨간 슬라임",
+      "maxHp": 160,
+      "attack": 16,
+      "expReward": 35,
+      "goldReward": 18,
+      "wordLevelMin": 1,
+      "wordLevelMax": 2,
+      "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_red_idle_01.png"
+    },
+    {
+      "id": "slime_yellow",
+      "name": "노란 슬라임",
+      "maxHp": 150,
+      "attack": 15,
+      "expReward": 40,
+      "goldReward": 20,
+      "wordLevelMin": 2,
+      "wordLevelMax": 2,
+      "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_yellow_idle_01.png"
+    },
+    {
+      "id": "slime_poison",
+      "name": "독 슬라임",
+      "maxHp": 180,
+      "attack": 17,
+      "expReward": 45,
+      "goldReward": 22,
+      "wordLevelMin": 2,
+      "wordLevelMax": 3,
+      "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_poison_idle_01.png"
+    },
+    {
+      "id": "slime_armor",
+      "name": "철갑 슬라임",
+      "maxHp": 220,
+      "attack": 16,
+      "expReward": 50,
+      "goldReward": 25,
+      "wordLevelMin": 2,
+      "wordLevelMax": 3,
+      "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_armor_idle_01.png"
+    },
+    {
+      "id": "slime_elite",
+      "name": "엘리트 슬라임",
+      "maxHp": 240,
+      "attack": 20,
+      "expReward": 60,
+      "goldReward": 30,
+      "wordLevelMin": 2,
+      "wordLevelMax": 3,
+      "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_elite_idle_01.png"
+    },
+    {
+      "id": "slime_king",
+      "name": "슬라임 킹",
+      "maxHp": 350,
+      "attack": 24,
+      "expReward": 100,
+      "goldReward": 60,
+      "wordLevelMin": 2,
+      "wordLevelMax": 4,
+      "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_king_idle_01.png"
     }
   ]
 }

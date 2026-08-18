@@ -23,6 +23,42 @@
       "monsterId": "slime_blue",
       "title": "마왕성 4층",
       "isBoss": false
+    },
+    {
+      "floor": 5,
+      "monsterId": "slime_red",
+      "title": "마왕성 5층",
+      "isBoss": false
+    },
+    {
+      "floor": 6,
+      "monsterId": "slime_yellow",
+      "title": "마왕성 6층",
+      "isBoss": false
+    },
+    {
+      "floor": 7,
+      "monsterId": "slime_poison",
+      "title": "마왕성 7층",
+      "isBoss": false
+    },
+    {
+      "floor": 8,
+      "monsterId": "slime_armor",
+      "title": "마왕성 8층",
+      "isBoss": false
+    },
+    {
+      "floor": 9,
+      "monsterId": "slime_elite",
+      "title": "마왕성 9층",
+      "isBoss": false
+    },
+    {
+      "floor": 10,
+      "monsterId": "slime_king",
+      "title": "마왕성 10층",
+      "isBoss": true
     }
   ]
 }
