@@ -148,6 +148,8 @@ public class BattleManager : MonoBehaviour
 
     private FloorData currentFloorData;
     private MonsterData currentMonsterData;
+    private FloorDataList floorDataList;
+    private MonsterDataList monsterDataList;
 
     // =========================
     // 승리 UI
@@ -186,7 +188,7 @@ public class BattleManager : MonoBehaviour
     private Quaternion debugWeaponOriginalRotation;
 #endif
 
-    void Start()
+    IEnumerator Start()
     {
         FindUI();
 
@@ -194,14 +196,15 @@ public class BattleManager : MonoBehaviour
         saveService = new SaveService();
 
         Debug.Log("Save Path: " + saveService.GetSavePath());
+        yield return StartCoroutine(LoadFloorAndMonsterDataLists());
         LoadGame();
 
         // 단어 DB 연결
         wordService = new WordService();
-        wordService.Initialize();
+        yield return StartCoroutine(wordService.Initialize());
 
         itemService = new ItemService();
-        itemService.Initialize();
+        yield return StartCoroutine(itemService.Initialize());
         ValidateStartingItems();
         ApplyEquipmentVisuals();
 
@@ -645,6 +648,47 @@ public class BattleManager : MonoBehaviour
 #endif
     }
 
+    IEnumerator LoadFloorAndMonsterDataLists()
+    {
+        string floorJson = null;
+        string monsterJson = null;
+        string floorLoadError = null;
+        string monsterLoadError = null;
+
+        yield return RuntimeDataLoader.LoadDataText(
+            "Data/Floors/floors.json",
+            text => floorJson = text,
+            error => floorLoadError = error
+        );
+
+        yield return RuntimeDataLoader.LoadDataText(
+            "Data/Monsters/monsters.json",
+            text => monsterJson = text,
+            error => monsterLoadError = error
+        );
+
+        if (!string.IsNullOrEmpty(floorLoadError))
+        {
+            Debug.LogError("floors.json load failed: " + floorLoadError);
+            floorDataList = null;
+        }
+        else
+        {
+            floorDataList = JsonUtility.FromJson<FloorDataList>(floorJson);
+        }
+
+        if (!string.IsNullOrEmpty(monsterLoadError))
+        {
+            Debug.LogError("monsters.json load failed: " + monsterLoadError);
+            monsterDataList = null;
+        }
+        else
+        {
+            monsterDataList =
+                JsonUtility.FromJson<MonsterDataList>(monsterJson);
+        }
+    }
+
     SaveData CreateSaveData()
     {
         return new SaveData
@@ -1061,10 +1105,7 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
-#if UNITY_EDITOR
-        Sprite equipmentSprite =
-            UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
-
+        Sprite equipmentSprite = LoadRuntimeSprite(spritePath);
         if (equipmentSprite == null)
         {
             Debug.LogWarning(
@@ -1076,7 +1117,6 @@ public class BattleManager : MonoBehaviour
         targetImage.sprite = equipmentSprite;
         targetImage.color = Color.white;
         targetImage.preserveAspect = true;
-#endif
     }
 
     void PauseHeroIdle()
@@ -2631,19 +2671,10 @@ public class BattleManager : MonoBehaviour
 
     bool FloorDataExists(int targetFloor)
     {
-        string floorPath =
-            Path.Combine(Application.dataPath, "Data/Floors/floors.json");
-
-        if (!File.Exists(floorPath))
+        if (floorDataList == null || floorDataList.floors == null)
             return false;
 
-        string floorJson = File.ReadAllText(floorPath);
-        FloorDataList floorList =
-            JsonUtility.FromJson<FloorDataList>(floorJson);
-
-        return floorList != null &&
-            floorList.floors != null &&
-            floorList.floors.Exists(f => f.floor == targetFloor);
+        return floorDataList.floors.Exists(f => f.floor == targetFloor);
     }
 
     // ========================================
@@ -2846,42 +2877,14 @@ public class BattleManager : MonoBehaviour
     // ========================================
     void LoadFloorAndMonsterData()
     {
-        string floorPath =
-            Path.Combine(Application.dataPath, "Data/Floors/floors.json");
-
-        string monsterPath =
-            Path.Combine(Application.dataPath, "Data/Monsters/monsters.json");
-
-
-        // =========================
-        // JSON 파일 존재 여부 확인
-        // =========================
-
-        if (!File.Exists(floorPath))
+        if (floorDataList == null ||
+            floorDataList.floors == null ||
+            monsterDataList == null ||
+            monsterDataList.monsters == null)
         {
-            Debug.LogError("floors.json 파일을 찾을 수 없습니다.");
+            Debug.LogError("Floor/Monster data is not loaded.");
             return;
         }
-
-        if (!File.Exists(monsterPath))
-        {
-            Debug.LogError("monsters.json 파일을 찾을 수 없습니다.");
-            return;
-        }
-
-
-        // =========================
-        // JSON 읽기
-        // =========================
-
-        string floorJson = File.ReadAllText(floorPath);
-        string monsterJson = File.ReadAllText(monsterPath);
-
-        FloorDataList floorList =
-            JsonUtility.FromJson<FloorDataList>(floorJson);
-
-        MonsterDataList monsterList =
-            JsonUtility.FromJson<MonsterDataList>(monsterJson);
 
 
         // =========================
@@ -2889,7 +2892,7 @@ public class BattleManager : MonoBehaviour
         // =========================
 
         currentFloorData =
-            floorList.floors.Find(f => f.floor == currentFloor);
+            floorDataList.floors.Find(f => f.floor == currentFloor);
 
         if (currentFloorData == null)
         {
@@ -2906,7 +2909,7 @@ public class BattleManager : MonoBehaviour
         // =========================
 
         currentMonsterData =
-            monsterList.monsters.Find(
+            monsterDataList.monsters.Find(
                 m => m.id == currentFloorData.monsterId
             );
 
@@ -2964,13 +2967,7 @@ public class BattleManager : MonoBehaviour
         if (monsterImage == null || currentMonsterData == null)
             return;
 
-    #if UNITY_EDITOR
-
-        Sprite monsterSprite =
-            UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
-                currentMonsterData.spritePath
-            );
-
+        Sprite monsterSprite = LoadRuntimeSprite(currentMonsterData.spritePath);
         if (monsterSprite != null)
         {
             monsterImage.sprite = monsterSprite;
@@ -2988,8 +2985,59 @@ public class BattleManager : MonoBehaviour
                 currentMonsterData.spritePath
             );
         }
+    }
 
-    #endif
+    Sprite LoadRuntimeSprite(string assetPath)
+    {
+        if (string.IsNullOrEmpty(assetPath))
+            return null;
+
+#if UNITY_EDITOR
+        Sprite editorSprite =
+            UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+
+        if (editorSprite != null)
+            return editorSprite;
+#endif
+
+        string resourcesPath = ToResourcesSpritePath(assetPath);
+
+        if (string.IsNullOrEmpty(resourcesPath))
+            return null;
+
+        return Resources.Load<Sprite>(resourcesPath);
+    }
+
+    string ToResourcesSpritePath(string assetPath)
+    {
+        string normalizedPath = assetPath.Replace("\\", "/");
+
+        if (normalizedPath.StartsWith("Assets/Resources/"))
+        {
+            normalizedPath = normalizedPath.Substring(
+                "Assets/Resources/".Length
+            );
+        }
+        else if (normalizedPath.StartsWith("Assets/Art/"))
+        {
+            normalizedPath = "Art/" + normalizedPath.Substring(
+                "Assets/Art/".Length
+            );
+        }
+        else
+        {
+            return null;
+        }
+
+        string extension = Path.GetExtension(normalizedPath);
+
+        if (!string.IsNullOrEmpty(extension))
+            normalizedPath = normalizedPath.Substring(
+                0,
+                normalizedPath.Length - extension.Length
+            );
+
+        return normalizedPath;
     }
 
     void ApplyMonsterVisualScale()

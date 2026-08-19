@@ -1,5 +1,5 @@
+using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using UnityEngine;
 
@@ -7,21 +7,24 @@ public class ItemService
 {
     private List<ItemData> items = new List<ItemData>();
 
-    public void Initialize()
+    public IEnumerator Initialize()
     {
-        string itemPath = Path.Combine(
-            Application.dataPath,
-            "Data/Items/items.json"
+        string itemJson = null;
+        string loadError = null;
+
+        yield return RuntimeDataLoader.LoadDataText(
+            "Data/Items/items.json",
+            text => itemJson = text,
+            error => loadError = error
         );
 
-        if (!File.Exists(itemPath))
+        if (!string.IsNullOrEmpty(loadError))
         {
-            Debug.LogError("items.json 파일을 찾을 수 없습니다.");
+            Debug.LogError("items.json load failed: " + loadError);
             items = new List<ItemData>();
-            return;
+            yield break;
         }
 
-        string itemJson = File.ReadAllText(itemPath);
         ItemDataList itemList =
             JsonUtility.FromJson<ItemDataList>(itemJson);
 

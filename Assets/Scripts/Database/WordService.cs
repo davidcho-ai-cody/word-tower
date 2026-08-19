@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,13 +8,40 @@ using SQLite;
 
 public class WordService
 {
+#if UNITY_ANDROID && !UNITY_EDITOR
+    private List<WordData> words = new List<WordData>();
+#else
     private SQLiteConnection db;
+#endif
 
-    // ========================================
-    // DB 초기화
-    // ========================================
-    public void Initialize()
+    public IEnumerator Initialize()
     {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        string wordsJson = null;
+        string loadError = null;
+
+        yield return RuntimeDataLoader.LoadStreamingAssetText(
+            "Data/Words/words.json",
+            text => wordsJson = text,
+            error => loadError = error
+        );
+
+        if (!string.IsNullOrEmpty(loadError))
+        {
+            Debug.LogError("words.json load failed: " + loadError);
+            words = new List<WordData>();
+            yield break;
+        }
+
+        WordDataJsonList wordList =
+            JsonUtility.FromJson<WordDataJsonList>(wordsJson);
+
+        words = wordList != null && wordList.words != null
+            ? wordList.words.Select(word => word.ToWordData()).ToList()
+            : new List<WordData>();
+
+        Debug.Log($"Word JSON Loaded: {words.Count}");
+#else
         string dbPath = Path.Combine(
             Application.streamingAssetsPath,
             "Data/Words/words.db"
@@ -21,37 +50,24 @@ public class WordService
         db = new SQLiteConnection(dbPath);
 
         Debug.Log("Word DB Connected : " + dbPath);
+#endif
+
+        yield break;
     }
 
-
-    // ========================================
-    // 실제 등록된 단어인지 확인
-    // ========================================
     public bool IsValidWord(string word)
     {
-        if (db == null)
-            return false;
-
-        WordData result = db.Table<WordData>()
-            .FirstOrDefault(
+        return GetActiveWords()
+            .Any(
                 w =>
                     w.word == word &&
                     w.is_active == 1
             );
-
-        return result != null;
     }
 
-
-    // ========================================
-    // 단어 정보 조회
-    // ========================================
     public WordData GetWord(string word)
     {
-        if (db == null)
-            return null;
-
-        return db.Table<WordData>()
+        return GetActiveWords()
             .FirstOrDefault(
                 w =>
                     w.word == word &&
@@ -59,14 +75,6 @@ public class WordService
             );
     }
 
-
-    // ========================================
-    // 몬스터가 사용할 단어 선택
-    //
-    // startChar : 시작 글자
-    // minLevel  : 몬스터 최소 단어 난이도
-    // maxLevel  : 몬스터 최대 단어 난이도
-    // ========================================
     public WordData GetMonsterWord(
         string startChar,
         int minLevel,
@@ -74,11 +82,8 @@ public class WordService
         HashSet<string> usedWords
     )
     {
-        if (db == null)
-            return null;
-
         List<WordData> candidates =
-            db.Table<WordData>()
+            GetActiveWords()
             .Where(
                 w =>
                     w.first_char == startChar &&
@@ -88,7 +93,6 @@ public class WordService
             )
             .ToList();
 
-        // 이미 사용한 단어 제거
         candidates = candidates
             .Where(w => !usedWords.Contains(w.word))
             .ToList();
@@ -96,29 +100,23 @@ public class WordService
         if (candidates.Count == 0)
             return null;
 
-        int index = Random.Range(0, candidates.Count);
+        int index = UnityEngine.Random.Range(0, candidates.Count);
 
         return candidates[index];
     }
 
-    // ========================================
-    // 한방단어 여부 확인
-    //
-    // 입력 단어의 마지막 글자로 시작하는
-    // 유효한 후속 단어가 DB에 하나도 없으면 true
-    // ========================================
     public bool IsOneShotForPlayer(
         string word,
         HashSet<string> usedWords
     )
     {
-        if (db == null || string.IsNullOrEmpty(word))
+        if (string.IsNullOrEmpty(word))
             return false;
 
         string lastChar = word[word.Length - 1].ToString();
 
         int candidateCount =
-            db.Table<WordData>()
+            GetActiveWords()
             .Where(
                 w =>
                     w.first_char == lastChar &&
@@ -139,13 +137,13 @@ public class WordService
         HashSet<string> usedWords
     )
     {
-        if (db == null || string.IsNullOrEmpty(word))
+        if (string.IsNullOrEmpty(word))
             return false;
 
         string lastChar = word[word.Length - 1].ToString();
 
         int candidateCount =
-            db.Table<WordData>()
+            GetActiveWords()
             .Where(
                 w =>
                     w.first_char == lastChar &&
@@ -161,23 +159,14 @@ public class WordService
         return candidateCount == 0;
     }
 
-    // ========================================
-    // 한방단어 발생 후 새로운 제시어 선택
-    //
-    // 이미 사용한 단어는 제외하고
-    // DB에서 새로운 시작 단어를 하나 랜덤 선택
-    // ========================================
     public WordData GetRandomStartWord(
         int minLevel,
         int maxLevel,
         HashSet<string> usedWords
     )
     {
-        if (db == null)
-            return null;
-
         List<WordData> candidates =
-            db.Table<WordData>()
+            GetActiveWords()
             .Where(
                 w =>
                     w.level >= minLevel &&
@@ -186,7 +175,6 @@ public class WordService
             )
             .ToList();
 
-        // 이미 사용한 단어 제외
         candidates = candidates
             .Where(w => !usedWords.Contains(w.word))
             .ToList();
@@ -194,7 +182,7 @@ public class WordService
         if (candidates.Count == 0)
             return null;
 
-        int index = Random.Range(0, candidates.Count);
+        int index = UnityEngine.Random.Range(0, candidates.Count);
 
         return candidates[index];
     }
@@ -203,11 +191,8 @@ public class WordService
         HashSet<string> usedWords
     )
     {
-        if (db == null)
-            return null;
-
         List<WordData> availableWords =
-            db.Table<WordData>()
+            GetActiveWords()
             .Where(w => w.is_active == 1)
             .ToList()
             .Where(w => !usedWords.Contains(w.word))
@@ -226,17 +211,64 @@ public class WordService
         if (candidates.Count == 0)
             return null;
 
-        int index = Random.Range(0, candidates.Count);
+        int index = UnityEngine.Random.Range(0, candidates.Count);
 
         return candidates[index];
     }
 
-    // ========================================
-    // DB 종료
-    // ========================================
     public void Close()
     {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        words.Clear();
+#else
         db?.Close();
         db = null;
+#endif
+    }
+
+    private IEnumerable<WordData> GetActiveWords()
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        return words;
+#else
+        if (db == null)
+            return Enumerable.Empty<WordData>();
+
+        return db.Table<WordData>();
+#endif
+    }
+
+    [Serializable]
+    private class WordDataJsonList
+    {
+        public List<WordDataJson> words;
+    }
+
+    [Serializable]
+    private class WordDataJson
+    {
+        public int id;
+        public string word;
+        public string first_char;
+        public string last_char;
+        public string meaning;
+        public int level;
+        public string category;
+        public int is_active;
+
+        public WordData ToWordData()
+        {
+            return new WordData
+            {
+                id = id,
+                word = word,
+                first_char = first_char,
+                last_char = last_char,
+                meaning = meaning,
+                level = level,
+                category = category,
+                is_active = is_active
+            };
+        }
     }
 }

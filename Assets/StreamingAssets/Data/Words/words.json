@@ -1,0 +1,314 @@
+{
+  "words": [
+    {
+      "id": 1,
+      "word": "사과",
+      "first_char": "사",
+      "last_char": "과",
+      "meaning": "사과나무의 열매",
+      "level": 1,
+      "category": "음식",
+      "is_active": 1
+    },
+    {
+      "id": 2,
+      "word": "과자",
+      "first_char": "과",
+      "last_char": "자",
+      "meaning": "간식으로 먹는 식품",
+      "level": 1,
+      "category": "음식",
+      "is_active": 1
+    },
+    {
+      "id": 3,
+      "word": "자동차",
+      "first_char": "자",
+      "last_char": "차",
+      "meaning": "도로를 달리는 탈것",
+      "level": 1,
+      "category": "교통",
+      "is_active": 1
+    },
+    {
+      "id": 4,
+      "word": "차표",
+      "first_char": "차",
+      "last_char": "표",
+      "meaning": "교통수단 이용권",
+      "level": 1,
+      "category": "생활",
+      "is_active": 1
+    },
+    {
+      "id": 5,
+      "word": "표지",
+      "first_char": "표",
+      "last_char": "지",
+      "meaning": "책이나 문서의 겉면",
+      "level": 1,
+      "category": "생활",
+      "is_active": 1
+    },
+    {
+      "id": 6,
+      "word": "지갑",
+      "first_char": "지",
+      "last_char": "갑",
+      "meaning": "돈이나 카드를 넣는 물건",
+      "level": 1,
+      "category": "생활",
+      "is_active": 1
+    },
+    {
+      "id": 7,
+      "word": "표범",
+      "first_char": "표",
+      "last_char": "범",
+      "meaning": "고양잇과의 동물",
+      "level": 2,
+      "category": "동물",
+      "is_active": 1
+    },
+    {
+      "id": 8,
+      "word": "범인",
+      "first_char": "범",
+      "last_char": "인",
+      "meaning": "범죄를 저지른 사람",
+      "level": 2,
+      "category": "일반",
+      "is_active": 1
+    },
+    {
+      "id": 9,
+      "word": "인사",
+      "first_char": "인",
+      "last_char": "사",
+      "meaning": "서로 예의를 표현하는 행동",
+      "level": 1,
+      "category": "생활",
+      "is_active": 1
+    },
+    {
+      "id": 10,
+      "word": "사슴",
+      "first_char": "사",
+      "last_char": "슴",
+      "meaning": "뿔이 있는 초식동물",
+      "level": 1,
+      "category": "동물",
+      "is_active": 1
+    },
+    {
+      "id": 11,
+      "word": "슴새",
+      "first_char": "슴",
+      "last_char": "새",
+      "meaning": "바닷새의 한 종류",
+      "level": 3,
+      "category": "동물",
+      "is_active": 1
+    },
+    {
+      "id": 12,
+      "word": "새우",
+      "first_char": "새",
+      "last_char": "우",
+      "meaning": "물에 사는 갑각류",
+      "level": 1,
+      "category": "동물",
+      "is_active": 1
+    },
+    {
+      "id": 13,
+      "word": "우산",
+      "first_char": "우",
+      "last_char": "산",
+      "meaning": "비를 막는 도구",
+      "level": 1,
+      "category": "생활",
+      "is_active": 1
+    },
+    {
+      "id": 14,
+      "word": "산책",
+      "first_char": "산",
+      "last_char": "책",
+      "meaning": "가볍게 걸어 다니는 일",
+      "level": 1,
+      "category": "생활",
+      "is_active": 1
+    },
+    {
+      "id": 15,
+      "word": "책상",
+      "first_char": "책",
+      "last_char": "상",
+      "meaning": "책을 읽거나 일을 하는 가구",
+      "level": 1,
+      "category": "생활",
+      "is_active": 1
+    },
+    {
+      "id": 16,
+      "word": "상자",
+      "first_char": "상",
+      "last_char": "자",
+      "meaning": "물건을 담는 용기",
+      "level": 1,
+      "category": "생활",
+      "is_active": 1
+    },
+    {
+      "id": 17,
+      "word": "거울",
+      "first_char": "거",
+      "last_char": "울",
+      "meaning": "모습을 비추는 물건",
+      "level": 1,
+      "category": "생활",
+      "is_active": 1
+    },
+    {
+      "id": 18,
+      "word": "울음",
+      "first_char": "울",
+      "last_char": "음",
+      "meaning": "우는 소리나 행동",
+      "level": 1,
+      "category": "일반",
+      "is_active": 1
+    },
+    {
+      "id": 19,
+      "word": "음악",
+      "first_char": "음",
+      "last_char": "악",
+      "meaning": "소리로 표현하는 예술",
+      "level": 1,
+      "category": "예술",
+      "is_active": 1
+    },
+    {
+      "id": 20,
+      "word": "악기",
+      "first_char": "악",
+      "last_char": "기",
+      "meaning": "음악을 연주하는 도구",
+      "level": 1,
+      "category": "예술",
+      "is_active": 1
+    },
+    {
+      "id": 21,
+      "word": "기차",
+      "first_char": "기",
+      "last_char": "차",
+      "meaning": "철도를 따라 달리는 교통수단",
+      "level": 1,
+      "category": "교통",
+      "is_active": 1
+    },
+    {
+      "id": 22,
+      "word": "학교",
+      "first_char": "학",
+      "last_char": "교",
+      "meaning": "학생이 공부하는 곳",
+      "level": 1,
+      "category": "생활",
+      "is_active": 1
+    },
+    {
+      "id": 23,
+      "word": "교실",
+      "first_char": "교",
+      "last_char": "실",
+      "meaning": "수업을 하는 방",
+      "level": 1,
+      "category": "생활",
+      "is_active": 1
+    },
+    {
+      "id": 24,
+      "word": "실내",
+      "first_char": "실",
+      "last_char": "내",
+      "meaning": "건물의 안쪽",
+      "level": 1,
+      "category": "생활",
+      "is_active": 1
+    },
+    {
+      "id": 25,
+      "word": "내일",
+      "first_char": "내",
+      "last_char": "일",
+      "meaning": "오늘의 다음 날",
+      "level": 1,
+      "category": "시간",
+      "is_active": 1
+    },
+    {
+      "id": 26,
+      "word": "일기",
+      "first_char": "일",
+      "last_char": "기",
+      "meaning": "하루 일을 기록한 글",
+      "level": 1,
+      "category": "생활",
+      "is_active": 1
+    },
+    {
+      "id": 27,
+      "word": "바다",
+      "first_char": "바",
+      "last_char": "다",
+      "meaning": "넓고 큰 소금물",
+      "level": 1,
+      "category": "자연",
+      "is_active": 1
+    },
+    {
+      "id": 28,
+      "word": "다리",
+      "first_char": "다",
+      "last_char": "리",
+      "meaning": "몸을 지탱하거나 건너는 구조물",
+      "level": 1,
+      "category": "일반",
+      "is_active": 1
+    },
+    {
+      "id": 29,
+      "word": "리본",
+      "first_char": "리",
+      "last_char": "본",
+      "meaning": "장식용 끈",
+      "level": 2,
+      "category": "생활",
+      "is_active": 1
+    },
+    {
+      "id": 30,
+      "word": "본능",
+      "first_char": "본",
+      "last_char": "능",
+      "meaning": "타고난 행동 성향",
+      "level": 3,
+      "category": "일반",
+      "is_active": 1
+    },
+    {
+      "id": 31,
+      "word": "능력",
+      "first_char": "능",
+      "last_char": "력",
+      "meaning": "어떤 일을 해낼 수 있는 힘",
+      "level": 2,
+      "category": "일반",
+      "is_active": 1
+    }
+  ]
+}

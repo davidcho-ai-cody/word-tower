@@ -14,7 +14,8 @@
 - 목표: 100층 마왕성을 한국어 끝말잇기 전투로 공략
 - 현재 확정·구현 콘텐츠: 1~10층 슬라임 챕터
 - 메인 씬: Assets/Scenes/BattleScene.unity
-- 초기 런타임은 AI/API 없이 SQLite 단어 DB로 동작
+- 중복 루트 씬 Assets/BattleScene.unity는 삭제됐으며 다시 생성하거나 사용하지 않는다.
+- 초기 런타임은 AI/API 없이 로컬 단어 데이터로 동작한다. Windows Editor는 SQLite DB, Android 1차 APK는 JSON 단어 데이터를 사용한다.
 
 WordTower는 단순 단어 퀴즈가 아니라 전투 언어가 끝말잇기인 RPG를 지향한다. 전투 손맛, 보이는 성장, 단어 선택의 전략성을 보존한다.
 
@@ -192,8 +193,11 @@ Save Reset:
 - 매핑: Assets/Scripts/Database/WordData.cs
 - sqlite-net: Assets/Scripts/Database/SQLite.cs
 - Windows Editor DLL: Assets/Plugins/x86_64/sqlite3.dll
+- Android 1차 APK 데이터: Assets/StreamingAssets/Data/Words/words.json
 
 WordData는 [Table("words")]로 실제 words 테이블과 매핑한다.
+
+Windows Editor에서는 기존 words.db와 sqlite3.dll을 사용한다. Android 런타임에서는 Android ARM64 SQLite 네이티브 플러그인이 아직 확정되지 않았으므로, 1차 APK 호환을 위해 StreamingAssets의 words.json을 UnityWebRequest로 읽어 메모리 조회한다. words.db는 원본/검증용으로 유지하며, 운영용 대규모 DB 단계에서는 Android SQLite 플러그인과 persistentDataPath 복사 구조를 다시 검토한다.
 
 현재 WordService 메서드:
 
@@ -344,6 +348,12 @@ ItemService — Assets/Scripts/ItemService.cs:
 
 BattleManager는 items.json을 직접 읽지 않고 ItemService를 초기화한다.
 
+RuntimeDataLoader — Assets/Scripts/RuntimeDataLoader.cs:
+
+- Android StreamingAssets 텍스트 데이터를 UnityWebRequest로 로드
+- Editor/Standalone에서는 Assets/Data를 우선 읽고 StreamingAssets를 fallback으로 사용
+- Android 1차 APK에서 floors.json, monsters.json, items.json, words.json 로딩에 사용
+
 ---
 
 ## 8.1 아이템 / 장비 데이터 — 기반 구현 완료
@@ -441,7 +451,7 @@ Equipment Visual:
 - 장착 직후, Save Load 후 초기화, Save Reset 시 현재 equipped ID 기준으로 외형을 갱신한다.
 - Sprite 교체 시 기존 RectTransform을 유지해 위치, 크기, 공격/피격 애니메이션을 보존한다.
 - 경로가 비어 있거나 Sprite 로드에 실패하면 현재 표시 중인 Sprite를 유지하고 Warning만 남긴다.
-- 현재 Unity Editor 프로토타입은 UnityEditor.AssetDatabase를 사용하며 Android 런타임 로딩은 별도 TODO다.
+- Editor에서는 UnityEditor.AssetDatabase를 우선 사용하고, Android/Player에서는 Assets/Resources/Art/Sprites 아래 복제된 Sprite를 Resources.Load로 읽는다.
 
 ---
 
@@ -523,9 +533,9 @@ Audio 방향:
     ├─ slime_elite_idle_01.png
     └─ slime_king_idle_01.png
 
-Editor에서는 BattleManager.ApplyMonsterSprite()가 JSON spritePath를 UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>()로 로드한다.
+Editor에서는 BattleManager.ApplyMonsterSprite()가 JSON spritePath를 UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>()로 우선 로드한다.
 
-이 방식은 Android 런타임에서 작동하지 않는다. Resources, Addressables 또는 직렬화 참조로 교체하는 작업이 TODO다.
+Android/Player에서는 같은 JSON spritePath를 Resources 경로로 변환해 Assets/Resources/Art/Sprites 아래 복제 Sprite를 로드한다. 장기적으로는 Resources 복제 대신 Addressables 또는 직렬화 참조 구조로 정리하는 작업이 TODO다.
 
 ---
 
@@ -657,6 +667,8 @@ Debug 이동 시:
 
 Assets/Scripts/Editor/BattleSceneBuilder.cs가 전투 UI의 소스 오브 트루스다.
 
+공식 BattleScene은 Assets/Scenes/BattleScene.unity 하나만 사용한다. 과거 중복으로 존재했던 Assets/BattleScene.unity와 meta는 삭제됐으며, 루트 BattleScene을 다시 만들거나 Build Settings에 추가하지 않는다.
+
 주요 생성 오브젝트:
 
 - BattleCanvas
@@ -700,18 +712,40 @@ Hierarchy에만 수동 추가한 중요 UI는 Builder 재실행 시 사라질 �
 
 ## 17. 플랫폼 주의사항
 
+현재 Android 개발 환경:
+
+- Unity 6.5 (6000.5.8f1)
+- Android Build Support / Android SDK & NDK Tools / OpenJDK 설치 완료
+- Android Build Profile: Assets/Settings/Build Profiles/Android APK.asset
+- Main Scene: Assets/Scenes/BattleScene.unity
+- Orientation: Portrait
+- Scripting Backend: IL2CPP
+- Target Architecture: ARM64
+- Minimum API Level: Android 8.0 / API 26
+- Target API Level: Automatic
+- 테스트용 Company Name: DavidCho
+- 테스트용 Android Package Name: com.davidcho.wordtower
+
+DavidCho와 com.davidcho.wordtower는 첫 실기기 테스트용 임시 값이다. 정식 출시 전 게임 스튜디오/브랜드명을 결정한 뒤 변경한다.
+
 현재 확인:
 
 - Windows Unity Editor에서 sqlite3 연결
 - Editor에서 JSON spritePath 기반 이미지 교체
+- Android 1차 APK에서 words.json 기반 단어 조회
+- Android/Player에서 Resources 기반 몬스터/장비 Sprite 교체
+- Unity Editor C# compile error 해결, Console Error 0, Play Mode 정상
+- Editor에서 Word DB 연결, Item/Floor 로드, 몬스터/Hero Sprite, 단어 판정, 공격, 다음 Floor 이동 정상 확인
 
 Android TODO:
 
-- StreamingAssets DB를 Application.persistentDataPath로 복사
+- Android APK 첫 빌드
+- Galaxy 실기기 설치와 Android 런타임 테스트
+- 운영용 DB 단계에서 StreamingAssets DB를 Application.persistentDataPath로 복사
 - Android SQLite 네이티브 설정 검증
-- UnityEditor.AssetDatabase 없는 런타임 이미지 로딩
+- Resources 복제 Sprite를 Addressables 또는 직렬화 참조 구조로 개선
 
-Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
+Android APK 실제 빌드와 실기기 테스트는 아직 수행하지 않았다. Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 
 ---
 
@@ -737,7 +771,9 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 - Weapon attackBonus 기반 일반/크리티컬 Final Attack
 - Armor defenseRate 기반 몬스터 일반/크리티컬 피해 감소
 - 장비 변경 Save/Load, Reset 기본 장비, 잘못된 장비 ID fallback
-- 장착 Weapon/Armor의 Editor용 Sprite 교체와 Load/Reset 외형 복원
+- 장착 Weapon/Armor의 Editor/Android Sprite 교체와 Load/Reset 외형 복원
+- Android 1차 APK용 StreamingAssets JSON 데이터 로딩
+- Android Build Profile과 Android Player Settings 1차 구성
 - LV/EXP UI와 LEVEL UP 연출
 - JSON 기반 Floor/Monster 로딩
 - 1~10층 슬라임 챕터
@@ -762,7 +798,8 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 - 11층 이후 확정 콘텐츠
 - 운영용 대규모 한국어 단어 DB
 - 단어 뜻/도감/부적절 단어 관리
-- Android SQLite와 런타임 이미지 로딩
+- 운영용 Android SQLite와 대규모 DB 로딩 구조
+- Resources 복제 Sprite의 장기 로딩 구조 개선
 - 타이틀/메뉴/튜토리얼
 - Gold, Shop Buy, Equip, UI Button 실제 SFX
 - 실제 BGM AudioClip과 BGM 재생 로직
@@ -775,16 +812,18 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 
 ## 20. 현재 권장 다음 작업
 
-전투 Polish, Equipment Visual, 핵심 Combat/Reward SFX까지 구현됐다. 다음 작업 후보는 아래 순서이며 개발 상황에 따라 조정할 수 있다.
+전투 Polish, Equipment Visual, 핵심 Combat/Reward SFX, Android 1차 APK 사전 호환성 수정까지 진행됐다. 다음 시작점은 Android APK 첫 빌드와 Galaxy 실기기 설치/런타임 테스트다. 그 뒤 작업 후보는 아래 순서이며 개발 상황에 따라 조정할 수 있다.
 
 권장 순서:
 
-1. Shop Buy SFX
-2. Equip SFX
-3. Button Click SFX
-4. Slime Chapter Clear Sequence 구현
-5. Chapter Clear Illustration 최종 제작 및 적용
-6. BGM 방향성 기획 및 구현
+1. Android APK 첫 빌드
+2. Galaxy 실기기 설치 및 Android 런타임 테스트
+3. Shop Buy SFX
+4. Equip SFX
+5. Button Click SFX
+6. Slime Chapter Clear Sequence 구현
+7. Chapter Clear Illustration 최종 제작 및 적용
+8. BGM 방향성 기획 및 구현
 
 BGM은 임시 곡을 먼저 붙이기보다 WordTower 고유의 음악적 Identity를 정한 후 진행한다. Main/Title Theme, Battle BGM, Boss BGM, Chapter Clear Music이 완전히 분리된 곡이 아니라 공통 Melody 또는 Motif를 공유하는 방향을 검토한다. 현재는 기획 단계다.
 
