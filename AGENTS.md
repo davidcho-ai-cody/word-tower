@@ -552,6 +552,17 @@ Debug 이동 시:
 
 ## 13. 전투 연출 — 구현 완료
 
+- Hero Procedural Idle: Frame Sprite 없이 PlayerPlaceholder 부모의 Position/Scale을 미세하게 변화시켜 Body와 Weapon을 함께 움직인다.
+- Hero Idle은 저장된 기준 Transform을 중심으로 계산하며 공격/피격 중 일시 중지하고 연출 종료 후 기준값으로 복구·재개한다.
+- Slime Procedural Idle: 단일 Sprite의 RectTransform에 미세한 Squash & Stretch와 Y 이동을 적용한다.
+- Slime Idle은 MonsterData.visualScale이 적용된 Base Scale을 보존하며 일반/Elite/King별 속도와 변화 폭을 다르게 사용한다.
+- Slime 공격/피격/사망 중에는 Idle을 중지하고, 생존 연출 종료 또는 새 Floor 초기화 후 기준 Transform에서 재개한다.
+- Hero와 Slime Idle은 독립적으로 동작하며 Frame Animation은 아직 사용하지 않는다.
+- Monster Attack Anticipation: Slime Idle을 중지하고 Base Scale 기준으로 짧게 Squash한 뒤 기존 Rush를 실행한다.
+- 일반/Elite/King은 공격 준비 속도와 압축 폭이 다르며, 이 연출은 기존 공격 거리와 Damage 계산에 영향을 주지 않는다.
+- HeroShadow와 MonsterShadow는 BattleSceneBuilder가 생성하는 반투명 타원형 UI Ground Shadow다.
+- Shadow는 Procedural Idle에 미세하게 반응하고 공격/피격 중 캐릭터의 X 이동을 추적하며, Monster Shadow는 사망 연출과 함께 축소·페이드된다.
+- Floor 및 Floor Debug 이동 시 Shadow의 위치, 크기, Alpha를 초기화하고 Elite/King에는 몬스터 등급에 맞는 기준 크기를 적용한다.
 - 플레이어 전진 공격: +110f X 기준
 - 무기 스윙: 20° → -55° 기준
 - 몬스터 돌진: -85f X 기준
@@ -563,6 +574,15 @@ Debug 이동 시:
 - LEVEL UP! 텍스트
 
 시각 테스트된 타이밍과 공용 오브젝트 이름은 관련 작업이 아니면 변경하지 않는다.
+
+### Audio System 2단계
+
+- `Assets/Scripts/Audio/AudioManager.cs`가 Scene 단위 AudioManager와 SFX/BGM AudioSource를 관리한다.
+- SFX는 `SfxId`와 `PlayOneShot()`을 사용하며 HeroAttack, MonsterHit, Critical, MonsterAttack, MonsterDeath, LevelUp, Victory 이벤트가 BattleManager에 연결되어 있다.
+- SFX/BGM AudioSource는 분리되어 있고 BattleSceneBuilder가 Hierarchy를 재생성한다. Main Camera의 기존 AudioListener를 사용한다.
+- HeroAttack은 `hero_attack_01.flac` Whoosh를 Swing 시작에 재생하고, MonsterHit은 `monster_hit_01.wav` Slime Impact를 실제 타격 시점에 재생한다. 두 역할과 호출 시점을 분리한다.
+- Critical, MonsterAttack, MonsterDeath, LevelUp, Victory의 실제 Clip과 BGM은 아직 없으며 Clip 미등록 상태에서는 오류나 반복 경고 없이 재생을 건너뛴다.
+- Settings/Volume UI, Audio Mixer, UI/상점 SFX, 실제 BGM은 TODO다.
 
 ---
 
@@ -596,6 +616,7 @@ Assets/Scripts/Editor/BattleSceneBuilder.cs가 전투 UI의 소스 오브 트루
 주요 생성 오브젝트:
 
 - BattleCanvas
+- AudioManager / SFX AudioSource / BGM AudioSource
 - PlayerPlaceholder / Hero 레이어 / SlimePlaceholder
 - HP UI / WordBattlePanel
 - StatusPanel / LevelText / ExpText / GoldText
@@ -682,6 +703,8 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 - Editor/Development Build용 Floor Debug UI
 - 정적 한글 폰트 기반 TMP 표시
 - Sprite 자동 Import
+- Scene 단위 AudioManager, SFX/BGM AudioSource 분리와 1차 전투 SFX 연결 지점
+- HeroAttack Whoosh와 Slime MonsterHit Impact 실제 AudioClip 연결
 
 ---
 
@@ -695,7 +718,9 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 - 단어 뜻/도감/부적절 단어 관리
 - Android SQLite와 런타임 이미지 로딩
 - 타이틀/메뉴/튜토리얼
-- BGM/SFX
+- Critical, MonsterAttack, MonsterDeath, LevelUp, Victory 실제 SFX
+- 실제 BGM AudioClip과 BGM 재생 로직
+- Settings/Volume UI와 Audio Mixer
 - 프로덕션 UI 폴리시
 
 ---

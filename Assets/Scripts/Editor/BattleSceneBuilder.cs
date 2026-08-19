@@ -39,6 +39,7 @@ public static class BattleSceneBuilder
 
         // 전투 로직 관리자 자동 생성
         CreateBattleManager();
+        CreateAudioManager();
 
         Canvas canvas = CreateCanvas();
 
@@ -87,7 +88,8 @@ public static class BattleSceneBuilder
         {
             if (obj.name == "Main Camera" ||
                 obj.name == "Global Light 2D" ||
-                obj.name == "BattleManager")
+                obj.name == "BattleManager" ||
+                obj.name == "AudioManager")
             {
                 continue;
             }
@@ -121,6 +123,89 @@ public static class BattleSceneBuilder
 
         // 실제 전투 로직 스크립트 연결
         managerObject.AddComponent<BattleManager>();
+    }
+
+    private static void CreateAudioManager()
+    {
+        GameObject managerObject = GameObject.Find("AudioManager");
+
+        if (managerObject == null)
+            managerObject = new GameObject("AudioManager");
+
+        AudioManager audioManager =
+            managerObject.GetComponent<AudioManager>();
+
+        if (audioManager == null)
+            audioManager = managerObject.AddComponent<AudioManager>();
+
+        Transform sfxTransform = managerObject.transform.Find(
+            "SFX AudioSource"
+        );
+        GameObject sfxObject;
+
+        if (sfxTransform == null)
+        {
+            sfxObject = new GameObject(
+                "SFX AudioSource",
+                typeof(AudioSource)
+            );
+            sfxObject.transform.SetParent(managerObject.transform, false);
+        }
+        else
+        {
+            sfxObject = sfxTransform.gameObject;
+        }
+
+        AudioSource sfxSource = sfxObject.GetComponent<AudioSource>();
+
+        if (sfxSource == null)
+            sfxSource = sfxObject.AddComponent<AudioSource>();
+
+        sfxSource.playOnAwake = false;
+        sfxSource.loop = false;
+        sfxSource.spatialBlend = 0f;
+
+        Transform bgmTransform = managerObject.transform.Find(
+            "BGM AudioSource"
+        );
+        GameObject bgmObject;
+
+        if (bgmTransform == null)
+        {
+            bgmObject = new GameObject(
+                "BGM AudioSource",
+                typeof(AudioSource)
+            );
+            bgmObject.transform.SetParent(managerObject.transform, false);
+        }
+        else
+        {
+            bgmObject = bgmTransform.gameObject;
+        }
+
+        AudioSource bgmSource = bgmObject.GetComponent<AudioSource>();
+
+        if (bgmSource == null)
+            bgmSource = bgmObject.AddComponent<AudioSource>();
+
+        bgmSource.playOnAwake = false;
+        bgmSource.loop = true;
+        bgmSource.spatialBlend = 0f;
+
+        audioManager.ConfigureSources(sfxSource, bgmSource);
+
+        AudioClip heroAttackClip = AssetDatabase.LoadAssetAtPath<AudioClip>(
+            "Assets/Audio/SFX/Combat/hero_attack_01.flac"
+        );
+        AudioClip monsterHitClip = AssetDatabase.LoadAssetAtPath<AudioClip>(
+            "Assets/Audio/SFX/Combat/monster_hit_01.wav"
+        );
+
+        audioManager.ConfigureDefaultCombatClips(
+            heroAttackClip,
+            monsterHitClip
+        );
+        EditorUtility.SetDirty(audioManager);
     }
 
     private static Canvas CreateCanvas()
@@ -162,6 +247,13 @@ public static class BattleSceneBuilder
             "PlayerHP",
             new Vector2(0.23f, 0.77f),
             "HP 100 / 100"
+        );
+
+        CreateGroundShadow(
+            parent,
+            "HeroShadow",
+            new Vector2(0.25f, 0.505f),
+            new Vector2(110f, 24f)
         );
 
         GameObject player = CreatePanel(
@@ -304,6 +396,13 @@ public static class BattleSceneBuilder
             "MonsterHP",
             new Vector2(0.77f, 0.77f),
             "HP 100 / 100"
+        );
+
+        CreateGroundShadow(
+            parent,
+            "MonsterShadow",
+            new Vector2(0.75f, 0.52f),
+            new Vector2(135f, 26f)
         );
 
         GameObject slime = CreatePanel(
@@ -855,6 +954,29 @@ public static class BattleSceneBuilder
         image.color = color;
 
         return obj;
+    }
+
+    private static void CreateGroundShadow(
+        Transform parent,
+        string name,
+        Vector2 anchor,
+        Vector2 size
+    )
+    {
+        GameObject shadow = CreatePanel(
+            parent,
+            name,
+            new Color(0f, 0f, 0f, 0.22f),
+            anchor,
+            size
+        );
+
+        Image shadowImage = shadow.GetComponent<Image>();
+        shadowImage.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>(
+            "UI/Skin/Knob.psd"
+        );
+        shadowImage.preserveAspect = false;
+        shadowImage.raycastTarget = false;
     }
 
     private static void CreateFullScreenImage(

@@ -9,6 +9,15 @@ public class BattleManager : MonoBehaviour
 {
     private const float CriticalTextStartDelay = 0.05f;
     private const float CriticalDamageTextDelay = 0.6f;
+    private const float HeroIdleCycleDuration = 1.8f;
+    private const float HeroIdleYOffset = 2.5f;
+    private const float HeroIdleScaleX = 0.997f;
+    private const float HeroIdleScaleY = 1.01f;
+    private const float NormalSlimeIdleCycle = 1.5f;
+    private const float EliteSlimeIdleCycle = 1.8f;
+    private const float KingSlimeIdleCycle = 2.2f;
+    private const float MonsterHitFlashDuration = 0.12f;
+    private const float MonsterHitFlashAlpha = 0.15f;
 
     [Header("Player")]
     public int playerHp = 100;
@@ -102,6 +111,19 @@ public class BattleManager : MonoBehaviour
     private RectTransform slimeVisual;
     private Image playerBodyImage;
     private Image weaponImage;
+    private RectTransform heroShadow;
+    private RectTransform monsterShadow;
+    private Image monsterShadowImage;
+    private Vector2 heroShadowBasePosition;
+    private Vector3 heroShadowBaseScale = Vector3.one;
+    private Vector2 monsterShadowBasePosition;
+    private Vector3 monsterShadowBaseScale = Vector3.one;
+    private Color monsterShadowBaseColor = new Color(0f, 0f, 0f, 0.22f);
+    private Vector2 heroIdleBasePosition;
+    private Vector3 heroIdleBaseScale;
+    private float heroIdleElapsed;
+    private bool heroIdleInitialized;
+    private bool heroIdlePaused = true;
 
     // =========================
     // 공격 / 타격 연출
@@ -134,6 +156,12 @@ public class BattleManager : MonoBehaviour
     private TMP_Text victoryRewardText;
     private Button nextFloorButton;
     private Vector2 slimeOriginalPosition;
+    private Vector2 monsterIdleBasePosition;
+    private Vector3 monsterIdleBaseScale;
+    private float monsterIdleElapsed;
+    private bool monsterIdleInitialized;
+    private bool monsterIdlePaused = true;
+    private Coroutine monsterHitFlashCoroutine;
 
     // =========================
     // 현재 몬스터 이미지
@@ -181,6 +209,145 @@ public class BattleManager : MonoBehaviour
 
         // 로드한 데이터 기준으로 전투 시작
         SetupBattle();
+        ResumeHeroIdle();
+        ResumeMonsterIdle();
+    }
+
+    void Update()
+    {
+        UpdateHeroIdle();
+        UpdateMonsterIdle();
+        UpdateGroundShadows();
+    }
+
+    void PlaySfx(SfxId id)
+    {
+        AudioManager.Instance?.PlaySfx(id);
+    }
+
+    void UpdateHeroIdle()
+    {
+        if (!heroIdleInitialized || heroIdlePaused || playerVisual == null)
+            return;
+
+        heroIdleElapsed =
+            (heroIdleElapsed + Time.deltaTime) % HeroIdleCycleDuration;
+
+        float phase = heroIdleElapsed / HeroIdleCycleDuration;
+        float breath = (1f - Mathf.Cos(phase * Mathf.PI * 2f)) * 0.5f;
+
+        playerVisual.anchoredPosition =
+            heroIdleBasePosition + new Vector2(0f, HeroIdleYOffset * breath);
+        playerVisual.localScale = Vector3.Scale(
+            heroIdleBaseScale,
+            new Vector3(
+                Mathf.Lerp(1f, HeroIdleScaleX, breath),
+                Mathf.Lerp(1f, HeroIdleScaleY, breath),
+                1f
+            )
+        );
+    }
+
+    void UpdateMonsterIdle()
+    {
+        if (!monsterIdleInitialized || monsterIdlePaused || slimeVisual == null)
+            return;
+
+        float cycleDuration = currentFloor >= 10
+            ? KingSlimeIdleCycle
+            : currentFloor == 9
+                ? EliteSlimeIdleCycle
+                : NormalSlimeIdleCycle;
+        float scaleXAmount = currentFloor >= 10
+            ? 0.01f
+            : currentFloor == 9
+                ? 0.012f
+                : 0.018f;
+        float scaleYAmount = currentFloor >= 10
+            ? 0.012f
+            : currentFloor == 9
+                ? 0.015f
+                : 0.02f;
+        float yAmount = currentFloor >= 10
+            ? 1f
+            : currentFloor == 9
+                ? 1.25f
+                : 1.5f;
+
+        monsterIdleElapsed =
+            (monsterIdleElapsed + Time.deltaTime) % cycleDuration;
+
+        float phase = monsterIdleElapsed / cycleDuration;
+        float wave = Mathf.Sin(phase * Mathf.PI * 2f);
+
+        slimeVisual.anchoredPosition =
+            monsterIdleBasePosition + new Vector2(0f, -wave * yAmount);
+        slimeVisual.localScale = Vector3.Scale(
+            monsterIdleBaseScale,
+            new Vector3(
+                1f + (wave * scaleXAmount),
+                1f - (wave * scaleYAmount),
+                1f
+            )
+        );
+    }
+
+    void UpdateGroundShadows()
+    {
+        if (heroShadow != null && playerVisual != null && heroIdleInitialized)
+        {
+            float heroDeltaX =
+                playerVisual.anchoredPosition.x - heroIdleBasePosition.x;
+            float heroLift = Mathf.Clamp01(
+                (playerVisual.anchoredPosition.y - heroIdleBasePosition.y) /
+                HeroIdleYOffset
+            );
+            float heroShadowScale = Mathf.Lerp(1f, 0.97f, heroLift);
+
+            heroShadow.anchoredPosition =
+                heroShadowBasePosition + new Vector2(heroDeltaX, 0f);
+            heroShadow.localScale =
+                heroShadowBaseScale * heroShadowScale;
+        }
+
+        if (monsterShadow == null ||
+            slimeVisual == null ||
+            !monsterIdleInitialized)
+        {
+            return;
+        }
+
+        float monsterDeltaX =
+            slimeVisual.anchoredPosition.x - monsterIdleBasePosition.x;
+        monsterShadow.anchoredPosition =
+            monsterShadowBasePosition + new Vector2(monsterDeltaX, 0f);
+
+        float baseScaleX = Mathf.Max(monsterIdleBaseScale.x, 0.0001f);
+        float currentScaleRatio = slimeVisual.localScale.x / baseScaleX;
+
+        if (slimeHp <= 0)
+        {
+            float deathScale = Mathf.Clamp01(currentScaleRatio);
+            monsterShadow.localScale =
+                monsterShadowBaseScale * deathScale;
+            return;
+        }
+
+        float shadowScaleX = Mathf.Clamp(
+            1f + ((currentScaleRatio - 1f) * 0.6f),
+            0.9f,
+            1.1f
+        );
+        float shadowScaleY = Mathf.Clamp(
+            1f - ((currentScaleRatio - 1f) * 0.25f),
+            0.95f,
+            1.05f
+        );
+
+        monsterShadow.localScale = Vector3.Scale(
+            monsterShadowBaseScale,
+            new Vector3(shadowScaleX, shadowScaleY, 1f)
+        );
     }
 
     void FindUI()
@@ -203,11 +370,32 @@ public class BattleManager : MonoBehaviour
 
         playerVisual = GameObject.Find("PlayerPlaceholder")?.GetComponent<RectTransform>();
         slimeVisual = GameObject.Find("SlimePlaceholder")?.GetComponent<RectTransform>();
+        heroShadow = GameObject.Find("HeroShadow")?.GetComponent<RectTransform>();
+        monsterShadow = GameObject.Find("MonsterShadow")?.GetComponent<RectTransform>();
+
+        if (heroShadow != null)
+        {
+            heroShadowBasePosition = heroShadow.anchoredPosition;
+            heroShadowBaseScale = heroShadow.localScale;
+        }
+
+        if (monsterShadow != null)
+        {
+            monsterShadowBasePosition = monsterShadow.anchoredPosition;
+            monsterShadowBaseScale = monsterShadow.localScale;
+            monsterShadowImage = monsterShadow.GetComponent<Image>();
+
+            if (monsterShadowImage != null)
+                monsterShadowBaseColor = monsterShadowImage.color;
+        }
 
         if (playerVisual != null)
         {
             playerBodyImage = playerVisual.Find("Body")?.GetComponent<Image>();
             weaponImage = playerVisual.Find("Weapon")?.GetComponent<Image>();
+            heroIdleBasePosition = playerVisual.anchoredPosition;
+            heroIdleBaseScale = playerVisual.localScale;
+            heroIdleInitialized = true;
         }
 
         // 현재 몬스터를 표시하는 UI Image
@@ -494,6 +682,9 @@ public class BattleManager : MonoBehaviour
 
     void ResetSaveData()
     {
+        PauseHeroIdle();
+        PauseMonsterIdle();
+        ResetMonsterHitFlash();
         saveService?.DeleteSave();
 
         playerProgress.Reset();
@@ -887,6 +1078,75 @@ public class BattleManager : MonoBehaviour
 #endif
     }
 
+    void PauseHeroIdle()
+    {
+        heroIdlePaused = true;
+        ResetHeroIdleTransform();
+    }
+
+    void ResumeHeroIdle()
+    {
+        if (!heroIdleInitialized || battleEnded)
+            return;
+
+        ResetHeroIdleTransform();
+        heroIdleElapsed = 0f;
+        heroIdlePaused = false;
+    }
+
+    void ResetHeroIdleTransform()
+    {
+        if (!heroIdleInitialized || playerVisual == null)
+            return;
+
+        playerVisual.anchoredPosition = heroIdleBasePosition;
+        playerVisual.localScale = heroIdleBaseScale;
+    }
+
+    void PauseMonsterIdle()
+    {
+        monsterIdlePaused = true;
+        ResetMonsterIdleTransform();
+    }
+
+    void ResumeMonsterIdle()
+    {
+        if (!monsterIdleInitialized || battleEnded || slimeHp <= 0)
+            return;
+
+        ResetMonsterIdleTransform();
+        monsterIdleElapsed = 0f;
+        monsterIdlePaused = false;
+    }
+
+    void ResetMonsterIdleTransform()
+    {
+        if (!monsterIdleInitialized || slimeVisual == null)
+            return;
+
+        slimeVisual.anchoredPosition = monsterIdleBasePosition;
+        slimeVisual.localScale = monsterIdleBaseScale;
+        slimeVisual.localRotation = Quaternion.identity;
+    }
+
+    void ResetGroundShadows()
+    {
+        if (heroShadow != null)
+        {
+            heroShadow.anchoredPosition = heroShadowBasePosition;
+            heroShadow.localScale = heroShadowBaseScale;
+        }
+
+        if (monsterShadow != null)
+        {
+            monsterShadow.anchoredPosition = monsterShadowBasePosition;
+            monsterShadow.localScale = monsterShadowBaseScale;
+        }
+
+        if (monsterShadowImage != null)
+            monsterShadowImage.color = monsterShadowBaseColor;
+    }
+
     void TryBuyItem(string itemId)
     {
         ItemData item = itemService.GetItem(itemId);
@@ -1119,6 +1379,7 @@ public class BattleManager : MonoBehaviour
     void PlayerAttack(string inputWord)
     {
         currentWord = inputWord;
+        PauseHeroIdle();
 
         // 공격 중에는 입력 방지
         wordInput.text = "";
@@ -1295,7 +1556,18 @@ public class BattleManager : MonoBehaviour
         if (slimeVisual == null)
             yield break;
 
+        PauseMonsterIdle();
+        PauseHeroIdle();
+
         Vector2 originalSlimePos = slimeVisual.anchoredPosition;
+        Vector3 attackBaseScale = monsterIdleBaseScale;
+
+        yield return StartCoroutine(MonsterAttackAnticipation());
+
+        Vector2 anticipationPosition = slimeVisual.anchoredPosition;
+        Vector3 anticipationScale = slimeVisual.localScale;
+
+        PlaySfx(SfxId.MonsterAttack);
 
         // -------------------------
         // 1. 용사 쪽으로 돌진
@@ -1305,6 +1577,7 @@ public class BattleManager : MonoBehaviour
             originalSlimePos + new Vector2(-85f, 0f);
 
         float rushDuration = 0.13f;
+        float scaleRecoveryDuration = 0.04f;
         float elapsed = 0f;
 
         while (elapsed < rushDuration)
@@ -1315,15 +1588,21 @@ public class BattleManager : MonoBehaviour
 
             slimeVisual.anchoredPosition =
                 Vector2.Lerp(
-                    originalSlimePos,
+                    anticipationPosition,
                     attackPosition,
                     t
                 );
+            slimeVisual.localScale = Vector3.Lerp(
+                anticipationScale,
+                attackBaseScale,
+                Mathf.Clamp01(elapsed / scaleRecoveryDuration)
+            );
 
             yield return null;
         }
 
         slimeVisual.anchoredPosition = attackPosition;
+        slimeVisual.localScale = attackBaseScale;
 
         // -------------------------
         // 2. 실제 데미지 적용
@@ -1350,6 +1629,7 @@ public class BattleManager : MonoBehaviour
         // Critical은 CRITICAL! 연출이 거의 끝난 뒤 데미지 숫자 표시
         if (isMonsterCritical)
         {
+            PlaySfx(SfxId.Critical);
             StartCoroutine(CriticalImpactEffect());
             StartCoroutine(CriticalTextEffect());
             StartCoroutine(
@@ -1367,7 +1647,7 @@ public class BattleManager : MonoBehaviour
 
         // 플레이어는 왼쪽으로 밀리며 피격
         if (playerVisual != null)
-            StartCoroutine(HitEffect(playerVisual));
+            StartCoroutine(PlayerHitEffect());
 
         yield return new WaitForSeconds(0.1f);
 
@@ -1394,6 +1674,61 @@ public class BattleManager : MonoBehaviour
         }
 
         slimeVisual.anchoredPosition = originalSlimePos;
+        ResumeMonsterIdle();
+    }
+
+    IEnumerator MonsterAttackAnticipation()
+    {
+        float duration = currentFloor >= 10
+            ? 0.18f
+            : currentFloor == 9
+                ? 0.14f
+                : 0.12f;
+        float scaleX = currentFloor >= 10
+            ? 1.03f
+            : currentFloor == 9
+                ? 1.04f
+                : 1.05f;
+        float scaleY = currentFloor >= 10
+            ? 0.95f
+            : currentFloor == 9
+                ? 0.94f
+                : 0.92f;
+        float yOffset = currentFloor >= 10
+            ? -2f
+            : currentFloor == 9
+                ? -2f
+                : -2.5f;
+
+        Vector2 squashPosition =
+            monsterIdleBasePosition + new Vector2(0f, yOffset);
+        Vector3 squashScale = Vector3.Scale(
+            monsterIdleBaseScale,
+            new Vector3(scaleX, scaleY, 1f)
+        );
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, elapsed / duration);
+
+            slimeVisual.anchoredPosition = Vector2.Lerp(
+                monsterIdleBasePosition,
+                squashPosition,
+                t
+            );
+            slimeVisual.localScale = Vector3.Lerp(
+                monsterIdleBaseScale,
+                squashScale,
+                t
+            );
+
+            yield return null;
+        }
+
+        slimeVisual.anchoredPosition = squashPosition;
+        slimeVisual.localScale = squashScale;
     }
 
     int CalculateIncomingDamage(int rawDamage)
@@ -1510,6 +1845,66 @@ public class BattleManager : MonoBehaviour
         target.anchoredPosition = originalPosition;
     }
 
+    IEnumerator PlayerHitEffect()
+    {
+        PauseHeroIdle();
+        yield return StartCoroutine(HitEffect(playerVisual));
+
+        if (!battleEnded)
+            ResumeHeroIdle();
+    }
+
+    IEnumerator MonsterHitEffect()
+    {
+        PauseMonsterIdle();
+        StartMonsterHitFlash();
+        yield return StartCoroutine(HitEffect(slimeVisual));
+
+        if (!battleEnded && slimeHp > 0)
+            ResumeMonsterIdle();
+    }
+
+    void StartMonsterHitFlash()
+    {
+        if (monsterImage == null)
+            return;
+
+        if (monsterHitFlashCoroutine != null)
+            StopCoroutine(monsterHitFlashCoroutine);
+
+        monsterHitFlashCoroutine = StartCoroutine(MonsterHitFlash());
+    }
+
+    IEnumerator MonsterHitFlash()
+    {
+        Color originalColor = monsterImage.color;
+        monsterImage.color = new Color(
+            originalColor.r,
+            originalColor.g,
+            originalColor.b,
+            MonsterHitFlashAlpha
+        );
+
+        yield return new WaitForSeconds(MonsterHitFlashDuration);
+
+        if (monsterImage != null)
+            monsterImage.color = originalColor;
+
+        monsterHitFlashCoroutine = null;
+    }
+
+    void ResetMonsterHitFlash()
+    {
+        if (monsterHitFlashCoroutine != null)
+        {
+            StopCoroutine(monsterHitFlashCoroutine);
+            monsterHitFlashCoroutine = null;
+        }
+
+        if (monsterImage != null)
+            monsterImage.color = Color.white;
+    }
+
     // ========================================
     // 플레이어 공격 연출
     // 1. 앞으로 돌진
@@ -1520,7 +1915,10 @@ public class BattleManager : MonoBehaviour
     IEnumerator PlayerAttackSequence()
     {
         if (playerVisual == null)
+        {
+            ResumeHeroIdle();
             yield break;
+        }
 
         // 현재 용사의 원래 위치 저장
         Vector2 originalPlayerPos = playerVisual.anchoredPosition;
@@ -1565,6 +1963,8 @@ public class BattleManager : MonoBehaviour
         // 2. 나무검 휘두르기
         // ========================================
 
+        PlaySfx(SfxId.HeroAttack);
+
         if (weaponVisual != null)
         {
             float swingDuration = 0.13f;
@@ -1599,8 +1999,11 @@ public class BattleManager : MonoBehaviour
         // ========================================
 
         // 검이 닿는 순간 타격 이펙트!
+        PlaySfx(SfxId.MonsterHit);
+
         if (isCriticalAttack)
         {
+            PlaySfx(SfxId.Critical);
             StartCoroutine(CriticalImpactEffect());
             StartCoroutine(CriticalTextEffect());
         }
@@ -1644,7 +2047,7 @@ public class BattleManager : MonoBehaviour
 
         // 슬라임 피격 흔들림
         if (slimeVisual != null)
-            StartCoroutine(HitEffect(slimeVisual));
+            StartCoroutine(MonsterHitEffect());
 
 
         // ========================================
@@ -1701,6 +2104,7 @@ public class BattleManager : MonoBehaviour
         // 7. 슬라임 반격 시작
         // ========================================
 
+        ResumeHeroIdle();
         StartCoroutine(SlimeTurn());
     }
 
@@ -1714,6 +2118,10 @@ public class BattleManager : MonoBehaviour
     {
         if (slimeVisual == null)
             yield break;
+
+        PauseMonsterIdle();
+        ResetMonsterHitFlash();
+        PlaySfx(SfxId.MonsterDeath);
 
         Vector2 originalPosition = slimeVisual.anchoredPosition;
         Vector3 originalScale = slimeVisual.localScale;
@@ -1784,6 +2192,16 @@ public class BattleManager : MonoBehaviour
                     t
                 );
 
+            if (monsterShadowImage != null)
+            {
+                monsterShadowImage.color = new Color(
+                    monsterShadowBaseColor.r,
+                    monsterShadowBaseColor.g,
+                    monsterShadowBaseColor.b,
+                    monsterShadowBaseColor.a * (1f - t)
+                );
+            }
+
             yield return null;
         }
 
@@ -1793,6 +2211,16 @@ public class BattleManager : MonoBehaviour
         // ========================================
 
         slimeVisual.localScale = Vector3.zero;
+
+        if (monsterShadowImage != null)
+        {
+            monsterShadowImage.color = new Color(
+                monsterShadowBaseColor.r,
+                monsterShadowBaseColor.g,
+                monsterShadowBaseColor.b,
+                0f
+            );
+        }
     }
 
     // ========================================
@@ -2046,6 +2474,8 @@ public class BattleManager : MonoBehaviour
     // ========================================
     void WinBattle()
     {
+        PauseHeroIdle();
+        monsterIdlePaused = true;
         battleEnded = true;
 
         // JSON 데이터 기준 보상 지급
@@ -2054,7 +2484,10 @@ public class BattleManager : MonoBehaviour
         playerProgress.AddGold(currentMonsterData.goldReward);
 
         if (didLevelUp)
+        {
+            PlaySfx(SfxId.LevelUp);
             StartCoroutine(LevelUpTextEffect());
+        }
 
         SaveGame();
 
@@ -2083,6 +2516,8 @@ public class BattleManager : MonoBehaviour
         // 승리 패널 표시
         if (victoryPanel != null)
             victoryPanel.SetActive(true);
+
+        PlaySfx(SfxId.Victory);
     }
 
     void OnNextFloorClicked()
@@ -2125,6 +2560,9 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
+        PauseHeroIdle();
+        PauseMonsterIdle();
+        ResetMonsterHitFlash();
         StopAllCoroutines();
 
         if (victoryPanel != null)
@@ -2198,6 +2636,9 @@ public class BattleManager : MonoBehaviour
     // ========================================
     void ResetBattleForNextFloor()
     {
+        PauseHeroIdle();
+        PauseMonsterIdle();
+        ResetMonsterHitFlash();
         battleEnded = false;
 
         // 몬스터 HP 초기화
@@ -2221,6 +2662,8 @@ public class BattleManager : MonoBehaviour
             slimeVisual.anchoredPosition = slimeOriginalPosition;
         }
 
+        ResetGroundShadows();
+
         // 입력창 복구
         if (wordInput != null)
         {
@@ -2240,10 +2683,15 @@ public class BattleManager : MonoBehaviour
 
         if (wordInput != null)
             wordInput.ActivateInputField();
+
+        ResumeHeroIdle();
+        ResumeMonsterIdle();
     }
 
     void LoseBattle()
     {
+        PauseHeroIdle();
+        PauseMonsterIdle();
         battleEnded = true;
 
         chainHintText.text = "패배했습니다.";
@@ -2539,5 +2987,24 @@ public class BattleManager : MonoBehaviour
             : 1f;
 
         slimeVisual.localScale = Vector3.one * scale;
+        monsterIdleBasePosition = slimeOriginalPosition;
+        monsterIdleBaseScale = slimeVisual.localScale;
+        monsterIdleElapsed = 0f;
+        monsterIdleInitialized = true;
+
+        if (monsterShadow != null)
+        {
+            float shadowScale = currentFloor >= 10
+                ? 1.55f
+                : currentFloor == 9
+                    ? 1.20f
+                    : 1f;
+
+            monsterShadowBaseScale = Vector3.one * shadowScale;
+            monsterShadow.localScale = monsterShadowBaseScale;
+        }
+
+        if (monsterShadowImage != null)
+            monsterShadowImage.color = monsterShadowBaseColor;
     }
 }
