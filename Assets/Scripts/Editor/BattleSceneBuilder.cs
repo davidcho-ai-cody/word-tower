@@ -200,10 +200,34 @@ public static class BattleSceneBuilder
         AudioClip monsterHitClip = AssetDatabase.LoadAssetAtPath<AudioClip>(
             "Assets/Audio/SFX/Combat/monster_hit_01.wav"
         );
+        AudioClip criticalClip = AssetDatabase.LoadAssetAtPath<AudioClip>(
+            "Assets/Audio/SFX/Combat/critical_01.mp3"
+        );
+        AudioClip monsterSquashClip = AssetDatabase.LoadAssetAtPath<AudioClip>(
+            "Assets/Audio/SFX/Combat/monster_squash_01.wav"
+        );
+        AudioClip monsterAttackClip = AssetDatabase.LoadAssetAtPath<AudioClip>(
+            "Assets/Audio/SFX/Combat/monster_attack_01.mp3"
+        );
+        AudioClip monsterDeathClip = AssetDatabase.LoadAssetAtPath<AudioClip>(
+            "Assets/Audio/SFX/Combat/monster_death_01.wav"
+        );
+        AudioClip levelUpClip = AssetDatabase.LoadAssetAtPath<AudioClip>(
+            "Assets/Audio/SFX/Reward/level_up_01.wav"
+        );
+        AudioClip victoryClip = AssetDatabase.LoadAssetAtPath<AudioClip>(
+            "Assets/Audio/SFX/Reward/victory_01.wav"
+        );
 
-        audioManager.ConfigureDefaultCombatClips(
+        audioManager.ConfigureDefaultSfxClips(
             heroAttackClip,
-            monsterHitClip
+            monsterHitClip,
+            criticalClip,
+            monsterSquashClip,
+            monsterAttackClip,
+            monsterDeathClip,
+            levelUpClip,
+            victoryClip
         );
         EditorUtility.SetDirty(audioManager);
     }

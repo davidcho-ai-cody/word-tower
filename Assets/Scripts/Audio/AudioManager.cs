@@ -5,6 +5,7 @@ public enum SfxId
     HeroAttack,
     MonsterHit,
     Critical,
+    MonsterSquash,
     MonsterAttack,
     MonsterDeath,
     LevelUp,
@@ -27,6 +28,7 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip heroAttackClip;
     [SerializeField] private AudioClip monsterHitClip;
     [SerializeField] private AudioClip criticalClip;
+    [SerializeField] private AudioClip monsterSquashClip;
     [SerializeField] private AudioClip monsterAttackClip;
     [SerializeField] private AudioClip monsterDeathClip;
     [SerializeField] private AudioClip levelUpClip;
@@ -76,9 +78,15 @@ public class AudioManager : MonoBehaviour
         ApplyVolumes();
     }
 
-    public bool ConfigureDefaultCombatClips(
+    public bool ConfigureDefaultSfxClips(
         AudioClip defaultHeroAttackClip,
-        AudioClip defaultMonsterHitClip
+        AudioClip defaultMonsterHitClip,
+        AudioClip defaultCriticalClip,
+        AudioClip defaultMonsterSquashClip,
+        AudioClip defaultMonsterAttackClip,
+        AudioClip defaultMonsterDeathClip,
+        AudioClip defaultLevelUpClip,
+        AudioClip defaultVictoryClip
     )
     {
         bool changed = false;
@@ -92,6 +100,42 @@ public class AudioManager : MonoBehaviour
         if (monsterHitClip == null && defaultMonsterHitClip != null)
         {
             monsterHitClip = defaultMonsterHitClip;
+            changed = true;
+        }
+
+        if (criticalClip == null && defaultCriticalClip != null)
+        {
+            criticalClip = defaultCriticalClip;
+            changed = true;
+        }
+
+        if (monsterSquashClip == null && defaultMonsterSquashClip != null)
+        {
+            monsterSquashClip = defaultMonsterSquashClip;
+            changed = true;
+        }
+
+        if (monsterAttackClip == null && defaultMonsterAttackClip != null)
+        {
+            monsterAttackClip = defaultMonsterAttackClip;
+            changed = true;
+        }
+
+        if (monsterDeathClip == null && defaultMonsterDeathClip != null)
+        {
+            monsterDeathClip = defaultMonsterDeathClip;
+            changed = true;
+        }
+
+        if (levelUpClip == null && defaultLevelUpClip != null)
+        {
+            levelUpClip = defaultLevelUpClip;
+            changed = true;
+        }
+
+        if (victoryClip == null && defaultVictoryClip != null)
+        {
+            victoryClip = defaultVictoryClip;
             changed = true;
         }
 
@@ -149,6 +193,8 @@ public class AudioManager : MonoBehaviour
                 return monsterHitClip;
             case SfxId.Critical:
                 return criticalClip;
+            case SfxId.MonsterSquash:
+                return monsterSquashClip;
             case SfxId.MonsterAttack:
                 return monsterAttackClip;
             case SfxId.MonsterDeath:

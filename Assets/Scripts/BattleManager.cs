@@ -9,6 +9,7 @@ public class BattleManager : MonoBehaviour
 {
     private const float CriticalTextStartDelay = 0.05f;
     private const float CriticalDamageTextDelay = 0.6f;
+    private const float LevelUpRewardDelay = 0.65f;
     private const float HeroIdleCycleDuration = 1.8f;
     private const float HeroIdleYOffset = 2.5f;
     private const float HeroIdleScaleX = 0.997f;
@@ -1567,8 +1568,6 @@ public class BattleManager : MonoBehaviour
         Vector2 anticipationPosition = slimeVisual.anchoredPosition;
         Vector3 anticipationScale = slimeVisual.localScale;
 
-        PlaySfx(SfxId.MonsterAttack);
-
         // -------------------------
         // 1. 용사 쪽으로 돌진
         // 슬라임은 오른쪽에 있으므로 왼쪽(-X)으로 이동
@@ -1603,6 +1602,8 @@ public class BattleManager : MonoBehaviour
 
         slimeVisual.anchoredPosition = attackPosition;
         slimeVisual.localScale = attackBaseScale;
+
+        PlaySfx(SfxId.MonsterAttack);
 
         // -------------------------
         // 2. 실제 데미지 적용
@@ -1679,6 +1680,8 @@ public class BattleManager : MonoBehaviour
 
     IEnumerator MonsterAttackAnticipation()
     {
+        PlaySfx(SfxId.MonsterSquash);
+
         float duration = currentFloor >= 10
             ? 0.18f
             : currentFloor == 9
@@ -2469,6 +2472,17 @@ public class BattleManager : MonoBehaviour
         levelUpText.gameObject.SetActive(false);
     }
 
+    IEnumerator LevelUpRewardEffectAfterDelay(int rewardFloor)
+    {
+        yield return new WaitForSeconds(LevelUpRewardDelay);
+
+        if (!battleEnded || currentFloor != rewardFloor)
+            yield break;
+
+        PlaySfx(SfxId.LevelUp);
+        yield return StartCoroutine(LevelUpTextEffect());
+    }
+
     // ========================================
     // 전투 승리 처리
     // ========================================
@@ -2482,12 +2496,6 @@ public class BattleManager : MonoBehaviour
         bool didLevelUp =
             playerProgress.AddExp(currentMonsterData.expReward);
         playerProgress.AddGold(currentMonsterData.goldReward);
-
-        if (didLevelUp)
-        {
-            PlaySfx(SfxId.LevelUp);
-            StartCoroutine(LevelUpTextEffect());
-        }
 
         SaveGame();
 
@@ -2518,6 +2526,13 @@ public class BattleManager : MonoBehaviour
             victoryPanel.SetActive(true);
 
         PlaySfx(SfxId.Victory);
+
+        if (didLevelUp)
+        {
+            StartCoroutine(
+                LevelUpRewardEffectAfterDelay(currentFloor)
+            );
+        }
     }
 
     void OnNextFloorClicked()

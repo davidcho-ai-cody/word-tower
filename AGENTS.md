@@ -95,9 +95,9 @@ Victory 연결 흐름:
     WinBattle()
     → PlayerProgressService.AddExp(currentMonsterData.expReward)
     → PlayerProgressService.AddGold(currentMonsterData.goldReward)
-    → 레벨업 발생 시 LevelUpTextEffect()
-    → UpdateUI()
-    → VictoryPanel 표시
+    → Save / UpdateUI()
+    → VictoryPanel / Victory SFX
+    → 레벨업 발생 시 짧은 간격 후 LevelUp SFX + LevelUpTextEffect()
 
 레벨업 규칙:
 
@@ -462,6 +462,44 @@ Equipment Visual:
 
 슬라임 킹은 첫 보스로 확정됐지만 isBoss 기반 보스 전용 전투 패턴은 아직 없다.
 
+### 9.1 Chapter Clear 공통 기획 — 확정 방향, 미구현
+
+각 Chapter의 마지막 Boss를 처치하면 일반 Floor Victory와 구분되는 Chapter Clear Sequence를 실행한다. Chapter 1에서는 10층 Slime King 처치가 해당 트리거다.
+
+기본 흐름:
+
+    Final Boss 마지막 공격
+    → Boss Death
+    → 짧은 여운
+    → Battle 화면 Fade Out
+    → Chapter Clear Illustration Fade In
+    → Chapter Title / Complete UI
+    → 짧은 Story Text
+    → 다음 Chapter 이동
+
+정확한 연출 시간은 아직 확정하지 않는다. 현재 코드와 Scene에는 Chapter Clear 분기가 구현되어 있지 않다.
+
+Chapter Clear Illustration 원칙:
+
+- 일반 Gameplay는 밝고 귀여운 2D SD Character를 유지한다.
+- Chapter Ending은 SD가 아닌 Full Character 비율의 고전 판타지 책 삽화 같은 고품질 Illustration으로 대비를 만든다.
+- Chapter 1은 Hero가 Slime King을 처치하는 역동적인 순간을 기록한 판타지 삽화 방향이다. 현재 Concept Sample은 최종 게임 Asset 확정본이 아니다.
+- Artwork에는 가능하면 문자를 직접 넣지 않고 CHAPTER, Title, COMPLETE 등의 Text는 Unity UI로 분리해 Animation, Localization, 재사용성을 보존한다.
+- Story Text는 Chapter 종료와 다음 모험을 암시하는 1~2문장 정도로 짧게 사용한다. 구체 문구는 아직 확정하지 않는다.
+
+수집 확장 방향:
+
+- Chapter Clear 시 해당 Illustration을 Unlock한다.
+- 향후 `모험의 기록` 또는 Gallery에서 획득 Illustration을 다시 감상할 수 있게 한다.
+- 미획득 항목은 Silhouette, Lock, Unknown 등으로 표현할 수 있다.
+- Gallery와 Unlock 저장 구조는 아직 구현하지 않는다.
+
+Audio 방향:
+
+- 일반 Victory는 현재 `victory_01.wav`를 사용한다.
+- Chapter Clear는 향후 전용 Jingle 또는 Music으로 일반 Victory와 구분한다.
+- Boss/Chapter Clear 전용 Audio는 아직 제작·연결하지 않는다.
+
 ### 10층 이후 방향 — 미확정 후보
 
 - 11~20층: 스켈레톤 계열 후보
@@ -575,14 +613,20 @@ Debug 이동 시:
 
 시각 테스트된 타이밍과 공용 오브젝트 이름은 관련 작업이 아니면 변경하지 않는다.
 
-### Audio System 2단계
+### Audio System 7단계
 
 - `Assets/Scripts/Audio/AudioManager.cs`가 Scene 단위 AudioManager와 SFX/BGM AudioSource를 관리한다.
-- SFX는 `SfxId`와 `PlayOneShot()`을 사용하며 HeroAttack, MonsterHit, Critical, MonsterAttack, MonsterDeath, LevelUp, Victory 이벤트가 BattleManager에 연결되어 있다.
+- SFX는 `SfxId`와 `PlayOneShot()`을 사용하며 HeroAttack, MonsterHit, Critical, MonsterSquash, MonsterAttack, MonsterDeath, LevelUp, Victory 이벤트가 BattleManager에 연결되어 있다.
 - SFX/BGM AudioSource는 분리되어 있고 BattleSceneBuilder가 Hierarchy를 재생성한다. Main Camera의 기존 AudioListener를 사용한다.
 - HeroAttack은 `hero_attack_01.flac` Whoosh를 Swing 시작에 재생하고, MonsterHit은 `monster_hit_01.wav` Slime Impact를 실제 타격 시점에 재생한다. 두 역할과 호출 시점을 분리한다.
-- Critical, MonsterAttack, MonsterDeath, LevelUp, Victory의 실제 Clip과 BGM은 아직 없으며 Clip 미등록 상태에서는 오류나 반복 경고 없이 재생을 건너뛴다.
-- Settings/Volume UI, Audio Mixer, UI/상점 SFX, 실제 BGM은 TODO다.
+- Critical은 `critical_01.mp3`를 실제 타격 레이어로 사용한다. Player Critical에서는 HeroAttack 이후 MonsterHit과 Critical을 함께 재생하고, Monster Critical에서도 같은 Critical Clip을 사용한다.
+- Monster 공격은 `monster_squash_01.wav`의 Anticipation 압축음과 `monster_attack_01.mp3`의 Rush/Hero Impact 음으로 역할을 분리한다. Monster Critical은 여기에 공용 `critical_01.mp3`를 겹쳐 재생한다.
+- MonsterDeath는 `monster_death_01.wav`를 Slime 사망 애니메이션 시작에 재생한다. 1~10층 Slime은 같은 Clip을 사용하며, Victory는 별도의 전투 결과 이벤트로 유지한다.
+- Victory는 Reward 폴더의 `victory_01.wav`를 VictoryPanel 표시 시 재생한다. 1~10층이 같은 Jingle을 사용하며, Boss/Chapter Clear 전용 Jingle은 아직 없다.
+- LevelUp은 Reward 폴더의 `level_up_01.wav`를 실제 레벨 상승 시에만 재생한다. 한 Reward에서 여러 레벨이 올라도 한 번만 울리며, Victory와 구분되도록 SFX와 기존 팝업을 함께 짧게 늦춘다.
+- Save Load와 Reset은 LevelUp 이벤트가 아니므로 재생하지 않는다.
+- Shop Buy, Equip, Button Click, Gold/UI SFX와 Settings/Volume UI, Audio Mixer는 TODO다.
+- BGM AudioSource 기반만 있으며 실제 BGM은 아직 제작·재생하지 않는다.
 
 ---
 
@@ -703,8 +747,10 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 - Editor/Development Build용 Floor Debug UI
 - 정적 한글 폰트 기반 TMP 표시
 - Sprite 자동 Import
-- Scene 단위 AudioManager, SFX/BGM AudioSource 분리와 1차 전투 SFX 연결 지점
-- HeroAttack Whoosh와 Slime MonsterHit Impact 실제 AudioClip 연결
+- Hero/Slime Procedural Idle, 등급별 Slime Idle 차이, Attack Anticipation, Hit Flash, Ground Shadow 연동
+- Scene 단위 AudioManager와 SFX/BGM AudioSource 분리, SfxId/PlayOneShot 기반 중첩 재생
+- HeroAttack, MonsterHit, Critical, MonsterSquash, MonsterAttack, MonsterDeath 실제 Combat SFX
+- Victory와 LevelUp 실제 Reward SFX 및 다중 레벨업 1회 재생
 
 ---
 
@@ -718,24 +764,29 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 - 단어 뜻/도감/부적절 단어 관리
 - Android SQLite와 런타임 이미지 로딩
 - 타이틀/메뉴/튜토리얼
-- Critical, MonsterAttack, MonsterDeath, LevelUp, Victory 실제 SFX
+- Gold, Shop Buy, Equip, UI Button 실제 SFX
 - 실제 BGM AudioClip과 BGM 재생 로직
 - Settings/Volume UI와 Audio Mixer
+- Chapter Clear Sequence, Illustration Unlock, Gallery
+- Boss/Chapter Clear 전용 Jingle 또는 Music
 - 프로덕션 UI 폴리시
 
 ---
 
 ## 20. 현재 권장 다음 작업
 
-Equipment Visual까지 구현됐으며 다음 가까운 콘텐츠 작업은 10층 챕터 완료 처리다.
+전투 Polish, Equipment Visual, 핵심 Combat/Reward SFX까지 구현됐다. 다음 작업 후보는 아래 순서이며 개발 상황에 따라 조정할 수 있다.
 
 권장 순서:
 
-1. 10층 Victory 챕터 완료 UI
-2. isBoss를 활용한 최소 보스 연출/분기
-3. 인벤토리 UI
-4. Android용 장비/몬스터 런타임 Sprite 로딩
-5. 11층 이후 콘텐츠 확정
+1. Shop Buy SFX
+2. Equip SFX
+3. Button Click SFX
+4. Slime Chapter Clear Sequence 구현
+5. Chapter Clear Illustration 최종 제작 및 적용
+6. BGM 방향성 기획 및 구현
+
+BGM은 임시 곡을 먼저 붙이기보다 WordTower 고유의 음악적 Identity를 정한 후 진행한다. Main/Title Theme, Battle BGM, Boss BGM, Chapter Clear Music이 완전히 분리된 곡이 아니라 공통 Melody 또는 Motif를 공유하는 방향을 검토한다. 현재는 기획 단계다.
 
 ---
 
