@@ -7,6 +7,9 @@ using System.IO;
 
 public class BattleManager : MonoBehaviour
 {
+    private const float CriticalTextStartDelay = 0.05f;
+    private const float CriticalDamageTextDelay = 0.6f;
+
     [Header("Player")]
     public int playerHp = 100;
 
@@ -30,7 +33,37 @@ public class BattleManager : MonoBehaviour
     private int requiredExp => playerProgress.RequiredExp;
     private int gold => playerProgress.Gold;
     private int playerMaxHp => playerProgress.PlayerMaxHp;
-    private int playerAttack => playerProgress.PlayerAttack;
+    private int playerBaseAttack => playerProgress.PlayerAttack;
+    private int equippedWeaponAttackBonus
+    {
+        get
+        {
+            ItemData weapon = itemService?.GetItem(
+                playerProgress.EquippedWeaponId
+            );
+
+            return weapon != null &&
+                weapon.GetItemType() == ItemType.Weapon
+                ? weapon.attackBonus
+                : 0;
+        }
+    }
+    private float equippedArmorDefenseRate
+    {
+        get
+        {
+            ItemData armor = itemService?.GetItem(
+                playerProgress.EquippedArmorId
+            );
+
+            return armor != null &&
+                armor.GetItemType() == ItemType.Armor
+                ? Mathf.Max(0f, armor.defenseRate)
+                : 0f;
+        }
+    }
+    private int playerAttack =>
+        playerBaseAttack + equippedWeaponAttackBonus;
 
     private TMP_Text playerHpText;
     private TMP_Text slimeHpText;
@@ -67,6 +100,8 @@ public class BattleManager : MonoBehaviour
 
     private RectTransform playerVisual;
     private RectTransform slimeVisual;
+    private Image playerBodyImage;
+    private Image weaponImage;
 
     // =========================
     // 공격 / 타격 연출
@@ -139,6 +174,7 @@ public class BattleManager : MonoBehaviour
         itemService = new ItemService();
         itemService.Initialize();
         ValidateStartingItems();
+        ApplyEquipmentVisuals();
 
         // 현재 층 데이터와 몬스터 데이터 로드
         LoadFloorAndMonsterData();
@@ -167,6 +203,12 @@ public class BattleManager : MonoBehaviour
 
         playerVisual = GameObject.Find("PlayerPlaceholder")?.GetComponent<RectTransform>();
         slimeVisual = GameObject.Find("SlimePlaceholder")?.GetComponent<RectTransform>();
+
+        if (playerVisual != null)
+        {
+            playerBodyImage = playerVisual.Find("Body")?.GetComponent<Image>();
+            weaponImage = playerVisual.Find("Weapon")?.GetComponent<Image>();
+        }
 
         // 현재 몬스터를 표시하는 UI Image
         if (slimeVisual != null)
@@ -457,6 +499,11 @@ public class BattleManager : MonoBehaviour
         playerProgress.Reset();
         currentFloor = 1;
         highestFloor = 1;
+        ValidateStartingItems();
+
+        isShopOpen = false;
+        if (shopPanel != null)
+            shopPanel.SetActive(false);
 
         StopAllCoroutines();
 
@@ -480,6 +527,10 @@ public class BattleManager : MonoBehaviour
 
         LoadFloorAndMonsterData();
         ResetBattleForNextFloor();
+        ApplyEquipmentVisuals();
+
+        if (shopPanel != null)
+            RefreshShopUI("");
 
         Debug.Log("Save 데이터 초기화 완료");
     }
@@ -489,16 +540,55 @@ public class BattleManager : MonoBehaviour
         if (itemService == null)
             return;
 
-        ValidateItemExists(playerProgress.EquippedWeaponId);
-        ValidateItemExists(playerProgress.EquippedArmorId);
+        bool correctedWeapon = ValidateEquippedItem(
+            playerProgress.EquippedWeaponId,
+            PlayerProgressData.DefaultWeaponId,
+            ItemType.Weapon
+        );
+        bool correctedArmor = ValidateEquippedItem(
+            playerProgress.EquippedArmorId,
+            PlayerProgressData.DefaultArmorId,
+            ItemType.Armor
+        );
+
+        if (correctedWeapon || correctedArmor)
+            SaveGame();
     }
 
-    void ValidateItemExists(string itemId)
+    bool ValidateEquippedItem(
+        string equippedItemId,
+        string fallbackItemId,
+        ItemType expectedType
+    )
     {
-        if (itemService.GetItem(itemId) != null)
-            return;
+        ItemData equippedItem = itemService.GetItem(equippedItemId);
 
-        Debug.LogWarning($"아이템 데이터를 찾을 수 없습니다: {itemId}");
+        if (equippedItem != null &&
+            equippedItem.GetItemType() == expectedType &&
+            playerProgress.OwnsItem(equippedItemId))
+        {
+            return false;
+        }
+
+        ItemData fallbackItem = itemService.GetItem(fallbackItemId);
+
+        if (fallbackItem == null ||
+            fallbackItem.GetItemType() != expectedType)
+        {
+            Debug.LogError(
+                $"기본 장비 데이터를 찾을 수 없습니다: {fallbackItemId}"
+            );
+            return false;
+        }
+
+        playerProgress.EnsureOwnedItem(fallbackItemId);
+        playerProgress.TryEquipItem(fallbackItem);
+
+        Debug.LogWarning(
+            $"잘못된 장착 ID를 기본 장비로 복구했습니다: " +
+            $"{equippedItemId} -> {fallbackItemId}"
+        );
+        return true;
     }
 
     bool CanOpenShop()
@@ -616,8 +706,6 @@ public class BattleManager : MonoBehaviour
         );
 
         string statText = GetItemStatText(item);
-        string stateText = GetItemStateText(item);
-
         CreateShopText(
             row.transform,
             "Name",
@@ -652,15 +740,21 @@ public class BattleManager : MonoBehaviour
 
         if (ownsItem)
         {
-            CreateShopText(
+            bool isEquipped = IsItemEquipped(item);
+            Button equipButton = CreateShopButton(
                 row.transform,
-                "State",
-                stateText,
-                24,
-                FontStyles.Bold,
+                "EquipButton",
+                isEquipped ? "장착 중" : "장착",
                 new Vector2(0.82f, 0.50f),
-                new Vector2(230f, 70f)
+                new Vector2(210f, 70f)
             );
+
+            equipButton.interactable = !isEquipped;
+
+            if (!isEquipped)
+                equipButton.onClick.AddListener(
+                    () => TryEquipItem(item.id)
+                );
 
             return;
         }
@@ -681,23 +775,116 @@ public class BattleManager : MonoBehaviour
         ItemType itemType = item.GetItemType();
 
         if (itemType == ItemType.Weapon)
-            return $"ATK +{item.attackBonus}";
+            return $"공격력 +{item.attackBonus}";
 
         if (itemType == ItemType.Armor)
-            return $"DMG -{Mathf.RoundToInt(item.defenseRate * 100f)}%";
+            return $"받는 피해 {Mathf.RoundToInt(item.defenseRate * 100f)}% 감소";
 
         return "";
     }
 
-    string GetItemStateText(ItemData item)
+    bool IsItemEquipped(ItemData item)
     {
-        if (item.id == playerProgress.EquippedWeaponId ||
-            item.id == playerProgress.EquippedArmorId)
+        if (item == null)
+            return false;
+
+        if (item.GetItemType() == ItemType.Weapon)
+            return item.id == playerProgress.EquippedWeaponId;
+
+        if (item.GetItemType() == ItemType.Armor)
+            return item.id == playerProgress.EquippedArmorId;
+
+        return false;
+    }
+
+    void TryEquipItem(string itemId)
+    {
+        ItemData item = itemService.GetItem(itemId);
+
+        if (item == null)
         {
-            return "장착 중";
+            RefreshShopUI("아이템을 찾을 수 없습니다.");
+            return;
         }
 
-        return "보유 중";
+        if (!playerProgress.OwnsItem(item.id))
+        {
+            RefreshShopUI("보유하지 않은 아이템은 장착할 수 없습니다.");
+            return;
+        }
+
+        if (!playerProgress.TryEquipItem(item))
+        {
+            RefreshShopUI("장착할 수 없는 아이템입니다.");
+            return;
+        }
+
+        SaveGame();
+        ApplyEquipmentVisuals();
+        RefreshShopUI($"{item.name} 장착 완료!");
+    }
+
+    void ApplyEquipmentVisuals()
+    {
+        ApplyEquipmentSprite(
+            playerProgress.EquippedWeaponId,
+            ItemType.Weapon,
+            playerBodyImage: null,
+            equipmentImage: weaponImage
+        );
+        ApplyEquipmentSprite(
+            playerProgress.EquippedArmorId,
+            ItemType.Armor,
+            playerBodyImage: playerBodyImage,
+            equipmentImage: null
+        );
+    }
+
+    void ApplyEquipmentSprite(
+        string itemId,
+        ItemType expectedType,
+        Image playerBodyImage,
+        Image equipmentImage
+    )
+    {
+        ItemData item = itemService?.GetItem(itemId);
+        Image targetImage = expectedType == ItemType.Weapon
+            ? equipmentImage
+            : playerBodyImage;
+
+        if (item == null ||
+            item.GetItemType() != expectedType ||
+            targetImage == null)
+        {
+            return;
+        }
+
+        string spritePath = expectedType == ItemType.Weapon
+            ? item.spritePath
+            : item.characterSpritePath;
+
+        if (string.IsNullOrEmpty(spritePath))
+        {
+            Debug.LogWarning($"장비 이미지 경로가 비어 있습니다: {item.id}");
+            return;
+        }
+
+#if UNITY_EDITOR
+        Sprite equipmentSprite =
+            UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+
+        if (equipmentSprite == null)
+        {
+            Debug.LogWarning(
+                $"장비 이미지를 찾을 수 없습니다: {spritePath}"
+            );
+            return;
+        }
+
+        targetImage.sprite = equipmentSprite;
+        targetImage.color = Color.white;
+        targetImage.preserveAspect = true;
+#endif
     }
 
     void TryBuyItem(string itemId)
@@ -1141,7 +1328,9 @@ public class BattleManager : MonoBehaviour
         // -------------------------
         // 2. 실제 데미지 적용
         // -------------------------
-        playerHp -= attackDamage;
+        int finalDamage = CalculateIncomingDamage(attackDamage);
+
+        playerHp -= finalDamage;
         playerHp = Mathf.Max(playerHp, 0);
 
         UpdateUI();
@@ -1149,17 +1338,32 @@ public class BattleManager : MonoBehaviour
         if (isMonsterCritical)
         {
             chainHintText.text =
-                $"몬스터 크리티컬 공격! {attackDamage} 데미지!";
+                $"몬스터 크리티컬 공격! {finalDamage} 데미지!";
         }
         else
         {
             chainHintText.text =
-                $"슬라임의 공격! {attackDamage} 데미지\n" +
+                $"슬라임의 공격! {finalDamage} 데미지\n" +
                 $"'{currentWord[currentWord.Length - 1]}'로 시작하는 단어를 입력하세요!";
         }
 
-        // 플레이어 머리 위 데미지 숫자
-        ShowDamageText(playerVisual, attackDamage);
+        // Critical은 CRITICAL! 연출이 거의 끝난 뒤 데미지 숫자 표시
+        if (isMonsterCritical)
+        {
+            StartCoroutine(CriticalImpactEffect());
+            StartCoroutine(CriticalTextEffect());
+            StartCoroutine(
+                ShowDamageTextAfterDelay(
+                    playerVisual,
+                    finalDamage,
+                    CriticalDamageTextDelay
+                )
+            );
+        }
+        else
+        {
+            ShowDamageText(playerVisual, finalDamage);
+        }
 
         // 플레이어는 왼쪽으로 밀리며 피격
         if (playerVisual != null)
@@ -1190,6 +1394,15 @@ public class BattleManager : MonoBehaviour
         }
 
         slimeVisual.anchoredPosition = originalSlimePos;
+    }
+
+    int CalculateIncomingDamage(int rawDamage)
+    {
+        int calculatedDamage = Mathf.RoundToInt(
+            rawDamage * (1f - equippedArmorDefenseRate)
+        );
+
+        return Mathf.Max(1, calculatedDamage);
     }
 
     // ========================================
@@ -1413,8 +1626,21 @@ public class BattleManager : MonoBehaviour
                 $"공격 성공! {currentAttackDamage} 데미지!";
         }
 
-        // -20 데미지 숫자
-        ShowDamageText(slimeVisual, currentAttackDamage);
+        // 일반 공격은 즉시, Critical은 CRITICAL! 종료 직전에 표시
+        if (isCriticalAttack)
+        {
+            StartCoroutine(
+                ShowDamageTextAfterDelay(
+                    slimeVisual,
+                    currentAttackDamage,
+                    CriticalDamageTextDelay
+                )
+            );
+        }
+        else
+        {
+            ShowDamageText(slimeVisual, currentAttackDamage);
+        }
 
         // 슬라임 피격 흔들림
         if (slimeVisual != null)
@@ -1665,6 +1891,8 @@ public class BattleManager : MonoBehaviour
     {
         if (criticalText == null)
             yield break;
+
+        yield return new WaitForSeconds(CriticalTextStartDelay);
 
         RectTransform rect =
             criticalText.GetComponent<RectTransform>();
@@ -2103,6 +2331,16 @@ public class BattleManager : MonoBehaviour
         text.alignment = TextAlignmentOptions.Center;
 
         StartCoroutine(DamageTextAnimation(rect, text));
+    }
+
+    IEnumerator ShowDamageTextAfterDelay(
+        RectTransform target,
+        int damage,
+        float delay
+    )
+    {
+        yield return new WaitForSeconds(delay);
+        ShowDamageText(target, damage);
     }
 
     IEnumerator DamageTextAnimation(

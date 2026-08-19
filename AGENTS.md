@@ -354,8 +354,8 @@ BattleManager는 items.json을 직접 읽지 않고 ItemService를 초기화한�
 |---|---|---|---:|---:|---:|---|
 | wood_sword_01 | 나무검 | Weapon | 0 | 0 | 0 | 실제 weapon_wood_sword_01.png 사용 |
 | beginner_armor_01 | 초보자 방어구 | Armor | 0 | 0 | 0 | 실제 hero_beginner_01.png 사용 |
-| iron_sword_01 | 철검 | Weapon | 100 | 5 | 0 | 테스트 데이터, 실제 이미지 없음 |
-| leather_armor_01 | 가죽 갑옷 | Armor | 120 | 0 | 0.10 | 테스트 데이터, 실제 이미지 없음 |
+| iron_sword_01 | 철검 | Weapon | 100 | 5 | 0 | weapon_iron_sword_01.png 연결 |
+| leather_armor_01 | 가죽 갑옷 | Armor | 120 | 0 | 0.10 | hero_leather_armor_01.png 연결 |
 
 기본 장비:
 
@@ -363,7 +363,7 @@ BattleManager는 items.json을 직접 읽지 않고 ItemService를 초기화한�
 - equippedArmorId = beginner_armor_01
 - ownedItemIds 기본값에는 위 두 기본 장비가 포함된다.
 
-PlayerProgressService는 로드된 진행 데이터에서 장착 장비 ID가 비어 있으면 기본 장비로 보정하고, ownedItemIds에 기본 장비와 장착 장비가 포함되도록 보정한다. ownedItemIds 중복은 제거한다.
+PlayerProgressService는 ownedItemIds에 기본 장비가 포함되도록 보정하고 중복을 제거한다. BattleManager는 ItemService 초기화 후 저장된 장착 ID의 존재 여부, ItemType, 보유 여부를 검증한다. 잘못된 무기/방어구 ID는 각각 wood_sword_01 / beginner_armor_01로 복구하고 수정된 진행 상태를 저장한다.
 
 스탯 역할:
 
@@ -371,9 +371,16 @@ PlayerProgressService는 로드된 진행 데이터에서 장착 장비 ID가 �
 - Weapon은 attackBonus로 플레이어 공격력을 증가시킨다.
 - Armor는 Max HP를 증가시키지 않고 defenseRate로 몬스터에게 받는 최종 Damage를 비율 감소시킨다.
 
-현재 장비 보너스와 defenseRate는 실제 전투에 아직 반영하지 않는다. 기존 레벨업 기반 playerAttack/playerMaxHp 동작을 유지하고, 다음 Equipment 작업에서 finalAttack = baseAttack + equippedWeapon.attackBonus, finalDamage = monsterDamage * (1 - equippedArmor.defenseRate) 구조로 확장한다.
+장비 전투 규칙:
 
-Shop 1단계에서 상점 UI와 Gold 구매는 구현됐다. 장착 UI, 인벤토리 화면, 장비 스탯/외형 반영은 아직 TODO다.
+- Final Attack = 레벨업으로 성장하는 Base Attack + 장착 Weapon의 attackBonus
+- 플레이어 일반 공격과 한방단어 Critical 모두 Final Attack을 사용한다.
+- Armor는 현재 HP와 Max HP에 영향을 주지 않는다.
+- 몬스터 일반/크리티컬 Raw Damage에 장착 Armor의 defenseRate를 적용한다.
+- 피격 Damage는 Mathf.RoundToInt(rawDamage * (1 - defenseRate))로 계산하며 최소 1이다.
+- 장비 교체는 Base Attack이나 HP를 직접 변경하지 않으므로 반복 교체해도 보너스가 누적되지 않는다.
+
+Shop 구매와 장착은 분리되어 있다. 구매는 Gold 차감과 ownedItemIds 추가만 수행하며, 사용자가 보유 아이템의 장착 버튼을 눌러야 equippedWeaponId / equippedArmorId가 변경된다.
 
 ---
 
@@ -425,7 +432,16 @@ Shop이 열리면 WordInput과 AttackButton을 잠그고, 닫으면 전투가 �
 - Gold가 충분하면 Gold 차감, ownedItemIds 추가, UI 즉시 갱신, SaveGame() 호출
 - price = 0인 기본 장비는 기본 ownedItemIds에 포함되므로 구매 대상이 아니다.
 
-구매와 장착은 분리한다. Shop 1단계에서는 구매해도 자동 장착하지 않고, Weapon attackBonus / Armor defenseRate / 외형 변경도 아직 전투에 반영하지 않는다.
+구매와 장착은 분리한다. 미보유 아이템은 구매 버튼, 보유한 미장착 아이템은 장착 버튼, 현재 장비는 비활성 장착 중 버튼으로 표시한다. Weapon/Armor만 타입에 맞게 장착할 수 있으며 장착 변경은 즉시 Save하고 Shop UI와 장비 외형을 갱신한다.
+
+Equipment Visual:
+
+- Weapon은 ItemData.spritePath를 기존 Weapon Image에 적용한다.
+- Armor는 ItemData.characterSpritePath를 기존 Body Image에 적용한다.
+- 장착 직후, Save Load 후 초기화, Save Reset 시 현재 equipped ID 기준으로 외형을 갱신한다.
+- Sprite 교체 시 기존 RectTransform을 유지해 위치, 크기, 공격/피격 애니메이션을 보존한다.
+- 경로가 비어 있거나 Sprite 로드에 실패하면 현재 표시 중인 Sprite를 유지하고 Warning만 남긴다.
+- 현재 Unity Editor 프로토타입은 UnityEditor.AssetDatabase를 사용하며 Android 런타임 로딩은 별도 TODO다.
 
 ---
 
@@ -562,13 +578,14 @@ Debug 이동 시:
     Assets/Art/Sprites/Hero/Body/hero_body_base.png
     Assets/Art/Sprites/Hero/Body/hero_beginner_01.png
     Assets/Art/Sprites/Hero/Weapon/weapon_wood_sword_01.png
+    Assets/Art/Sprites/Hero/Body/hero_leather_armor_01.png
+    Assets/Art/Sprites/Hero/Weapon/weapon_iron_sword_01.png
 
 나무검 기준 배치:
 
     Pos X 110 / Pos Y 5 / Width 150 / Height 150 / Rotation 0
 
-장비 구매, 인벤토리, 외형 교체 로직은 TODO다.
-현재 장비 ID와 보유 아이템 ID 저장 구조는 구현되어 있다.
+장비 구매, 장착, 스탯 적용, 저장과 Editor용 외형 교체는 구현되어 있다. 인벤토리는 TODO다. 철검과 가죽 갑옷 이미지는 items.json에 연결되어 있다.
 
 ---
 
@@ -651,6 +668,11 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 - ItemData / items.json / ItemService 기반 아이템 데이터 구조
 - PlayerProgress 기반 장착 장비 ID와 ownedItemIds 저장
 - BattleScene Modal Shop 1단계와 Gold 구매
+- 보유 Weapon/Armor 장착 및 교체
+- Weapon attackBonus 기반 일반/크리티컬 Final Attack
+- Armor defenseRate 기반 몬스터 일반/크리티컬 피해 감소
+- 장비 변경 Save/Load, Reset 기본 장비, 잘못된 장비 ID fallback
+- 장착 Weapon/Armor의 Editor용 Sprite 교체와 Load/Reset 외형 복원
 - LV/EXP UI와 LEVEL UP 연출
 - JSON 기반 Floor/Monster 로딩
 - 1~10층 슬라임 챕터
@@ -668,8 +690,6 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 - 10층 클리어 후 존재하지 않는 11층 이동 방어와 챕터 완료 처리
 - 보스 전용 패턴 및 isBoss 기반 전투 분기
 - 인벤토리 UI
-- 장비 장착/교체 UI
-- 장비 보너스 스탯/방어율/외형 적용
 - 11층 이후 확정 콘텐츠
 - 운영용 대규모 한국어 단어 DB
 - 단어 뜻/도감/부적절 단어 관리
@@ -682,15 +702,15 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 
 ## 20. 현재 권장 다음 작업
 
-가장 가까운 큰 구조 작업은 Equipment System이다. Shop 1단계로 아이템 구매와 ownedItemIds 저장은 준비되어 있다.
+Equipment Visual까지 구현됐으며 다음 가까운 콘텐츠 작업은 10층 챕터 완료 처리다.
 
 권장 순서:
 
-1. 장비 장착 UI
-2. Weapon Attack 보너스 적용
-3. Armor defenseRate 적용
-4. 10층 Victory 챕터 완료 UI
-5. isBoss를 활용한 최소 보스 연출/분기
+1. 10층 Victory 챕터 완료 UI
+2. isBoss를 활용한 최소 보스 연출/분기
+3. 인벤토리 UI
+4. Android용 장비/몬스터 런타임 Sprite 로딩
+5. 11층 이후 콘텐츠 확정
 
 ---
 

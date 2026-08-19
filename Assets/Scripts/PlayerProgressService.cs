@@ -53,8 +53,8 @@ public class PlayerProgressService
         if (string.IsNullOrEmpty(Data.equippedArmorId))
             Data.equippedArmorId = PlayerProgressData.DefaultArmorId;
 
-        EnsureOwnedItem(Data.equippedWeaponId);
-        EnsureOwnedItem(Data.equippedArmorId);
+        EnsureOwnedItem(PlayerProgressData.DefaultWeaponId);
+        EnsureOwnedItem(PlayerProgressData.DefaultArmorId);
         RemoveDuplicateOwnedItems();
     }
 
@@ -115,6 +115,26 @@ public class PlayerProgressService
     {
         return Data.ownedItemIds != null &&
             Data.ownedItemIds.Contains(itemId);
+    }
+
+    public bool TryEquipItem(ItemData item)
+    {
+        if (item == null || !OwnsItem(item.id))
+            return false;
+
+        switch (item.GetItemType())
+        {
+            case ItemType.Weapon:
+                Data.equippedWeaponId = item.id;
+                return true;
+
+            case ItemType.Armor:
+                Data.equippedArmorId = item.id;
+                return true;
+
+            default:
+                return false;
+        }
     }
 
     private void RemoveDuplicateOwnedItems()
