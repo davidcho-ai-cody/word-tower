@@ -55,31 +55,51 @@ WordTower는 단순 단어 퀴즈가 아니라 전투 언어가 끝말잇기인 
 - 몬스터 일반 데미지: 현재 몬스터 attack
 - 몬스터 한방단어: 현재 몬스터 attack * 2
 
+Level, EXP, Gold, Max HP, Attack은 PlayerProgressData / PlayerProgressService에서 관리한다. BattleManager는 전투 중 현재 HP(playerHp)를 별도로 들고, 공격력과 Max HP는 PlayerProgressService에서 조회해 사용한다.
+
 플레이어 한방단어는 Critical Impact 이미지와 CRITICAL! 텍스트 연출을 사용한다.
 
 ---
 
-## 4. 플레이어 레벨업 시스템 — 구현 완료
+## 4. 플레이어 진행/레벨업 시스템 — 구현 완료
 
-구현: Assets/Scripts/BattleManager.cs
+구현:
 
-현재 필드:
+- Assets/Scripts/Data/PlayerProgressData.cs
+- Assets/Scripts/PlayerProgressService.cs
+- BattleManager.cs는 현재 전투와 UI 연결만 담당
+
+PlayerProgressData 필드:
 
     public int playerLevel = 1;
     public int exp = 0;
     public int requiredExp = 100;
+    public int gold = 0;
     public int playerMaxHp = 100;
     public int playerAttack = 20;
+    public string equippedWeaponId = "wood_sword_01";
+    public string equippedArmorId = "beginner_armor_01";
+    public List<string> ownedItemIds;
+
+PlayerProgressService 역할:
+
+- EXP 추가
+- Gold 추가
+- 레벨업 판정
+- 필요 경험치 증가
+- 레벨업 시 Max HP / Attack 증가
+- 현재 진행 상태 조회
 
 Victory 연결 흐름:
 
     WinBattle()
-    → currentMonsterData.expReward / goldReward 지급
-    → CheckLevelUp()
+    → PlayerProgressService.AddExp(currentMonsterData.expReward)
+    → PlayerProgressService.AddGold(currentMonsterData.goldReward)
+    → 레벨업 발생 시 LevelUpTextEffect()
     → UpdateUI()
     → VictoryPanel 표시
 
-CheckLevelUp() 규칙:
+레벨업 규칙:
 
 - while (exp >= requiredExp)로 여러 레벨 상승 가능
 - exp -= requiredExp이므로 초과 EXP 이월
@@ -105,7 +125,53 @@ UI:
 
 - 레벨업 시 Max HP는 증가하지만 현재 HP를 즉시 추가 회복하지는 않는다.
 - 다음 층 초기화에서 새 Max HP까지 완전 회복한다.
-- 저장/불러오기는 미구현이다.
+- playerHp는 현재 전투 중 변하는 값이므로 BattleManager에 남아 있다.
+
+---
+
+## 4.1 Save / Load 시스템 — 구현 완료
+
+구현:
+
+- Assets/Scripts/Data/SaveData.cs
+- Assets/Scripts/SaveService.cs
+
+저장 방식:
+
+- JSON 파일 기반
+- 경로: Application.persistentDataPath / wordtower_save.json
+- PlayerPrefs는 주요 진행 데이터 저장에 사용하지 않는다.
+- saveVersion = 1을 저장하지만 마이그레이션 시스템은 아직 없다.
+
+SaveData 저장 항목:
+
+- playerProgress: playerLevel, exp, requiredExp, gold, playerMaxHp, playerAttack, equippedWeaponId, equippedArmorId, ownedItemIds
+- currentFloor: 현재 이어서 시작할 층
+- highestFloor: 정상 플레이로 도달한 최고 층
+
+저장하지 않는 항목:
+
+- playerHp
+- 몬스터 현재 HP
+- currentWord
+- usedWords
+- 공격/피격/코루틴/애니메이션 진행 상태
+- VictoryPanel 표시 상태
+
+게임 시작 시 Save 파일이 있으면 PlayerProgressData와 currentFloor/highestFloor를 불러온 뒤 해당 층의 새 전투로 시작한다. Save 파일이 없거나 손상되면 기본 PlayerProgressData와 1층으로 시작한다.
+
+자동 저장 시점:
+
+- Victory 보상 지급과 레벨업 판정 완료 후
+- 정상 다음 층 진입 후 currentFloor/highestFloor 갱신 완료 후
+
+Debug Floor 이동은 EXP/Gold/Level/highestFloor를 변경하지 않고 Save 파일도 덮어쓰지 않는다. 개발 테스트 중 10층으로 이동해도 실제 진행도가 오염되지 않아야 한다.
+
+Save Reset:
+
+- SaveService.DeleteSave()
+- 개발용 FloorDebugPanel의 DebugSaveResetButton에서 호출
+- 저장 파일 삭제, PlayerProgress 기본값 복구, currentFloor/highestFloor 1로 복구, 1층 새 전투 시작
 
 ---
 
@@ -250,6 +316,117 @@ MonsterData — Assets/Scripts/Data/MonsterData.cs:
 
 몬스터 스탯, 보상, 난이도, 이미지, 배율을 BattleManager에 하드코딩하지 않는다.
 
+ItemData — Assets/Scripts/Data/ItemData.cs:
+
+- id
+- name
+- type
+- price
+- attackBonus
+- defenseRate
+- spritePath
+- characterSpritePath
+- description
+
+데이터: Assets/Data/Items/items.json
+
+현재 지원 ItemType:
+
+- Weapon
+- Armor
+
+ItemService — Assets/Scripts/ItemService.cs:
+
+- items.json 로드
+- GetItem(string id)
+- GetItemsByType(ItemType itemType)
+- GetAllItems()
+
+BattleManager는 items.json을 직접 읽지 않고 ItemService를 초기화한다.
+
+---
+
+## 8.1 아이템 / 장비 데이터 — 기반 구현 완료
+
+현재 등록 아이템:
+
+| id | 이름 | 타입 | 가격 | ATK 보너스 | defenseRate | 아트 상태 |
+|---|---|---|---:|---:|---:|---|
+| wood_sword_01 | 나무검 | Weapon | 0 | 0 | 0 | 실제 weapon_wood_sword_01.png 사용 |
+| beginner_armor_01 | 초보자 방어구 | Armor | 0 | 0 | 0 | 실제 hero_beginner_01.png 사용 |
+| iron_sword_01 | 철검 | Weapon | 100 | 5 | 0 | 테스트 데이터, 실제 이미지 없음 |
+| leather_armor_01 | 가죽 갑옷 | Armor | 120 | 0 | 0.10 | 테스트 데이터, 실제 이미지 없음 |
+
+기본 장비:
+
+- equippedWeaponId = wood_sword_01
+- equippedArmorId = beginner_armor_01
+- ownedItemIds 기본값에는 위 두 기본 장비가 포함된다.
+
+PlayerProgressService는 로드된 진행 데이터에서 장착 장비 ID가 비어 있으면 기본 장비로 보정하고, ownedItemIds에 기본 장비와 장착 장비가 포함되도록 보정한다. ownedItemIds 중복은 제거한다.
+
+스탯 역할:
+
+- 레벨업은 기본 Max HP와 기본 Attack을 성장시킨다.
+- Weapon은 attackBonus로 플레이어 공격력을 증가시킨다.
+- Armor는 Max HP를 증가시키지 않고 defenseRate로 몬스터에게 받는 최종 Damage를 비율 감소시킨다.
+
+현재 장비 보너스와 defenseRate는 실제 전투에 아직 반영하지 않는다. 기존 레벨업 기반 playerAttack/playerMaxHp 동작을 유지하고, 다음 Equipment 작업에서 finalAttack = baseAttack + equippedWeapon.attackBonus, finalDamage = monsterDamage * (1 - equippedArmor.defenseRate) 구조로 확장한다.
+
+Shop 1단계에서 상점 UI와 Gold 구매는 구현됐다. 장착 UI, 인벤토리 화면, 장비 스탯/외형 반영은 아직 TODO다.
+
+---
+
+## 8.2 Shop System 1단계 — 구현 완료
+
+구현:
+
+- BattleScene 위에 Modal Shop Panel을 띄운다.
+- BattleSceneBuilder가 ShopButton / ShopPanel / 탭 / 아이템 목록 컨테이너를 생성한다.
+- BattleManager가 ItemService와 PlayerProgressService를 사용해 아이템 목록과 구매 상태를 표시한다.
+
+Shop UI 구조:
+
+- ShopButton
+- ShopPanel
+- ShopTitle
+- ShopCloseButton
+- ShopCurrentGold
+- ShopMessage
+- ShopTabWeapon
+- ShopTabArmor
+- ShopTabAccessory
+- ShopTabEtc
+- ShopItemListContent
+
+탭:
+
+- Weapon: 현재 데이터 있음
+- Armor: 현재 데이터 있음
+- Accessory: 향후 확장용, 현재 비활성
+- Etc: 향후 확장용, 현재 비활성
+
+Shop을 열 수 있는 상태:
+
+- battleEnded가 false
+- Shop이 이미 열려 있지 않음
+- WordInput과 AttackButton이 interactable
+- VictoryPanel이 표시 중이 아님
+
+공격 애니메이션, 몬스터 턴, 사망 연출, Victory 처리 중에는 입력 버튼이 잠겨 있으므로 ShopButton도 비활성화된다. Time.timeScale은 사용하지 않는다.
+
+Shop이 열리면 WordInput과 AttackButton을 잠그고, 닫으면 전투가 종료되지 않은 경우 플레이어 입력 상태로 복구한다.
+
+구매 규칙:
+
+- ItemService.GetItem(id)로 아이템 존재 확인
+- 이미 ownedItemIds에 있으면 재구매 불가
+- Gold가 부족하면 구매하지 않고 ShopMessage에 안내
+- Gold가 충분하면 Gold 차감, ownedItemIds 추가, UI 즉시 갱신, SaveGame() 호출
+- price = 0인 기본 장비는 기본 ownedItemIds에 포함되므로 구매 대상이 아니다.
+
+구매와 장착은 분리한다. Shop 1단계에서는 구매해도 자동 장착하지 않고, Weapon attackBonus / Armor defenseRate / 외형 변경도 아직 전투에 반영하지 않는다.
+
 ---
 
 ## 9. 1~10층 슬라임 챕터 — 구현 완료
@@ -264,8 +441,8 @@ MonsterData — Assets/Scripts/Data/MonsterData.cs:
 | 6 | slime_yellow | 노란 슬라임 | 150 | 15 | 40 | 20 | 2~2 | 1.0 | false | Assets/Art/Sprites/Monsters/Slime/slime_yellow_idle_01.png |
 | 7 | slime_poison | 독 슬라임 | 180 | 17 | 45 | 22 | 2~3 | 1.0 | false | Assets/Art/Sprites/Monsters/Slime/slime_poison_idle_01.png |
 | 8 | slime_armor | 철갑 슬라임 | 220 | 16 | 50 | 25 | 2~3 | 1.0 | false | Assets/Art/Sprites/Monsters/Slime/slime_armor_idle_01.png |
-| 9 | slime_elite | 엘리트 슬라임 | 240 | 20 | 60 | 30 | 2~3 | 1.15 | false | Assets/Art/Sprites/Monsters/Slime/slime_elite_idle_01.png |
-| 10 | slime_king | 슬라임 킹 | 350 | 24 | 100 | 60 | 2~4 | 1.35 | true | Assets/Art/Sprites/Monsters/Slime/slime_king_idle_01.png |
+| 9 | slime_elite | 엘리트 슬라임 | 240 | 20 | 60 | 30 | 2~3 | 1.20 | false | Assets/Art/Sprites/Monsters/Slime/slime_elite_idle_01.png |
+| 10 | slime_king | 슬라임 킹 | 350 | 24 | 100 | 60 | 2~4 | 1.70 | true | Assets/Art/Sprites/Monsters/Slime/slime_king_idle_01.png |
 
 슬라임 킹은 첫 보스로 확정됐지만 isBoss 기반 보스 전용 전투 패턴은 아직 없다.
 
@@ -303,8 +480,8 @@ Editor에서는 BattleManager.ApplyMonsterSprite()가 JSON spritePath를 UnityEd
 MonsterData.visualScale과 monsters.json으로 관리한다.
 
 - 1~8층: 1.0
-- 9층 엘리트 슬라임: 1.15
-- 10층 슬라임 킹: 1.35
+- 9층 엘리트 슬라임: 1.20
+- 10층 슬라임 킹: 1.70
 
 구현:
 
@@ -326,6 +503,7 @@ MonsterData.visualScale과 monsters.json으로 관리한다.
 - 이전 층
 - 다음 층
 - 10층 바로가기
+- Save Reset
 
 런타임 조건:
 
@@ -347,6 +525,8 @@ Debug 이동 시:
 
 - EXP/Gold 보상 없음
 - 누적 EXP, Gold, Level 유지
+- highestFloor 갱신 없음
+- Save 파일 덮어쓰기 없음
 - 플레이어 HP는 Max HP까지 회복
 - usedWords와 제시어 초기화
 - 몬스터 HP, 이미지, 스탯, 위치, 회전, 배율 복구
@@ -388,6 +568,7 @@ Debug 이동 시:
     Pos X 110 / Pos Y 5 / Width 150 / Height 150 / Rotation 0
 
 장비 구매, 인벤토리, 외형 교체 로직은 TODO다.
+현재 장비 ID와 보유 아이템 ID 저장 구조는 구현되어 있다.
 
 ---
 
@@ -404,7 +585,10 @@ Assets/Scripts/Editor/BattleSceneBuilder.cs가 전투 UI의 소스 오브 트루
 - VictoryPanel
 - ImpactEffect / CriticalImpactEffect / CriticalText
 - LevelUpText
+- ShopButton
+- ShopPanel
 - FloorDebugPanel
+- DebugSaveResetButton
 
 Builder 수정 후 반드시 실행:
 
@@ -462,6 +646,11 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 - VictoryPanel, EXP, Gold 보상
 - 레벨, 필요 EXP 증가, 초과 EXP 이월
 - 레벨업 Max HP/Attack 증가
+- PlayerProgressData / PlayerProgressService 기반 플레이어 진행 데이터 분리
+- JSON 기반 Save/Load와 Save Reset
+- ItemData / items.json / ItemService 기반 아이템 데이터 구조
+- PlayerProgress 기반 장착 장비 ID와 ownedItemIds 저장
+- BattleScene Modal Shop 1단계와 Gold 구매
 - LV/EXP UI와 LEVEL UP 연출
 - JSON 기반 Floor/Monster 로딩
 - 1~10층 슬라임 챕터
@@ -478,10 +667,9 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 
 - 10층 클리어 후 존재하지 않는 11층 이동 방어와 챕터 완료 처리
 - 보스 전용 패턴 및 isBoss 기반 전투 분기
-- 플레이어 데이터 모델 분리
-- 저장/불러오기
-- 아이템 데이터, 인벤토리, 상점
-- 장비 구매/스탯/외형 적용
+- 인벤토리 UI
+- 장비 장착/교체 UI
+- 장비 보너스 스탯/방어율/외형 적용
 - 11층 이후 확정 콘텐츠
 - 운영용 대규모 한국어 단어 DB
 - 단어 뜻/도감/부적절 단어 관리
@@ -494,13 +682,15 @@ Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
 
 ## 20. 현재 권장 다음 작업
 
-가장 가까운 다음 작업은 10층 챕터 완료 처리다.
+가장 가까운 큰 구조 작업은 Equipment System이다. Shop 1단계로 아이템 구매와 ownedItemIds 저장은 준비되어 있다.
 
-1. 10층 Victory에서 존재하지 않는 11층 이동 방어
-2. 슬라임 챕터 완료 UI 또는 임시 완료 상태
-3. isBoss를 활용한 최소 보스 연출/분기
-4. Player Progression 데이터를 BattleManager 밖으로 점진적 분리
-5. 저장/불러오기 기반 후 아이템/상점 확장
+권장 순서:
+
+1. 장비 장착 UI
+2. Weapon Attack 보너스 적용
+3. Armor defenseRate 적용
+4. 10층 Victory 챕터 완료 UI
+5. isBoss를 활용한 최소 보스 연출/분기
 
 ---
 

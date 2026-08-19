@@ -65,6 +65,7 @@ public static class BattleSceneBuilder
 
         CreateStatusPanel(canvas.transform);
         CreateVictoryPanel(canvas.transform); // 승리패널
+        CreateShopUI(canvas.transform);
         CreateLevelUpText(canvas.transform);
         CreateFloorDebugPanel(canvas.transform);
 
@@ -611,6 +612,103 @@ public static class BattleSceneBuilder
         panel.SetActive(false);
     }
 
+    private static void CreateShopUI(Transform parent)
+    {
+        Button shopButton = CreateButton(
+            parent,
+            "ShopButton",
+            "상점",
+            new Vector2(0.10f, 0.91f),
+            new Vector2(160f, 70f)
+        );
+
+        shopButton.transform.Find("Label")
+            .GetComponent<TMP_Text>().fontSize = 28;
+
+        GameObject panel = CreatePanel(
+            parent,
+            "ShopPanel",
+            new Color(0.06f, 0.07f, 0.10f, 0.96f),
+            new Vector2(0.5f, 0.5f),
+            new Vector2(900f, 1120f)
+        );
+
+        CreateText(
+            panel.transform,
+            "ShopTitle",
+            "SHOP",
+            58,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.92f),
+            new Vector2(500f, 90f)
+        );
+
+        Button closeButton = CreateButton(
+            panel.transform,
+            "ShopCloseButton",
+            "닫기",
+            new Vector2(0.87f, 0.92f),
+            new Vector2(150f, 65f)
+        );
+
+        closeButton.transform.Find("Label")
+            .GetComponent<TMP_Text>().fontSize = 24;
+
+        CreateText(
+            panel.transform,
+            "ShopCurrentGold",
+            "GOLD 0",
+            32,
+            FontStyles.Bold,
+            new Vector2(0.18f, 0.84f),
+            new Vector2(260f, 60f)
+        );
+
+        CreateText(
+            panel.transform,
+            "ShopMessage",
+            "",
+            26,
+            FontStyles.Bold,
+            new Vector2(0.62f, 0.84f),
+            new Vector2(460f, 60f)
+        );
+
+        CreateShopTabButton(panel.transform, "ShopTabWeapon", "Weapon", 0.16f);
+        CreateShopTabButton(panel.transform, "ShopTabArmor", "Armor", 0.38f);
+        CreateShopTabButton(panel.transform, "ShopTabAccessory", "Accessory", 0.62f);
+        CreateShopTabButton(panel.transform, "ShopTabEtc", "Etc", 0.84f);
+
+        CreatePanel(
+            panel.transform,
+            "ShopItemListContent",
+            new Color(0.10f, 0.12f, 0.18f, 0.80f),
+            new Vector2(0.5f, 0.42f),
+            new Vector2(820f, 680f)
+        );
+
+        panel.SetActive(false);
+    }
+
+    private static void CreateShopTabButton(
+        Transform parent,
+        string name,
+        string label,
+        float anchorX
+    )
+    {
+        Button button = CreateButton(
+            parent,
+            name,
+            label,
+            new Vector2(anchorX, 0.75f),
+            new Vector2(180f, 60f)
+        );
+
+        button.transform.Find("Label")
+            .GetComponent<TMP_Text>().fontSize = 22;
+    }
+
     private static void CreateLevelUpText(Transform parent)
     {
         TextMeshProUGUI levelUpText = CreateText(
@@ -634,7 +732,7 @@ public static class BattleSceneBuilder
             "FloorDebugPanel",
             new Color(0.05f, 0.06f, 0.09f, 0.88f),
             new Vector2(0.84f, 0.90f),
-            new Vector2(300f, 130f)
+            new Vector2(300f, 185f)
         );
 
         CreateText(
@@ -643,7 +741,7 @@ public static class BattleSceneBuilder
             "DEBUG FLOOR 1",
             22,
             FontStyles.Bold,
-            new Vector2(0.5f, 0.72f),
+            new Vector2(0.5f, 0.78f),
             new Vector2(270f, 45f)
         );
 
@@ -651,7 +749,7 @@ public static class BattleSceneBuilder
             panel.transform,
             "DebugPreviousFloorButton",
             "이전",
-            new Vector2(0.17f, 0.27f),
+            new Vector2(0.17f, 0.45f),
             new Vector2(82f, 48f)
         );
 
@@ -659,7 +757,7 @@ public static class BattleSceneBuilder
             panel.transform,
             "DebugNextFloorButton",
             "다음",
-            new Vector2(0.50f, 0.27f),
+            new Vector2(0.50f, 0.45f),
             new Vector2(82f, 48f)
         );
 
@@ -667,8 +765,16 @@ public static class BattleSceneBuilder
             panel.transform,
             "DebugFloorTenButton",
             "10층",
-            new Vector2(0.83f, 0.27f),
+            new Vector2(0.83f, 0.45f),
             new Vector2(82f, 48f)
+        );
+
+        Button saveResetButton = CreateButton(
+            panel.transform,
+            "DebugSaveResetButton",
+            "Save Reset",
+            new Vector2(0.5f, 0.16f),
+            new Vector2(260f, 44f)
         );
 
         previousButton.transform.Find("Label")
@@ -676,6 +782,8 @@ public static class BattleSceneBuilder
         nextButton.transform.Find("Label")
             .GetComponent<TMP_Text>().fontSize = 20;
         floorTenButton.transform.Find("Label")
+            .GetComponent<TMP_Text>().fontSize = 20;
+        saveResetButton.transform.Find("Label")
             .GetComponent<TMP_Text>().fontSize = 20;
     }
 

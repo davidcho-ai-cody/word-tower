@@ -8,9 +8,7 @@ using System.IO;
 public class BattleManager : MonoBehaviour
 {
     [Header("Player")]
-    public int playerMaxHp = 100;
     public int playerHp = 100;
-    public int playerAttack = 20;
 
     private int currentAttackDamage;
     private bool isCriticalAttack;
@@ -21,12 +19,18 @@ public class BattleManager : MonoBehaviour
     public int slimeAttack = 10;
 
     [Header("Reward")]
-    public int playerLevel = 1;
-    public int exp = 0;
-    public int requiredExp = 100;
-    public int gold = 0;
     public int slimeExpReward = 20;
     public int slimeGoldReward = 10;
+
+    private PlayerProgressService playerProgress;
+    private SaveService saveService;
+
+    private int playerLevel => playerProgress.PlayerLevel;
+    private int exp => playerProgress.Exp;
+    private int requiredExp => playerProgress.RequiredExp;
+    private int gold => playerProgress.Gold;
+    private int playerMaxHp => playerProgress.PlayerMaxHp;
+    private int playerAttack => playerProgress.PlayerAttack;
 
     private TMP_Text playerHpText;
     private TMP_Text slimeHpText;
@@ -42,6 +46,19 @@ public class BattleManager : MonoBehaviour
 
     private TMP_InputField wordInput;
     private Button attackButton;
+
+    private Button shopButton;
+    private GameObject shopPanel;
+    private TMP_Text shopCurrentGoldText;
+    private TMP_Text shopMessageText;
+    private RectTransform shopItemListContent;
+    private Button shopCloseButton;
+    private Button shopWeaponTabButton;
+    private Button shopArmorTabButton;
+    private Button shopAccessoryTabButton;
+    private Button shopEtcTabButton;
+    private bool isShopOpen = false;
+    private ItemType currentShopTab = ItemType.Weapon;
 
     private Image playerHpFill;
     private Image slimeHpFill;
@@ -69,6 +86,7 @@ public class BattleManager : MonoBehaviour
     // 현재 층 / 몬스터 데이터
     // =========================
     private int currentFloor = 1;
+    private int highestFloor = 1;
 
     private FloorData currentFloorData;
     private MonsterData currentMonsterData;
@@ -88,6 +106,7 @@ public class BattleManager : MonoBehaviour
     private Image monsterImage;
 
     private WordService wordService;
+    private ItemService itemService;
     // 이번 전투에서 이미 사용한 단어
     private HashSet<string> usedWords = new HashSet<string>();
 
@@ -98,6 +117,7 @@ public class BattleManager : MonoBehaviour
     private Button debugPreviousFloorButton;
     private Button debugNextFloorButton;
     private Button debugFloorTenButton;
+    private Button debugSaveResetButton;
     private Vector2 debugPlayerOriginalPosition;
     private Quaternion debugWeaponOriginalRotation;
 #endif
@@ -106,9 +126,19 @@ public class BattleManager : MonoBehaviour
     {
         FindUI();
 
+        playerProgress = new PlayerProgressService();
+        saveService = new SaveService();
+
+        Debug.Log("Save Path: " + saveService.GetSavePath());
+        LoadGame();
+
         // 단어 DB 연결
         wordService = new WordService();
         wordService.Initialize();
+
+        itemService = new ItemService();
+        itemService.Initialize();
+        ValidateStartingItems();
 
         // 현재 층 데이터와 몬스터 데이터 로드
         LoadFloorAndMonsterData();
@@ -203,6 +233,9 @@ public class BattleManager : MonoBehaviour
             }
         }
 
+        if (battleCanvas != null)
+            FindShopUI(battleCanvas);
+
         if (attackButton != null)
             attackButton.onClick.AddListener(OnAttackButtonClicked);
 
@@ -272,6 +305,8 @@ public class BattleManager : MonoBehaviour
                 .Find("DebugNextFloorButton")?.GetComponent<Button>();
             debugFloorTenButton = floorDebugPanel.transform
                 .Find("DebugFloorTenButton")?.GetComponent<Button>();
+            debugSaveResetButton = floorDebugPanel.transform
+                .Find("DebugSaveResetButton")?.GetComponent<Button>();
 
             if (debugPreviousFloorButton != null)
                 debugPreviousFloorButton.onClick.AddListener(
@@ -287,6 +322,9 @@ public class BattleManager : MonoBehaviour
                 debugFloorTenButton.onClick.AddListener(
                     () => DebugMoveToFloor(10)
                 );
+
+            if (debugSaveResetButton != null)
+                debugSaveResetButton.onClick.AddListener(ResetSaveData);
         }
 
         if (playerVisual != null)
@@ -298,6 +336,58 @@ public class BattleManager : MonoBehaviour
         if (floorDebugPanel != null)
             floorDebugPanel.SetActive(false);
 #endif
+    }
+
+    void FindShopUI(Transform battleCanvas)
+    {
+        shopButton = battleCanvas.Find("ShopButton")?.GetComponent<Button>();
+        shopPanel = battleCanvas.Find("ShopPanel")?.gameObject;
+
+        Transform shopPanelTransform = shopPanel != null
+            ? shopPanel.transform
+            : null;
+
+        if (shopPanelTransform != null)
+        {
+            shopCurrentGoldText = shopPanelTransform
+                .Find("ShopCurrentGold")?.GetComponent<TMP_Text>();
+            shopMessageText = shopPanelTransform
+                .Find("ShopMessage")?.GetComponent<TMP_Text>();
+            shopItemListContent = shopPanelTransform
+                .Find("ShopItemListContent")?.GetComponent<RectTransform>();
+            shopCloseButton = shopPanelTransform
+                .Find("ShopCloseButton")?.GetComponent<Button>();
+            shopWeaponTabButton = shopPanelTransform
+                .Find("ShopTabWeapon")?.GetComponent<Button>();
+            shopArmorTabButton = shopPanelTransform
+                .Find("ShopTabArmor")?.GetComponent<Button>();
+            shopAccessoryTabButton = shopPanelTransform
+                .Find("ShopTabAccessory")?.GetComponent<Button>();
+            shopEtcTabButton = shopPanelTransform
+                .Find("ShopTabEtc")?.GetComponent<Button>();
+        }
+
+        if (shopButton != null)
+            shopButton.onClick.AddListener(OpenShop);
+
+        if (shopCloseButton != null)
+            shopCloseButton.onClick.AddListener(CloseShop);
+
+        if (shopWeaponTabButton != null)
+            shopWeaponTabButton.onClick.AddListener(
+                () => SelectShopTab(ItemType.Weapon)
+            );
+
+        if (shopArmorTabButton != null)
+            shopArmorTabButton.onClick.AddListener(
+                () => SelectShopTab(ItemType.Armor)
+            );
+
+        if (shopAccessoryTabButton != null)
+            shopAccessoryTabButton.interactable = false;
+
+        if (shopEtcTabButton != null)
+            shopEtcTabButton.interactable = false;
     }
 
     void SetupBattle()
@@ -324,9 +414,424 @@ public class BattleManager : MonoBehaviour
 #endif
     }
 
+    SaveData CreateSaveData()
+    {
+        return new SaveData
+        {
+            currentFloor = currentFloor,
+            highestFloor = highestFloor,
+            playerProgress = playerProgress.Data
+        };
+    }
+
+    void LoadGame()
+    {
+        if (saveService == null || !saveService.HasSave())
+            return;
+
+        if (!saveService.TryLoad(out SaveData saveData))
+            return;
+
+        playerProgress.SetData(saveData.playerProgress);
+
+        int savedFloor = Mathf.Max(1, saveData.currentFloor);
+        currentFloor = FloorDataExists(savedFloor)
+            ? savedFloor
+            : 1;
+
+        highestFloor = Mathf.Max(
+            Mathf.Max(1, saveData.highestFloor),
+            currentFloor
+        );
+    }
+
+    void SaveGame()
+    {
+        saveService?.Save(CreateSaveData());
+    }
+
+    void ResetSaveData()
+    {
+        saveService?.DeleteSave();
+
+        playerProgress.Reset();
+        currentFloor = 1;
+        highestFloor = 1;
+
+        StopAllCoroutines();
+
+        if (victoryPanel != null)
+            victoryPanel.SetActive(false);
+
+        if (impactEffect != null)
+        {
+            impactEffect.gameObject.SetActive(false);
+            impactEffect.localScale = Vector3.one;
+        }
+
+        if (criticalImpactEffect != null)
+            criticalImpactEffect.SetActive(false);
+
+        if (criticalText != null)
+            criticalText.gameObject.SetActive(false);
+
+        if (levelUpText != null)
+            levelUpText.gameObject.SetActive(false);
+
+        LoadFloorAndMonsterData();
+        ResetBattleForNextFloor();
+
+        Debug.Log("Save 데이터 초기화 완료");
+    }
+
+    void ValidateStartingItems()
+    {
+        if (itemService == null)
+            return;
+
+        ValidateItemExists(playerProgress.EquippedWeaponId);
+        ValidateItemExists(playerProgress.EquippedArmorId);
+    }
+
+    void ValidateItemExists(string itemId)
+    {
+        if (itemService.GetItem(itemId) != null)
+            return;
+
+        Debug.LogWarning($"아이템 데이터를 찾을 수 없습니다: {itemId}");
+    }
+
+    bool CanOpenShop()
+    {
+        return !battleEnded &&
+            !isShopOpen &&
+            wordInput != null &&
+            attackButton != null &&
+            wordInput.interactable &&
+            attackButton.interactable &&
+            (victoryPanel == null || !victoryPanel.activeSelf);
+    }
+
+    void OpenShop()
+    {
+        if (!CanOpenShop())
+            return;
+
+        isShopOpen = true;
+
+        if (shopPanel != null)
+            shopPanel.SetActive(true);
+
+        if (wordInput != null)
+            wordInput.interactable = false;
+
+        if (attackButton != null)
+            attackButton.interactable = false;
+
+        UpdateShopButtonState();
+        RefreshShopUI("");
+    }
+
+    void CloseShop()
+    {
+        isShopOpen = false;
+
+        if (shopPanel != null)
+            shopPanel.SetActive(false);
+
+        if (!battleEnded)
+        {
+            if (wordInput != null)
+            {
+                wordInput.interactable = true;
+                wordInput.ActivateInputField();
+            }
+
+            if (attackButton != null)
+                attackButton.interactable = true;
+        }
+
+        UpdateShopButtonState();
+    }
+
+    void SelectShopTab(ItemType itemType)
+    {
+        currentShopTab = itemType;
+        RefreshShopUI("");
+    }
+
+    void RefreshShopUI(string message)
+    {
+        if (shopCurrentGoldText != null)
+            shopCurrentGoldText.text = $"GOLD {gold}";
+
+        if (shopMessageText != null)
+            shopMessageText.text = message;
+
+        ClearShopItemList();
+
+        if (shopItemListContent == null || itemService == null)
+            return;
+
+        List<ItemData> items = itemService.GetItemsByType(currentShopTab);
+
+        if (items.Count == 0)
+        {
+            CreateShopText(
+                shopItemListContent,
+                "ShopEmptyText",
+                "표시할 아이템이 없습니다.",
+                28,
+                FontStyles.Bold,
+                new Vector2(0.5f, 0.5f),
+                new Vector2(700f, 80f)
+            );
+
+            return;
+        }
+
+        for (int i = 0; i < items.Count; i++)
+            CreateShopItemRow(items[i], i);
+    }
+
+    void ClearShopItemList()
+    {
+        if (shopItemListContent == null)
+            return;
+
+        for (int i = shopItemListContent.childCount - 1; i >= 0; i--)
+            Destroy(shopItemListContent.GetChild(i).gameObject);
+    }
+
+    void CreateShopItemRow(ItemData item, int index)
+    {
+        float y = 0.86f - (index * 0.22f);
+
+        GameObject row = CreateShopPanel(
+            shopItemListContent,
+            $"ShopItem_{item.id}",
+            new Color(0.16f, 0.18f, 0.25f, 0.95f),
+            new Vector2(0.5f, y),
+            new Vector2(760f, 125f)
+        );
+
+        string statText = GetItemStatText(item);
+        string stateText = GetItemStateText(item);
+
+        CreateShopText(
+            row.transform,
+            "Name",
+            item.name,
+            28,
+            FontStyles.Bold,
+            new Vector2(0.18f, 0.66f),
+            new Vector2(230f, 45f)
+        );
+
+        CreateShopText(
+            row.transform,
+            "Description",
+            item.description,
+            20,
+            FontStyles.Normal,
+            new Vector2(0.33f, 0.29f),
+            new Vector2(430f, 50f)
+        );
+
+        CreateShopText(
+            row.transform,
+            "Stat",
+            statText,
+            22,
+            FontStyles.Bold,
+            new Vector2(0.51f, 0.66f),
+            new Vector2(180f, 45f)
+        );
+
+        bool ownsItem = playerProgress.OwnsItem(item.id);
+
+        if (ownsItem)
+        {
+            CreateShopText(
+                row.transform,
+                "State",
+                stateText,
+                24,
+                FontStyles.Bold,
+                new Vector2(0.82f, 0.50f),
+                new Vector2(230f, 70f)
+            );
+
+            return;
+        }
+
+        Button buyButton = CreateShopButton(
+            row.transform,
+            "BuyButton",
+            $"구매 {item.price}G",
+            new Vector2(0.82f, 0.50f),
+            new Vector2(210f, 70f)
+        );
+
+        buyButton.onClick.AddListener(() => TryBuyItem(item.id));
+    }
+
+    string GetItemStatText(ItemData item)
+    {
+        ItemType itemType = item.GetItemType();
+
+        if (itemType == ItemType.Weapon)
+            return $"ATK +{item.attackBonus}";
+
+        if (itemType == ItemType.Armor)
+            return $"DMG -{Mathf.RoundToInt(item.defenseRate * 100f)}%";
+
+        return "";
+    }
+
+    string GetItemStateText(ItemData item)
+    {
+        if (item.id == playerProgress.EquippedWeaponId ||
+            item.id == playerProgress.EquippedArmorId)
+        {
+            return "장착 중";
+        }
+
+        return "보유 중";
+    }
+
+    void TryBuyItem(string itemId)
+    {
+        ItemData item = itemService.GetItem(itemId);
+
+        if (item == null)
+        {
+            RefreshShopUI("아이템을 찾을 수 없습니다.");
+            return;
+        }
+
+        if (playerProgress.OwnsItem(item.id))
+        {
+            RefreshShopUI("이미 보유한 아이템입니다.");
+            return;
+        }
+
+        if (!playerProgress.TrySpendGold(item.price))
+        {
+            RefreshShopUI("Gold가 부족합니다.");
+            return;
+        }
+
+        playerProgress.AddOwnedItem(item.id);
+        SaveGame();
+        UpdateUI();
+        RefreshShopUI($"{item.name} 구매 완료!");
+    }
+
+    void UpdateShopButtonState()
+    {
+        if (shopButton != null)
+            shopButton.interactable = CanOpenShop();
+    }
+
+    GameObject CreateShopPanel(
+        Transform parent,
+        string name,
+        Color color,
+        Vector2 anchor,
+        Vector2 size
+    )
+    {
+        GameObject obj = new GameObject(
+            name,
+            typeof(RectTransform),
+            typeof(Image)
+        );
+
+        obj.transform.SetParent(parent, false);
+
+        RectTransform rect = obj.GetComponent<RectTransform>();
+        rect.anchorMin = anchor;
+        rect.anchorMax = anchor;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = size;
+
+        obj.GetComponent<Image>().color = color;
+
+        return obj;
+    }
+
+    TMP_Text CreateShopText(
+        Transform parent,
+        string name,
+        string value,
+        float fontSize,
+        FontStyles style,
+        Vector2 anchor,
+        Vector2 size
+    )
+    {
+        GameObject obj = new GameObject(
+            name,
+            typeof(RectTransform),
+            typeof(TextMeshProUGUI)
+        );
+
+        obj.transform.SetParent(parent, false);
+
+        RectTransform rect = obj.GetComponent<RectTransform>();
+        rect.anchorMin = anchor;
+        rect.anchorMax = anchor;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = size;
+
+        TextMeshProUGUI text = obj.GetComponent<TextMeshProUGUI>();
+        text.font = koreanFont;
+        text.text = value;
+        text.fontSize = fontSize;
+        text.fontStyle = style;
+        text.color = Color.white;
+        text.alignment = TextAlignmentOptions.Center;
+
+        return text;
+    }
+
+    Button CreateShopButton(
+        Transform parent,
+        string name,
+        string label,
+        Vector2 anchor,
+        Vector2 size
+    )
+    {
+        GameObject obj = CreateShopPanel(
+            parent,
+            name,
+            new Color(0.90f, 0.32f, 0.18f),
+            anchor,
+            size
+        );
+
+        Button button = obj.AddComponent<Button>();
+
+        CreateShopText(
+            obj.transform,
+            "Label",
+            label,
+            22,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.5f),
+            size
+        );
+
+        return button;
+    }
+
     public void OnAttackButtonClicked()
     {
-        if (battleEnded || wordInput == null)
+        if (battleEnded || isShopOpen || wordInput == null)
             return;
 
         string inputWord = wordInput.text.Trim();
@@ -432,6 +937,7 @@ public class BattleManager : MonoBehaviour
         wordInput.text = "";
         wordInput.interactable = false;
         attackButton.interactable = false;
+        UpdateShopButtonState();
 
         // 돌진 + 검 공격 연출 시작
         StartCoroutine(PlayerAttackSequence());
@@ -504,6 +1010,7 @@ public class BattleManager : MonoBehaviour
             // ----------------------------------------
             wordInput.interactable = true;
             attackButton.interactable = true;
+            UpdateShopButtonState();
 
             wordInput.text = "";
             wordInput.ActivateInputField();
@@ -581,6 +1088,7 @@ public class BattleManager : MonoBehaviour
 
         wordInput.interactable = true;
         attackButton.interactable = true;
+        UpdateShopButtonState();
 
         wordInput.ActivateInputField();
     }
@@ -1313,10 +1821,14 @@ public class BattleManager : MonoBehaviour
         battleEnded = true;
 
         // JSON 데이터 기준 보상 지급
-        exp += currentMonsterData.expReward;
-        gold += currentMonsterData.goldReward;
+        bool didLevelUp =
+            playerProgress.AddExp(currentMonsterData.expReward);
+        playerProgress.AddGold(currentMonsterData.goldReward);
 
-        CheckLevelUp();
+        if (didLevelUp)
+            StartCoroutine(LevelUpTextEffect());
+
+        SaveGame();
 
         // 기존 하단 상태 UI 갱신
         UpdateUI();
@@ -1324,6 +1836,7 @@ public class BattleManager : MonoBehaviour
         // 입력 잠금
         wordInput.interactable = false;
         attackButton.interactable = false;
+        UpdateShopButtonState();
 
         // 승리 패널 내용 설정
         if (victoryMonsterText != null)
@@ -1344,51 +1857,33 @@ public class BattleManager : MonoBehaviour
             victoryPanel.SetActive(true);
     }
 
-    // ========================================
-    // 다음 층 버튼 클릭
-    // ========================================
-    void CheckLevelUp()
-    {
-        bool didLevelUp = false;
-
-        while (exp >= requiredExp)
-        {
-            exp -= requiredExp;
-            playerLevel++;
-            didLevelUp = true;
-
-            playerMaxHp += 10;
-            playerAttack += 2;
-
-            // Lv.1 -> 2: 100, Lv.2 -> 3: 140,
-            // Lv.3 -> 4: 190, Lv.4 -> 5: 250
-            requiredExp += 20 + (playerLevel * 10);
-
-            Debug.Log(
-                $"LEVEL UP! Lv.{playerLevel} / " +
-                $"Max HP {playerMaxHp} / ATK {playerAttack} / " +
-                $"Next EXP {requiredExp}"
-            );
-        }
-
-        if (didLevelUp)
-            StartCoroutine(LevelUpTextEffect());
-    }
-
     void OnNextFloorClicked()
     {
+        int nextFloor = currentFloor + 1;
+
+        if (!FloorDataExists(nextFloor))
+        {
+            Debug.LogWarning(
+                $"다음 층 데이터가 없어 이동하지 않습니다. Floor: {nextFloor}"
+            );
+            return;
+        }
+
         // 승리 패널 숨김
         if (victoryPanel != null)
             victoryPanel.SetActive(false);
 
         // 다음 층으로 이동
-        currentFloor++;
+        currentFloor = nextFloor;
+        highestFloor = Mathf.Max(highestFloor, currentFloor);
 
         // 다음 층 데이터 로드
         LoadFloorAndMonsterData();
 
         // 새로운 전투 시작
         ResetBattleForNextFloor();
+
+        SaveGame();
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -1435,23 +1930,6 @@ public class BattleManager : MonoBehaviour
         Debug.Log($"Debug Floor 이동 완료: {currentFloor}층");
     }
 
-    bool FloorDataExists(int targetFloor)
-    {
-        string floorPath =
-            Path.Combine(Application.dataPath, "Data/Floors/floors.json");
-
-        if (!File.Exists(floorPath))
-            return false;
-
-        string floorJson = File.ReadAllText(floorPath);
-        FloorDataList floorList =
-            JsonUtility.FromJson<FloorDataList>(floorJson);
-
-        return floorList != null &&
-            floorList.floors != null &&
-            floorList.floors.Exists(f => f.floor == targetFloor);
-    }
-
     void RefreshFloorDebugUI()
     {
         if (debugFloorText != null)
@@ -1469,6 +1947,23 @@ public class BattleManager : MonoBehaviour
             debugFloorTenButton.interactable = FloorDataExists(10);
     }
 #endif
+
+    bool FloorDataExists(int targetFloor)
+    {
+        string floorPath =
+            Path.Combine(Application.dataPath, "Data/Floors/floors.json");
+
+        if (!File.Exists(floorPath))
+            return false;
+
+        string floorJson = File.ReadAllText(floorPath);
+        FloorDataList floorList =
+            JsonUtility.FromJson<FloorDataList>(floorJson);
+
+        return floorList != null &&
+            floorList.floors != null &&
+            floorList.floors.Exists(f => f.floor == targetFloor);
+    }
 
     // ========================================
     // 다음 층 전투 초기화
@@ -1574,6 +2069,8 @@ public class BattleManager : MonoBehaviour
 
         if (goldText != null)
             goldText.text = $"GOLD {gold}";
+
+        UpdateShopButtonState();
     }
 
     void ShowDamageText(RectTransform target, int damage)

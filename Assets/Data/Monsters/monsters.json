@@ -81,7 +81,7 @@
       "goldReward": 30,
       "wordLevelMin": 2,
       "wordLevelMax": 3,
-      "visualScale": 1.15,
+      "visualScale": 1.20,
       "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_elite_idle_01.png"
     },
     {
@@ -93,7 +93,7 @@
       "goldReward": 60,
       "wordLevelMin": 2,
       "wordLevelMax": 4,
-      "visualScale": 1.35,
+      "visualScale": 1.70,
       "spritePath": "Assets/Art/Sprites/Monsters/Slime/slime_king_idle_01.png"
     }
   ]
