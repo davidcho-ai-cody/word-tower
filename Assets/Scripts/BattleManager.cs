@@ -89,6 +89,18 @@ public class BattleManager : MonoBehaviour
 
     private TMP_InputField wordInput;
     private Button attackButton;
+    private Canvas battleCanvas;
+    private RectTransform wordBattlePanel;
+    private Vector2 wordBattlePanelOriginalPosition;
+    private bool wordBattlePanelPositionInitialized;
+    private readonly Vector3[] wordBattlePanelWorldCorners = new Vector3[4];
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+    private const float MobileKeyboardPanelMargin = 24f;
+    private const float MobileKeyboardDiagnosticInterval = 0.25f;
+    private float nextMobileKeyboardDiagnosticTime;
+    private TMP_Text mobileKeyboardDebugText;
+#endif
 
     private Button shopButton;
     private GameObject shopPanel;
@@ -222,6 +234,300 @@ public class BattleManager : MonoBehaviour
         UpdateHeroIdle();
         UpdateMonsterIdle();
         UpdateGroundShadows();
+        UpdateMobileKeyboardLayout();
+    }
+
+    void UpdateMobileKeyboardLayout()
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        LogMobileKeyboardDiagnostics();
+
+        if (!wordBattlePanelPositionInitialized ||
+            wordBattlePanel == null ||
+            battleCanvas == null)
+        {
+            return;
+        }
+
+        if (wordInput == null ||
+            !wordInput.isFocused ||
+            !TouchScreenKeyboard.visible ||
+            TouchScreenKeyboard.area.height <= 0f)
+        {
+            RestoreWordBattlePanelPosition();
+            return;
+        }
+
+        if (TryCalculateMobileKeyboardPanelLayout(
+            TouchScreenKeyboard.area,
+            out _,
+            out _,
+            out _,
+            out _,
+            out float clampedPanelY
+        ))
+        {
+            wordBattlePanel.anchoredPosition = new Vector2(
+                wordBattlePanelOriginalPosition.x,
+                clampedPanelY
+            );
+        }
+#endif
+    }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+    bool TryCalculateMobileKeyboardPanelLayout(
+        Rect keyboardArea,
+        out float panelBottomScreenY,
+        out float keyboardTopScreenY,
+        out float targetPanelBottom,
+        out float requiredPanelShift,
+        out float clampedPanelY
+    )
+    {
+        panelBottomScreenY = float.NaN;
+        keyboardTopScreenY = float.NaN;
+        targetPanelBottom = float.NaN;
+        requiredPanelShift = float.NaN;
+        clampedPanelY = float.NaN;
+
+        if (wordBattlePanel == null || battleCanvas == null)
+            return false;
+
+        RectTransform panelParent =
+            wordBattlePanel.parent as RectTransform;
+
+        if (panelParent == null)
+            return false;
+
+        Camera uiCamera =
+            battleCanvas.renderMode == RenderMode.ScreenSpaceOverlay
+                ? null
+                : battleCanvas.worldCamera;
+
+        wordBattlePanel.GetWorldCorners(wordBattlePanelWorldCorners);
+        panelBottomScreenY = RectTransformUtility.WorldToScreenPoint(
+            uiCamera,
+            wordBattlePanelWorldCorners[0]
+        ).y;
+
+        // Android keyboard area uses a top-left screen origin. Convert its
+        // top edge to Unity's bottom-left screen coordinate system.
+        keyboardTopScreenY = keyboardArea.height > 0f
+            ? Mathf.Clamp(
+                Screen.height - keyboardArea.y,
+                0f,
+                Screen.height
+            )
+            : 0f;
+
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            panelParent,
+            new Vector2(Screen.width * 0.5f, keyboardTopScreenY),
+            uiCamera,
+            out Vector2 keyboardTopLocalPoint
+        ))
+        {
+            return false;
+        }
+
+        Vector3 currentBottomLocal = panelParent.InverseTransformPoint(
+            wordBattlePanelWorldCorners[0]
+        );
+        Vector3 currentTopLocal = panelParent.InverseTransformPoint(
+            wordBattlePanelWorldCorners[1]
+        );
+        float currentAnchoredShift =
+            wordBattlePanel.anchoredPosition.y -
+            wordBattlePanelOriginalPosition.y;
+        float originalBottomLocalY =
+            currentBottomLocal.y - currentAnchoredShift;
+        float originalTopLocalY =
+            currentTopLocal.y - currentAnchoredShift;
+
+        targetPanelBottom =
+            keyboardTopLocalPoint.y + MobileKeyboardPanelMargin;
+        requiredPanelShift = Mathf.Max(
+            0f,
+            targetPanelBottom - originalBottomLocalY
+        );
+
+        float maximumPanelShift = Mathf.Max(
+            0f,
+            panelParent.rect.yMax - originalTopLocalY
+        );
+        float clampedPanelShift = Mathf.Min(
+            requiredPanelShift,
+            maximumPanelShift
+        );
+        clampedPanelY =
+            wordBattlePanelOriginalPosition.y + clampedPanelShift;
+
+        return true;
+    }
+
+    void LogMobileKeyboardDiagnostics()
+    {
+        if (!Debug.isDebugBuild ||
+            Time.unscaledTime < nextMobileKeyboardDiagnosticTime)
+        {
+            return;
+        }
+
+        nextMobileKeyboardDiagnosticTime =
+            Time.unscaledTime + MobileKeyboardDiagnosticInterval;
+
+        TouchScreenKeyboard keyboard =
+            wordInput != null ? wordInput.touchScreenKeyboard : null;
+        Rect keyboardArea = TouchScreenKeyboard.area;
+        float canvasScale = battleCanvas != null
+            ? battleCanvas.scaleFactor
+            : float.NaN;
+        TryCalculateMobileKeyboardPanelLayout(
+            keyboardArea,
+            out float panelBottomScreenY,
+            out float keyboardTopScreenY,
+            out float targetPanelBottom,
+            out float requiredPanelShift,
+            out float clampedPanelY
+        );
+
+        string diagnosticText =
+            "WT KEYBOARD DEBUG\n\n" +
+            $"focused={wordInput != null && wordInput.isFocused}\n" +
+            $"visible={TouchScreenKeyboard.visible}\n" +
+            $"area={keyboardArea}\n" +
+            $"areaHeight={keyboardArea.height}\n" +
+            $"keyboardExists={keyboard != null}\n" +
+            $"active={(keyboard != null ? keyboard.active.ToString() : "null")}\n" +
+            $"status={(keyboard != null ? keyboard.status.ToString() : "null")}\n\n" +
+            $"Screen={Screen.width}x{Screen.height}\n" +
+            $"scaleFactor={canvasScale}\n\n" +
+            $"panelOriginal={wordBattlePanelOriginalPosition}\n" +
+            $"panelCurrent=" +
+                $"{(wordBattlePanel != null ? wordBattlePanel.anchoredPosition.ToString() : "null")}\n" +
+            $"panelBottomY={panelBottomScreenY}\n" +
+            $"keyboardTopY={keyboardTopScreenY}\n" +
+            $"targetPanelBottom={targetPanelBottom}\n" +
+            $"requiredShift={requiredPanelShift}\n" +
+            $"clampedPanelY={clampedPanelY}";
+
+        Debug.Log("[WT_KEYBOARD]\n" + diagnosticText);
+
+        if (mobileKeyboardDebugText != null)
+            mobileKeyboardDebugText.text = diagnosticText;
+    }
+
+    void CreateMobileKeyboardDebugOverlay()
+    {
+        if (!Debug.isDebugBuild ||
+            battleCanvas == null ||
+            mobileKeyboardDebugText != null)
+        {
+            return;
+        }
+
+        GameObject overlayObject = new GameObject(
+            "KeyboardDebugOverlay",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image)
+        );
+        overlayObject.layer = battleCanvas.gameObject.layer;
+        overlayObject.transform.SetParent(battleCanvas.transform, false);
+
+        RectTransform overlayRect =
+            overlayObject.GetComponent<RectTransform>();
+        overlayRect.anchorMin = new Vector2(0f, 1f);
+        overlayRect.anchorMax = new Vector2(0f, 1f);
+        overlayRect.pivot = new Vector2(0f, 1f);
+        overlayRect.anchoredPosition = new Vector2(16f, -16f);
+        overlayRect.sizeDelta = new Vector2(640f, 440f);
+
+        Image overlayBackground = overlayObject.GetComponent<Image>();
+        overlayBackground.color = new Color(0f, 0f, 0f, 0.78f);
+        overlayBackground.raycastTarget = false;
+
+        GameObject textObject = new GameObject(
+            "KeyboardDebugText",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(TextMeshProUGUI)
+        );
+        textObject.layer = overlayObject.layer;
+        textObject.transform.SetParent(overlayObject.transform, false);
+
+        RectTransform textRect = textObject.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(14f, 10f);
+        textRect.offsetMax = new Vector2(-14f, -10f);
+
+        mobileKeyboardDebugText = textObject.GetComponent<TMP_Text>();
+        mobileKeyboardDebugText.font = chainHintText != null
+            ? chainHintText.font
+            : TMP_Settings.defaultFontAsset;
+        mobileKeyboardDebugText.fontSize = 18f;
+        mobileKeyboardDebugText.color = Color.white;
+        mobileKeyboardDebugText.alignment = TextAlignmentOptions.TopLeft;
+        mobileKeyboardDebugText.enableWordWrapping = false;
+        mobileKeyboardDebugText.overflowMode = TextOverflowModes.Overflow;
+        mobileKeyboardDebugText.raycastTarget = false;
+        mobileKeyboardDebugText.text = "WT KEYBOARD DEBUG\nWaiting for diagnostics...";
+
+        overlayObject.transform.SetAsLastSibling();
+    }
+#endif
+
+    void RestoreWordBattlePanelPosition()
+    {
+        if (wordBattlePanelPositionInitialized && wordBattlePanel != null)
+            wordBattlePanel.anchoredPosition = wordBattlePanelOriginalPosition;
+    }
+
+    void RequestWordInputFocus(bool keepMobileKeyboardOpen = false)
+    {
+        if (wordInput == null || !wordInput.interactable)
+            return;
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        if (!keepMobileKeyboardOpen)
+            return;
+
+        StartCoroutine(RefocusWordInputNextFrame());
+#else
+        wordInput.ActivateInputField();
+#endif
+    }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+    IEnumerator RefocusWordInputNextFrame()
+    {
+        yield return null;
+
+        if (!battleEnded &&
+            !isShopOpen &&
+            wordInput != null &&
+            wordInput.interactable)
+        {
+            wordInput.ActivateInputField();
+        }
+    }
+#endif
+
+    void CloseMobileKeyboardAndRestorePanel()
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        if (wordInput != null)
+            wordInput.DeactivateInputField();
+#endif
+
+        RestoreWordBattlePanelPosition();
+    }
+
+    void OnWordInputDeselected(string _)
+    {
+        RestoreWordBattlePanelPosition();
     }
 
     void PlaySfx(SfxId id)
@@ -416,11 +722,24 @@ public class BattleManager : MonoBehaviour
 
         // ImpactEffect는 시작 시 비활성화 상태이므로
         // GameObject.Find() 대신 BattleCanvas 하위에서 직접 검색한다.
-        Transform battleCanvas = GameObject.Find("BattleCanvas")?.transform;
+        Transform battleCanvasTransform = GameObject.Find("BattleCanvas")?.transform;
+        battleCanvas = battleCanvasTransform?.GetComponent<Canvas>();
+#if UNITY_ANDROID && !UNITY_EDITOR
+        CreateMobileKeyboardDebugOverlay();
+#endif
+        wordBattlePanel = battleCanvasTransform
+            ?.Find("WordBattlePanel")
+            ?.GetComponent<RectTransform>();
 
-        if (battleCanvas != null)
+        if (wordBattlePanel != null)
         {
-            Transform impactTransform = battleCanvas.Find("ImpactEffect");
+            wordBattlePanelOriginalPosition = wordBattlePanel.anchoredPosition;
+            wordBattlePanelPositionInitialized = true;
+        }
+
+        if (battleCanvasTransform != null)
+        {
+            Transform impactTransform = battleCanvasTransform.Find("ImpactEffect");
 
             if (impactTransform != null)
             {
@@ -429,10 +748,10 @@ public class BattleManager : MonoBehaviour
             }
         }
 
-        if (battleCanvas != null)
+        if (battleCanvasTransform != null)
         {
             Transform criticalImpactTransform =
-                battleCanvas.Find("CriticalImpactEffect");
+                battleCanvasTransform.Find("CriticalImpactEffect");
 
             if (criticalImpactTransform != null)
             {
@@ -445,9 +764,9 @@ public class BattleManager : MonoBehaviour
             }
         }
 
-        if (battleCanvas != null)
+        if (battleCanvasTransform != null)
         {
-            Transform criticalTextTransform = battleCanvas.Find("CriticalText");
+            Transform criticalTextTransform = battleCanvasTransform.Find("CriticalText");
 
             if (criticalTextTransform != null)
             {
@@ -456,9 +775,9 @@ public class BattleManager : MonoBehaviour
             }
         }
 
-        if (battleCanvas != null)
+        if (battleCanvasTransform != null)
         {
-            Transform levelUpTextTransform = battleCanvas.Find("LevelUpText");
+            Transform levelUpTextTransform = battleCanvasTransform.Find("LevelUpText");
 
             if (levelUpTextTransform != null)
             {
@@ -467,14 +786,17 @@ public class BattleManager : MonoBehaviour
             }
         }
 
-        if (battleCanvas != null)
-            FindShopUI(battleCanvas);
+        if (battleCanvasTransform != null)
+            FindShopUI(battleCanvasTransform);
 
         if (attackButton != null)
             attackButton.onClick.AddListener(OnAttackButtonClicked);
 
         if (wordInput != null)
+        {
             wordInput.onSubmit.AddListener(_ => OnAttackButtonClicked());
+            wordInput.onDeselect.AddListener(OnWordInputDeselected);
+        }
 
         if (playerHpFill != null)
             playerHpFullWidth = playerHpFill.rectTransform.sizeDelta.x;
@@ -640,7 +962,7 @@ public class BattleManager : MonoBehaviour
         if (wordInput != null)
         {
             wordInput.text = "";
-            wordInput.ActivateInputField();
+            RequestWordInputFocus();
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -843,6 +1165,7 @@ public class BattleManager : MonoBehaviour
         if (!CanOpenShop())
             return;
 
+        CloseMobileKeyboardAndRestorePanel();
         isShopOpen = true;
 
         if (shopPanel != null)
@@ -870,7 +1193,7 @@ public class BattleManager : MonoBehaviour
             if (wordInput != null)
             {
                 wordInput.interactable = true;
-                wordInput.ActivateInputField();
+                RequestWordInputFocus();
             }
 
             if (attackButton != null)
@@ -1325,7 +1648,10 @@ public class BattleManager : MonoBehaviour
         string inputWord = wordInput.text.Trim();
 
         if (string.IsNullOrEmpty(inputWord))
+        {
+            RequestWordInputFocus(true);
             return;
+        }
 
 
         // ========================================
@@ -1340,7 +1666,7 @@ public class BattleManager : MonoBehaviour
                 $"'{requiredChar}'로 시작해야 합니다!";
 
             wordInput.text = "";
-            wordInput.ActivateInputField();
+            RequestWordInputFocus(true);
 
             return;
         }
@@ -1356,7 +1682,7 @@ public class BattleManager : MonoBehaviour
                 $"'{inputWord}'은(는) 등록되지 않은 단어입니다!";
 
             wordInput.text = "";
-            wordInput.ActivateInputField();
+            RequestWordInputFocus(true);
 
             return;
         }
@@ -1372,7 +1698,7 @@ public class BattleManager : MonoBehaviour
                 $"'{inputWord}'은(는) 이미 사용한 단어입니다!";
 
             wordInput.text = "";
-            wordInput.ActivateInputField();
+            RequestWordInputFocus(true);
 
             return;
         }
@@ -1421,6 +1747,7 @@ public class BattleManager : MonoBehaviour
     {
         currentWord = inputWord;
         PauseHeroIdle();
+        CloseMobileKeyboardAndRestorePanel();
 
         // 공격 중에는 입력 방지
         wordInput.text = "";
@@ -1502,7 +1829,7 @@ public class BattleManager : MonoBehaviour
             UpdateShopButtonState();
 
             wordInput.text = "";
-            wordInput.ActivateInputField();
+            RequestWordInputFocus();
 
             yield break;
         }
@@ -1579,7 +1906,7 @@ public class BattleManager : MonoBehaviour
         attackButton.interactable = true;
         UpdateShopButtonState();
 
-        wordInput.ActivateInputField();
+        RequestWordInputFocus();
     }
 
     // ========================================
@@ -2682,6 +3009,7 @@ public class BattleManager : MonoBehaviour
     // ========================================
     void ResetBattleForNextFloor()
     {
+        CloseMobileKeyboardAndRestorePanel();
         PauseHeroIdle();
         PauseMonsterIdle();
         ResetMonsterHitFlash();
@@ -2728,7 +3056,7 @@ public class BattleManager : MonoBehaviour
 #endif
 
         if (wordInput != null)
-            wordInput.ActivateInputField();
+            RequestWordInputFocus();
 
         ResumeHeroIdle();
         ResumeMonsterIdle();
@@ -2738,6 +3066,7 @@ public class BattleManager : MonoBehaviour
     {
         PauseHeroIdle();
         PauseMonsterIdle();
+        CloseMobileKeyboardAndRestorePanel();
         battleEnded = true;
 
         chainHintText.text = "패배했습니다.";

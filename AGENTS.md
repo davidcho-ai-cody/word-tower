@@ -734,18 +734,79 @@ DavidCho와 com.davidcho.wordtower는 첫 실기기 테스트용 임시 값이�
 - Editor에서 JSON spritePath 기반 이미지 교체
 - Android 1차 APK에서 words.json 기반 단어 조회
 - Android/Player에서 Resources 기반 몬스터/장비 Sprite 교체
+- Android 1차 APK 빌드와 Galaxy 실기기 설치/실행 확인
+- Android에서는 WordInput을 직접 선택할 때만 소프트 키보드를 연다. `TouchScreenKeyboard.area`의 Android 상단 원점 좌표를 Unity 화면 좌표로 변환한 뒤 `ScreenPointToLocalPointInRectangle()`으로 Canvas 부모 로컬 좌표를 구해 WordBattlePanel을 키보드 위로 이동하며, Canvas 상단을 넘지 않도록 제한한다.
+- 정상 공격/Done/입력 취소/전투 상태 전환 시 키보드와 패널 위치를 복구하며, 잘못된 입력은 키보드와 올라간 패널을 유지해 바로 수정할 수 있게 한다.
 - Unity Editor C# compile error 해결, Console Error 0, Play Mode 정상
 - Editor에서 Word DB 연결, Item/Floor 로드, 몬스터/Hero Sprite, 단어 판정, 공격, 다음 Floor 이동 정상 확인
 
 Android TODO:
 
-- Android APK 첫 빌드
-- Galaxy 실기기 설치와 Android 런타임 테스트
+- 모바일 키보드 UX 변경 APK 재빌드와 Galaxy 실기기 회귀 테스트
 - 운영용 DB 단계에서 StreamingAssets DB를 Application.persistentDataPath로 복사
 - Android SQLite 네이티브 설정 검증
 - Resources 복제 Sprite를 Addressables 또는 직렬화 참조 구조로 개선
 
-Android APK 실제 빌드와 실기기 테스트는 아직 수행하지 않았다. Windows Editor 성공을 Android 준비 완료로 간주하지 않는다.
+모바일 키보드 위치와 제조사별 키보드 영역은 Editor에서 완전히 검증할 수 없으므로 APK 실기기 확인을 Definition of Done에 포함한다.
+
+### 17.1 Android 모바일 키보드 대응 인수인계
+
+첫 Android APK 빌드와 Galaxy 실기기 설치/실행은 성공했다. 공식 Scene은 `Assets/Scenes/BattleScene.unity`이며, 모바일 키보드 대응 과정에서 Scene을 수정하거나 `BattleSceneBuilder`를 실행하지 않았다.
+
+현재 Android 키보드 UX:
+
+- 평상시 소프트 키보드는 닫혀 있다.
+- 사용자가 WordInput을 직접 터치할 때만 키보드를 표시한다.
+- 정상 공격 또는 Done/Enter 제출 후 입력 포커스를 해제하고 키보드를 닫는다.
+- 다음 플레이어 턴에 키보드를 자동으로 다시 열지 않는다.
+- 잘못된 입력에서는 키보드와 올라간 WordBattlePanel을 유지해 바로 수정할 수 있게 한다.
+- 키보드 종료, 입력 취소, Shop, 다음 층, 전투 상태 전환 시 WordBattlePanel을 원래 `anchoredPosition`으로 복구한다.
+
+Android Development Build 진단:
+
+- USB/ADB 사용이 어려운 환경을 위해 `BattleManager`가 런타임에 화면 최상단 `WT KEYBOARD DEBUG` Overlay를 생성한다.
+- Overlay와 `[WT_KEYBOARD]` Logcat은 같은 계산 결과를 0.25초 간격으로 표시한다.
+- `#if UNITY_ANDROID && !UNITY_EDITOR`와 `Debug.isDebugBuild` 조건을 사용하므로 Release APK에서는 Overlay와 진단 로그가 표시되지 않는다.
+- 진단 Overlay는 원인 확인을 위한 임시 기능이며, 최종 실기기 검증 성공 후 제거 또는 비활성화를 검토한다.
+
+Galaxy + Samsung Keyboard에서 확인한 값:
+
+    Screen = 1080x2340
+    keyboard area = x:0, y:1314, width:1080, height:1026
+    focused = True
+    visible = True
+    keyboardExists = True
+    active = True
+    status = Visible
+
+진단 결과 키보드 감지와 상태 전달은 정상이었다. 기존 코드는 `TouchScreenKeyboard.area.yMax`를 키보드 상단으로 잘못 해석했다. 위 실기기 값에서 `yMax`는 `1314 + 1026 = 2340`, 즉 화면 최상단이 되어 `panelCurrent.y`가 약 `1736`까지 증가했고 WordBattlePanel이 화면 위로 사라졌다.
+
+작성 완료한 좌표 수정:
+
+- Android 키보드 영역의 상단 원점 좌표를 `keyboardTopScreenY = Screen.height - keyboardArea.y`로 Unity의 하단 원점 화면 좌표로 변환한다.
+- 위 실기기 값에서 `keyboardTopScreenY = 2340 - 1314 = 1026`이다.
+- `RectTransformUtility.ScreenPointToLocalPointInRectangle()`으로 키보드 상단 Screen 좌표를 WordBattlePanel 부모 RectTransform의 로컬 좌표로 변환한다.
+- 매 프레임 WordBattlePanel 원본 `anchoredPosition`과 원본 패널 하단을 기준으로 실제 겹치는 만큼만 이동해 누적 이동을 방지한다.
+- 부모 Canvas RectTransform의 상단을 기준으로 최종 Y를 clamp하여 패널이 화면 상단을 넘지 않게 한다.
+- 화면 픽셀 이동량을 `Canvas.scaleFactor`로 단순히 나누던 방식은 제거했다.
+- Debug Overlay에 수정 검증용 `targetPanelBottom`과 `clampedPanelY`를 추가했다.
+
+현재 상태:
+
+- 키보드 좌표 수정 코드는 작성 완료했다.
+- 수정 후 Unity 컴파일과 Android Development APK의 Galaxy 최종 실기기 재검증은 아직 수행하지 않았다.
+- 성공 확인 전에는 모바일 키보드 이동을 최종 완료로 간주하지 않는다.
+
+집에서 이어서 시작할 순서:
+
+1. `git pull`
+2. Unity를 열고 C# 컴파일 오류가 없는지 확인
+3. Android Development Build APK 재빌드
+4. Galaxy에서 WordBattlePanel이 Samsung Keyboard 바로 위로 이동하고 화면 상단을 벗어나지 않는지 확인
+5. 정상 공격/Done 후 원위치 복귀와 다음 턴 키보드 자동 재등장 없음 확인
+6. 잘못된 입력에서 키보드와 패널 유지 확인
+7. 성공 후 Keyboard Debug Overlay 제거 또는 비활성화 검토
+8. Release APK 재빌드 및 최종 회귀 테스트
 
 ---
 
@@ -774,6 +835,7 @@ Android APK 실제 빌드와 실기기 테스트는 아직 수행하지 않았�
 - 장착 Weapon/Armor의 Editor/Android Sprite 교체와 Load/Reset 외형 복원
 - Android 1차 APK용 StreamingAssets JSON 데이터 로딩
 - Android Build Profile과 Android Player Settings 1차 구성
+- Android 소프트 키보드 기반 WordBattlePanel 자동 이동과 자동 재호출 방지 코드 작성 완료(Galaxy 최종 재검증 대기)
 - LV/EXP UI와 LEVEL UP 연출
 - JSON 기반 Floor/Monster 로딩
 - 1~10층 슬라임 챕터
