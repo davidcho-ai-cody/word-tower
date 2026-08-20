@@ -97,9 +97,6 @@ public class BattleManager : MonoBehaviour
 
 #if UNITY_ANDROID && !UNITY_EDITOR
     private const float MobileKeyboardPanelMargin = 24f;
-    private const float MobileKeyboardDiagnosticInterval = 0.25f;
-    private float nextMobileKeyboardDiagnosticTime;
-    private TMP_Text mobileKeyboardDebugText;
 #endif
 
     private Button shopButton;
@@ -240,8 +237,6 @@ public class BattleManager : MonoBehaviour
     void UpdateMobileKeyboardLayout()
     {
 #if UNITY_ANDROID && !UNITY_EDITOR
-        LogMobileKeyboardDiagnostics();
-
         if (!wordBattlePanelPositionInitialized ||
             wordBattlePanel == null ||
             battleCanvas == null)
@@ -364,118 +359,6 @@ public class BattleManager : MonoBehaviour
             wordBattlePanelOriginalPosition.y + clampedPanelShift;
 
         return true;
-    }
-
-    void LogMobileKeyboardDiagnostics()
-    {
-        if (!Debug.isDebugBuild ||
-            Time.unscaledTime < nextMobileKeyboardDiagnosticTime)
-        {
-            return;
-        }
-
-        nextMobileKeyboardDiagnosticTime =
-            Time.unscaledTime + MobileKeyboardDiagnosticInterval;
-
-        TouchScreenKeyboard keyboard =
-            wordInput != null ? wordInput.touchScreenKeyboard : null;
-        Rect keyboardArea = TouchScreenKeyboard.area;
-        float canvasScale = battleCanvas != null
-            ? battleCanvas.scaleFactor
-            : float.NaN;
-        TryCalculateMobileKeyboardPanelLayout(
-            keyboardArea,
-            out float panelBottomScreenY,
-            out float keyboardTopScreenY,
-            out float targetPanelBottom,
-            out float requiredPanelShift,
-            out float clampedPanelY
-        );
-
-        string diagnosticText =
-            "WT KEYBOARD DEBUG\n\n" +
-            $"focused={wordInput != null && wordInput.isFocused}\n" +
-            $"visible={TouchScreenKeyboard.visible}\n" +
-            $"area={keyboardArea}\n" +
-            $"areaHeight={keyboardArea.height}\n" +
-            $"keyboardExists={keyboard != null}\n" +
-            $"active={(keyboard != null ? keyboard.active.ToString() : "null")}\n" +
-            $"status={(keyboard != null ? keyboard.status.ToString() : "null")}\n\n" +
-            $"Screen={Screen.width}x{Screen.height}\n" +
-            $"scaleFactor={canvasScale}\n\n" +
-            $"panelOriginal={wordBattlePanelOriginalPosition}\n" +
-            $"panelCurrent=" +
-                $"{(wordBattlePanel != null ? wordBattlePanel.anchoredPosition.ToString() : "null")}\n" +
-            $"panelBottomY={panelBottomScreenY}\n" +
-            $"keyboardTopY={keyboardTopScreenY}\n" +
-            $"targetPanelBottom={targetPanelBottom}\n" +
-            $"requiredShift={requiredPanelShift}\n" +
-            $"clampedPanelY={clampedPanelY}";
-
-        Debug.Log("[WT_KEYBOARD]\n" + diagnosticText);
-
-        if (mobileKeyboardDebugText != null)
-            mobileKeyboardDebugText.text = diagnosticText;
-    }
-
-    void CreateMobileKeyboardDebugOverlay()
-    {
-        if (!Debug.isDebugBuild ||
-            battleCanvas == null ||
-            mobileKeyboardDebugText != null)
-        {
-            return;
-        }
-
-        GameObject overlayObject = new GameObject(
-            "KeyboardDebugOverlay",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(Image)
-        );
-        overlayObject.layer = battleCanvas.gameObject.layer;
-        overlayObject.transform.SetParent(battleCanvas.transform, false);
-
-        RectTransform overlayRect =
-            overlayObject.GetComponent<RectTransform>();
-        overlayRect.anchorMin = new Vector2(0f, 1f);
-        overlayRect.anchorMax = new Vector2(0f, 1f);
-        overlayRect.pivot = new Vector2(0f, 1f);
-        overlayRect.anchoredPosition = new Vector2(16f, -16f);
-        overlayRect.sizeDelta = new Vector2(640f, 440f);
-
-        Image overlayBackground = overlayObject.GetComponent<Image>();
-        overlayBackground.color = new Color(0f, 0f, 0f, 0.78f);
-        overlayBackground.raycastTarget = false;
-
-        GameObject textObject = new GameObject(
-            "KeyboardDebugText",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(TextMeshProUGUI)
-        );
-        textObject.layer = overlayObject.layer;
-        textObject.transform.SetParent(overlayObject.transform, false);
-
-        RectTransform textRect = textObject.GetComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(14f, 10f);
-        textRect.offsetMax = new Vector2(-14f, -10f);
-
-        mobileKeyboardDebugText = textObject.GetComponent<TMP_Text>();
-        mobileKeyboardDebugText.font = chainHintText != null
-            ? chainHintText.font
-            : TMP_Settings.defaultFontAsset;
-        mobileKeyboardDebugText.fontSize = 18f;
-        mobileKeyboardDebugText.color = Color.white;
-        mobileKeyboardDebugText.alignment = TextAlignmentOptions.TopLeft;
-        mobileKeyboardDebugText.enableWordWrapping = false;
-        mobileKeyboardDebugText.overflowMode = TextOverflowModes.Overflow;
-        mobileKeyboardDebugText.raycastTarget = false;
-        mobileKeyboardDebugText.text = "WT KEYBOARD DEBUG\nWaiting for diagnostics...";
-
-        overlayObject.transform.SetAsLastSibling();
     }
 #endif
 
@@ -724,9 +607,6 @@ public class BattleManager : MonoBehaviour
         // GameObject.Find() 대신 BattleCanvas 하위에서 직접 검색한다.
         Transform battleCanvasTransform = GameObject.Find("BattleCanvas")?.transform;
         battleCanvas = battleCanvasTransform?.GetComponent<Canvas>();
-#if UNITY_ANDROID && !UNITY_EDITOR
-        CreateMobileKeyboardDebugOverlay();
-#endif
         wordBattlePanel = battleCanvasTransform
             ?.Find("WordBattlePanel")
             ?.GetComponent<RectTransform>();
