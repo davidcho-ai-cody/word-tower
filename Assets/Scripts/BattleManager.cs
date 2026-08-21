@@ -206,29 +206,40 @@ public class BattleManager : MonoBehaviour
     {
         FindUI();
 
-        playerProgress = new PlayerProgressService();
-        saveService = new SaveService();
+        if (battleCanvas != null)
+            battleCanvas.enabled = false;
 
-        Debug.Log("Save Path: " + saveService.GetSavePath());
-        yield return StartCoroutine(LoadFloorAndMonsterDataLists());
-        LoadGame();
+        try
+        {
+            playerProgress = new PlayerProgressService();
+            saveService = new SaveService();
 
-        // 단어 DB 연결
-        wordService = new WordService();
-        yield return StartCoroutine(wordService.Initialize());
+            Debug.Log("Save Path: " + saveService.GetSavePath());
+            yield return StartCoroutine(LoadFloorAndMonsterDataLists());
+            LoadGame();
 
-        itemService = new ItemService();
-        yield return StartCoroutine(itemService.Initialize());
-        ValidateStartingItems();
-        ApplyEquipmentVisuals();
+            // 단어 DB 연결
+            wordService = new WordService();
+            yield return StartCoroutine(wordService.Initialize());
 
-        // 현재 층 데이터와 몬스터 데이터 로드
-        LoadFloorAndMonsterData();
+            itemService = new ItemService();
+            yield return StartCoroutine(itemService.Initialize());
+            ValidateStartingItems();
+            ApplyEquipmentVisuals();
 
-        // 로드한 데이터 기준으로 전투 시작
-        SetupBattle();
-        ResumeHeroIdle();
-        ResumeMonsterIdle();
+            // 현재 층 데이터와 몬스터 데이터 로드
+            LoadFloorAndMonsterData();
+
+            // 로드한 데이터 기준으로 전투 시작
+            SetupBattle();
+            ResumeHeroIdle();
+            ResumeMonsterIdle();
+        }
+        finally
+        {
+            if (battleCanvas != null)
+                battleCanvas.enabled = true;
+        }
     }
 
     void Update()

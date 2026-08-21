@@ -683,6 +683,16 @@ TitleScene 1차 구조:
 - VictoryPanel 활성 상태에서는 같은 층 보상 중복 획득을 막기 위해 HOME/Back 이동을 금지한다.
 - 10층 Chapter Clear 후 TitleScene으로 나가는 흐름은 Chapter Clear 단계에서 별도 설계한다.
 
+BattleScene 초기 화면 표시:
+
+- 이어하기 진입 시 Scene에 저장된 1층 기본 Visual이 Android StreamingAssets 비동기 데이터와 Save 적용 전에 렌더링되어 약 0.2초 노출되는 플리커가 발견됐다.
+- 이는 초록 슬라임뿐 아니라 FloorTitle, Level/EXP/Gold, HP, 기본 장비와 Monster Scale을 포함한 BattleCanvas 전체의 초기 Visual 문제다.
+- BattleManager는 `Start()`에서 `FindUI()` 직후 첫 `yield` 전에 `BattleCanvas.enabled = false`로 렌더링을 숨긴다.
+- Floor/Monster/Word/Item 로드, Save와 PlayerProgress 적용, 장비 외형, Monster Sprite/Scale, `SetupBattle()`과 Idle 재개가 모두 끝난 뒤 Canvas를 표시한다.
+- 초기화 예외 시에도 `finally`에서 Canvas를 다시 표시해 영구 빈 화면을 방지한다.
+- Scene과 BattleSceneBuilder는 이 해결을 위해 수정하거나 재실행하지 않는다.
+- 회귀 검증은 5층 이상 Save, 장착 장비, 9/10층 Sprite/Scale, Save 없는 새 게임과 Android Release APK에서 수행한다.
+
 Assets/Scripts/Editor/BattleSceneBuilder.cs가 전투 UI의 소스 오브 트루스다.
 
 공식 BattleScene은 Assets/Scenes/BattleScene.unity 하나만 사용한다. 과거 중복으로 존재했던 Assets/BattleScene.unity와 meta는 삭제됐으며, 루트 BattleScene을 다시 만들거나 Build Settings에 추가하지 않는다.
