@@ -80,6 +80,7 @@ public class BattleManager : MonoBehaviour
     private TMP_Text enemyWordText;
     private TMP_Text chainHintText;
     private TMP_Text levelText;
+    private TMP_Text playerNameText;
     private TMP_Text expText;
     private TMP_Text goldText;
     private TMP_FontAsset koreanFont;
@@ -552,6 +553,7 @@ public class BattleManager : MonoBehaviour
         chainHintText = GameObject.Find("ChainHint")?.GetComponent<TMP_Text>();
 
         levelText = GameObject.Find("LevelText")?.GetComponent<TMP_Text>();
+        playerNameText = GameObject.Find("PlayerName")?.GetComponent<TMP_Text>();
         expText = GameObject.Find("ExpText")?.GetComponent<TMP_Text>();
         goldText = GameObject.Find("GoldText")?.GetComponent<TMP_Text>();
 
@@ -2994,6 +2996,9 @@ public class BattleManager : MonoBehaviour
 
         if (levelText != null)
             levelText.text = $"LV.{playerLevel}";
+
+        if (playerNameText != null)
+            playerNameText.text = $"LV.{playerLevel} 용사";
 
         if (expText != null)
             expText.text = $"EXP {exp} / {requiredExp}";

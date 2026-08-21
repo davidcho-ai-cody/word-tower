@@ -118,9 +118,11 @@ Victory 연결 흐름:
 UI:
 
 - LevelText: LV.{playerLevel}
+- PlayerName: LV.{playerLevel} 용사
 - ExpText: EXP {exp} / {requiredExp}
 - LevelUpTextEffect(): LEVEL UP!과 도달 레벨을 팝업으로 표시하고 상승/페이드아웃
 - LevelUpText는 BattleSceneBuilder가 생성
+- 상단 PlayerName은 과거 Scene의 `LV.1 용사` 정적 문자열만 사용해 레벨업 후 갱신되지 않았다. 현재는 BattleManager가 PlayerName TMP_Text를 참조하고 `UpdateUI()`에서 하단 LevelText와 같은 PlayerProgressData.playerLevel 기준으로 동기화한다.
 
 주의:
 
@@ -735,6 +737,8 @@ DavidCho와 com.davidcho.wordtower는 첫 실기기 테스트용 임시 값이�
 - Android 1차 APK에서 words.json 기반 단어 조회
 - Android/Player에서 Resources 기반 몬스터/장비 Sprite 교체
 - Android 1차 APK 빌드와 Galaxy 실기기 설치/실행 확인
+- Android 일반 Release APK 빌드 완료
+- Galaxy 실기기 최종 회귀 테스트와 실제 전투 플레이 정상 확인
 - Android에서는 WordInput을 직접 선택할 때만 소프트 키보드를 연다. `TouchScreenKeyboard.area`의 Android 상단 원점 좌표를 Unity 화면 좌표로 변환한 뒤 `ScreenPointToLocalPointInRectangle()`으로 Canvas 부모 로컬 좌표를 구해 WordBattlePanel을 키보드 위로 이동하며, Canvas 상단을 넘지 않도록 제한한다.
 - 정상 공격/Done/입력 취소/전투 상태 전환 시 키보드와 패널 위치를 복구하며, 잘못된 입력은 키보드와 올라간 패널을 유지해 바로 수정할 수 있게 한다.
 - Galaxy + Samsung Keyboard 실기기에서 WordBattlePanel이 키보드 바로 위로 이동하고, 키보드 닫힘 시 원위치로 복귀하는 것을 확인했다.
@@ -744,9 +748,6 @@ DavidCho와 com.davidcho.wordtower는 첫 실기기 테스트용 임시 값이�
 
 Android TODO:
 
-- 일반 Release APK 빌드
-- Galaxy 실기기 최종 회귀 테스트
-- Android 대응 변경 커밋/정리
 - 운영용 DB 단계에서 StreamingAssets DB를 Application.persistentDataPath로 복사
 - Android SQLite 네이티브 설정 검증
 - Resources 복제 Sprite를 Addressables 또는 직렬화 참조 구조로 개선
@@ -792,18 +793,13 @@ Galaxy + Samsung Keyboard에서 최종 확인한 값:
 현재 상태:
 
 - 키보드 좌표 수정은 Galaxy 실기기에서 해결 완료로 확인했다.
+- Android 일반 Release APK 빌드와 Galaxy 최종 회귀 테스트를 완료했고 실제 전투 플레이도 정상 확인했다.
 - WordInput과 AttackButton이 Samsung Keyboard 위에 정상 노출된다.
 - 키보드를 닫으면 WordBattlePanel이 `(0,0)` 원위치로 정상 복귀한다.
 - 다음 턴에 키보드가 자동으로 다시 열리지 않는다.
 - 해결 확인 후 Development Build용 `WT KEYBOARD DEBUG` Overlay와 `[WT_KEYBOARD]` Logcat 진단 코드는 제거했다.
 
-집에서 이어서 시작할 순서:
-
-1. Unity를 열고 C# 컴파일 오류가 없는지 확인
-2. 일반 Release APK 빌드
-3. Galaxy에서 WordInput / AttackButton 노출, 키보드 닫힘 복귀, 다음 턴 자동 재등장 없음 확인
-4. 잘못된 입력에서 키보드와 패널 유지 확인
-5. Android 대응 변경 커밋/정리
+Android 1차 실기기 대응은 완료됐다. 이후 Android 작업은 운영용 DB/SQLite와 Resources 대체 구조처럼 장기 배포 구조 개선 단계에서 진행한다.
 
 ---
 
@@ -833,6 +829,7 @@ Galaxy + Samsung Keyboard에서 최종 확인한 값:
 - Android 1차 APK용 StreamingAssets JSON 데이터 로딩
 - Android Build Profile과 Android Player Settings 1차 구성
 - Android 소프트 키보드 기반 WordBattlePanel 자동 이동과 자동 재호출 방지 해결 완료(Galaxy + Samsung Keyboard 실기기 확인)
+- 상단 PlayerName과 하단 LevelText의 PlayerProgressData 기반 레벨 표시 동기화
 - LV/EXP UI와 LEVEL UP 연출
 - JSON 기반 Floor/Monster 로딩
 - 1~10층 슬라임 챕터
@@ -871,19 +868,17 @@ Galaxy + Samsung Keyboard에서 최종 확인한 값:
 
 ## 20. 현재 권장 다음 작업
 
-전투 Polish, Equipment Visual, 핵심 Combat/Reward SFX, Android 1차 APK 사전 호환성 수정, Galaxy 실기기 모바일 키보드 대응까지 진행됐다. 다음 시작점은 일반 Release APK 빌드와 Galaxy 최종 회귀 테스트다. 그 뒤 작업 후보는 아래 순서이며 개발 상황에 따라 조정할 수 있다.
+전투 Polish, Equipment Visual, 핵심 Combat/Reward SFX, Android 일반 Release APK와 Galaxy 실기기 전투/모바일 키보드 검증까지 완료됐다. 다음 시작점은 상단 PlayerName 레벨 동기화의 Unity 회귀 확인이다. 그 뒤 작업 후보는 아래 순서이며 개발 상황에 따라 조정할 수 있다.
 
 권장 순서:
 
-1. 일반 Release APK 빌드
-2. Galaxy 최종 회귀 테스트
-3. Android 대응 변경 커밋/정리
-4. Shop Buy SFX
-5. Equip SFX
-6. Button Click SFX
-7. Slime Chapter Clear Sequence 구현
-8. Chapter Clear Illustration 최종 제작 및 적용
-9. BGM 방향성 기획 및 구현
+1. 상단 PlayerName과 하단 LevelText의 새 게임/Save Load/레벨업/다음 층/Reset 동기화 확인
+2. Shop Buy SFX
+3. Equip SFX
+4. Button Click SFX
+5. Slime Chapter Clear Sequence 구현
+6. Chapter Clear Illustration 최종 제작 및 적용
+7. BGM 방향성 기획 및 구현
 
 BGM은 임시 곡을 먼저 붙이기보다 WordTower 고유의 음악적 Identity를 정한 후 진행한다. Main/Title Theme, Battle BGM, Boss BGM, Chapter Clear Music이 완전히 분리된 곡이 아니라 공통 Melody 또는 Motif를 공유하는 방향을 검토한다. 현재는 기획 단계다.
 
