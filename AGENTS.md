@@ -15,7 +15,7 @@
 - 현재 확정·구현 콘텐츠: 1~10층 슬라임 챕터
 - 앱 진입 씬: Assets/Scenes/TitleScene.unity
 - 공식 전투 씬: Assets/Scenes/BattleScene.unity
-- Build Scene 순서: Index 0 TitleScene, Index 1 BattleScene
+- Build Scene 순서: Index 0 OpeningScene, Index 1 TitleScene, Index 2 BattleScene
 - 중복 루트 씬 Assets/BattleScene.unity는 삭제됐으며 다시 생성하거나 사용하지 않는다.
 - 초기 런타임은 AI/API 없이 로컬 단어 데이터로 동작한다. Windows Editor는 SQLite DB, Android 1차 APK는 JSON 단어 데이터를 사용한다.
 
@@ -513,6 +513,57 @@ Audio 방향:
 - 일반 Victory는 현재 `victory_01.wav`를 사용한다.
 - Chapter Clear는 향후 전용 Jingle 또는 Music으로 일반 Victory와 구분한다.
 - Boss/Chapter Clear 전용 Audio는 아직 제작·연결하지 않는다.
+
+### 9.2 Opening Story — 1차 구현 및 2차 연출 튜닝
+
+오프닝 스토리는 WordTower 최초 실행 시 1회만 자동 재생하고, 완료 또는 Skip 후 TitleScene으로 진입하는 구조다. 기존 gameplay save(`wordtower_save.json`)와 분리된 `wordtower_story_progress.json`을 사용해 오프닝 시청 여부를 저장한다.
+
+현재 코드:
+
+- Assets/Scripts/Story/StoryProgressData.cs
+- Assets/Scripts/Story/StoryProgressService.cs
+- Assets/Scripts/Story/OpeningStoryManager.cs
+- Assets/Scripts/Editor/OpeningSceneBuilder.cs
+- Assets/Scripts/Editor/OpeningStoryDebugMenu.cs
+
+오프닝 에셋:
+
+- Assets/Art/Opening/opening_01_peaceful_world.png
+- Assets/Art/Opening/opening_02_words_disappear.png
+- Assets/Art/Opening/opening_03_demon_king_steals_words.png
+- Assets/Art/Opening/opening_04_world_without_words.png
+- Assets/Art/Opening/opening_05_hero_awakens.png
+- Assets/Art/Opening/opening_06_toward_word_tower.png
+- Assets/Art/Opening/opening_07_demon_kings_plan.png
+- Assets/Art/Opening/opening_08_adventure_begins.png
+- Assets/Audio/BGM/Opening/wordtower_opening_theme.mp3
+
+2차 튜닝 Timeline:
+
+- Cut 1: 0.0 ~ 3.8
+- Cut 2: 3.8 ~ 6.2
+- Cut 3: 6.2 ~ 9.7
+- Cut 4: 9.7 ~ 14.0
+- Cut 5: 14.0 ~ 17.4
+- Cut 6: 17.4 ~ 21.2
+- Cut 7: 21.2 ~ 26.0
+- Cut 8: 26.0 ~ 30.8
+
+OpeningStoryManager는 `AudioSource.time`을 우선 기준으로 컷과 Motion을 동기화한다. 오프닝 음악은 0초부터 바로 재생하되 시작 볼륨 0에서 약 1.3초 동안 원래 AudioSource 볼륨까지 Fade In하고, 자연 종료 마지막 약 0.9초에는 Fade Out한다. SKIP 버튼과 Android Back/Escape는 반응성을 위해 긴 Audio Fade Out을 기다리지 않고 같은 완료 처리로 연결되어 `hasSeenOpeningStory = true` 저장 후 TitleScene으로 이동한다.
+
+컷 전환은 약 0.3초 Cross Fade를 유지하되, 다음 컷을 Fade 시작 시점부터 alpha 0 상태로 준비하고 Zoom/Pan Motion도 함께 진행한다. Cross Fade 중에는 outgoing cut과 incoming cut이 모두 움직이며, 전환 완료 시 incoming cut의 Motion progress를 reset하지 않고 Audio Timeline 기준으로 이어간다. 새 컷 초반 약 0.45초는 Motion을 약하게 적용해 핵심 스토리 문장 가독성을 확보한다. Cut 8은 마지막 약 1.8초 동안 Motion을 멈춰 `WORD TOWER` 로고와 모험 시작 이미지를 안정적으로 보여준다.
+
+OpeningSceneBuilder는 `WordTower → Build Opening Scene` 메뉴로 OpeningScene만 생성하고 Build Scene 순서를 아래처럼 맞춘다.
+
+1. Assets/Scenes/OpeningScene.unity
+2. Assets/Scenes/TitleScene.unity
+3. Assets/Scenes/BattleScene.unity
+
+Editor 전용 디버그 메뉴 `WordTower → Debug → Reset Opening Story`는 `wordtower_story_progress.json`만 삭제해 다음 Play에서 Opening Story를 다시 최초 실행 상태로 재생하게 한다. gameplay save인 `wordtower_save.json`은 건드리지 않는다.
+
+현재 2차 튜닝은 런타임 코드와 문서만 수정했으며 OpeningScene 재생성이나 Builder 실행은 하지 않았다. Editor/Android에서 최종 연출감은 아직 확인 전이다.
+
+향후 TitleScene STORY 메뉴에서는 `forceReplay` 또는 별도 Story 선택 진입을 통해 이미 본 Opening도 다시 재생할 수 있게 확장한다. `opening_08_adventure_begins.png`는 향후 TitleScene 배경과 Seamless Transition 후보로 남긴다.
 
 ### 10층 이후 방향 — 미확정 후보
 
