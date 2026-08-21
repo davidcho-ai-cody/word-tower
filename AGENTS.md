@@ -13,7 +13,9 @@
 - 화면: 모바일 우선, 세로 9:16
 - 목표: 100층 마왕성을 한국어 끝말잇기 전투로 공략
 - 현재 확정·구현 콘텐츠: 1~10층 슬라임 챕터
-- 메인 씬: Assets/Scenes/BattleScene.unity
+- 앱 진입 씬: Assets/Scenes/TitleScene.unity
+- 공식 전투 씬: Assets/Scenes/BattleScene.unity
+- Build Scene 순서: Index 0 TitleScene, Index 1 BattleScene
 - 중복 루트 씬 Assets/BattleScene.unity는 삭제됐으며 다시 생성하거나 사용하지 않는다.
 - 초기 런타임은 AI/API 없이 로컬 단어 데이터로 동작한다. Windows Editor는 SQLite DB, Android 1차 APK는 JSON 단어 데이터를 사용한다.
 
@@ -666,6 +668,20 @@ Debug 이동 시:
 ---
 
 ## 15. BattleSceneBuilder 규칙
+
+TitleScene 1차 구조:
+
+- TitleScene 1차 기능은 Unity에서 검증 완료됐으며 앱 진입, Save 유무별 시작/이어하기 표시, Title → Battle 이동과 종료가 정상 동작한다.
+- `Assets/Scripts/Title/TitleManager.cs`가 Save 존재 확인, 시작 버튼 문구, BattleScene 이동, 종료와 TitleScene의 Android Back/Escape를 담당한다.
+- 시작 버튼은 하나만 사용하며 Save가 없으면 `게임 시작`, Save가 있으면 `이어하기`로 표시한다.
+- 실제 Save Load는 기존처럼 BattleScene 진입 후 `BattleManager.LoadGame()`이 담당한다.
+- `Assets/Scripts/Editor/TitleSceneBuilder.cs`는 `WordTower → Build Title Scene` 메뉴로 TitleScene만 독립 생성한다. BattleScene이나 BattleSceneBuilder를 호출하지 않는다.
+- TitleManager는 Scene 참조가 비어 있어도 동일한 최소 Title UI를 런타임에 생성하는 fallback을 갖는다. TitleSceneBuilder로 재생성하면 정적 UI 참조를 연결해 사용한다.
+- BattleScene HOME/Back은 구현되어 있다. BattleSceneBuilder가 상단 `HomeButton`을 생성하고 BattleManager의 `ReturnToTitle()`이 현재 진행을 저장한 뒤 TitleScene으로 이동한다.
+- BattleScene Back 우선순위는 Android 키보드 닫기 → Shop 닫기 → Victory 이동 차단 → 일반 상태 Save 후 TitleScene 이동이다. 한 입력에서는 한 단계만 처리한다.
+- HOME/Back Scene 전환은 `isSceneTransitioning`으로 중복 실행을 막는다.
+- VictoryPanel 활성 상태에서는 같은 층 보상 중복 획득을 막기 위해 HOME/Back 이동을 금지한다.
+- 10층 Chapter Clear 후 TitleScene으로 나가는 흐름은 Chapter Clear 단계에서 별도 설계한다.
 
 Assets/Scripts/Editor/BattleSceneBuilder.cs가 전투 UI의 소스 오브 트루스다.
 

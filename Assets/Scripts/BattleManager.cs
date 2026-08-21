@@ -4,6 +4,8 @@ using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class BattleManager : MonoBehaviour
 {
@@ -90,6 +92,7 @@ public class BattleManager : MonoBehaviour
 
     private TMP_InputField wordInput;
     private Button attackButton;
+    private Button homeButton;
     private Canvas battleCanvas;
     private RectTransform wordBattlePanel;
     private Vector2 wordBattlePanelOriginalPosition;
@@ -111,6 +114,7 @@ public class BattleManager : MonoBehaviour
     private Button shopAccessoryTabButton;
     private Button shopEtcTabButton;
     private bool isShopOpen = false;
+    private bool isSceneTransitioning = false;
     private ItemType currentShopTab = ItemType.Weapon;
 
     private Image playerHpFill;
@@ -229,10 +233,43 @@ public class BattleManager : MonoBehaviour
 
     void Update()
     {
+        HandleBackInput();
         UpdateHeroIdle();
         UpdateMonsterIdle();
         UpdateGroundShadows();
         UpdateMobileKeyboardLayout();
+    }
+
+    void HandleBackInput()
+    {
+        if (isSceneTransitioning ||
+            Keyboard.current?.escapeKey.wasPressedThisFrame != true)
+        {
+            return;
+        }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        if ((wordInput != null && wordInput.isFocused) ||
+            TouchScreenKeyboard.visible)
+        {
+            CloseMobileKeyboardAndRestorePanel();
+            return;
+        }
+#endif
+
+        if (isShopOpen || (shopPanel != null && shopPanel.activeSelf))
+        {
+            CloseShop();
+            return;
+        }
+
+        if (IsVictoryPanelOpen())
+        {
+            Debug.Log("Victory 상태에서는 HOME으로 이동할 수 없습니다.");
+            return;
+        }
+
+        ReturnToTitle();
     }
 
     void UpdateMobileKeyboardLayout()
@@ -559,6 +596,7 @@ public class BattleManager : MonoBehaviour
 
         wordInput = GameObject.Find("WordInput")?.GetComponent<TMP_InputField>();
         attackButton = GameObject.Find("AttackButton")?.GetComponent<Button>();
+        homeButton = GameObject.Find("HomeButton")?.GetComponent<Button>();
 
         playerHpFill = GameObject.Find("PlayerHP/Fill")?.GetComponent<Image>();
         slimeHpFill = GameObject.Find("MonsterHP/Fill")?.GetComponent<Image>();
@@ -673,6 +711,9 @@ public class BattleManager : MonoBehaviour
 
         if (attackButton != null)
             attackButton.onClick.AddListener(OnAttackButtonClicked);
+
+        if (homeButton != null)
+            homeButton.onClick.AddListener(OnHomeButtonClicked);
 
         if (wordInput != null)
         {
@@ -927,6 +968,45 @@ public class BattleManager : MonoBehaviour
     void SaveGame()
     {
         saveService?.Save(CreateSaveData());
+    }
+
+    void OnHomeButtonClicked()
+    {
+        if (isSceneTransitioning)
+            return;
+
+        if (IsVictoryPanelOpen())
+        {
+            Debug.Log("Victory 상태에서는 HOME으로 이동할 수 없습니다.");
+            return;
+        }
+
+        ReturnToTitle();
+    }
+
+    bool IsVictoryPanelOpen()
+    {
+        return victoryPanel != null && victoryPanel.activeSelf;
+    }
+
+    void ReturnToTitle()
+    {
+        if (isSceneTransitioning || IsVictoryPanelOpen())
+            return;
+
+        isSceneTransitioning = true;
+        CloseMobileKeyboardAndRestorePanel();
+
+        if (isShopOpen || (shopPanel != null && shopPanel.activeSelf))
+        {
+            isShopOpen = false;
+
+            if (shopPanel != null)
+                shopPanel.SetActive(false);
+        }
+
+        SaveGame();
+        SceneManager.LoadScene("TitleScene");
     }
 
     void ResetSaveData()

@@ -67,6 +67,7 @@ public static class BattleSceneBuilder
         CreateStatusPanel(canvas.transform);
         CreateVictoryPanel(canvas.transform); // 승리패널
         CreateShopUI(canvas.transform);
+        CreateHomeButton(canvas.transform);
         CreateLevelUpText(canvas.transform);
         CreateFloorDebugPanel(canvas.transform);
 
@@ -811,6 +812,20 @@ public static class BattleSceneBuilder
         );
 
         panel.SetActive(false);
+    }
+
+    private static void CreateHomeButton(Transform parent)
+    {
+        Button homeButton = CreateButton(
+            parent,
+            "HomeButton",
+            "HOME",
+            new Vector2(0.28f, 0.91f),
+            new Vector2(160f, 70f)
+        );
+
+        homeButton.transform.Find("Label")
+            .GetComponent<TMP_Text>().fontSize = 28;
     }
 
     private static void CreateShopTabButton(
