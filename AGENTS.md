@@ -13,13 +13,27 @@
 - 화면: 모바일 우선, 세로 9:16
 - 목표: 100층 마왕성을 한국어 끝말잇기 전투로 공략
 - 현재 확정·구현 콘텐츠: 1~10층 슬라임 챕터
-- 앱 진입 씬: Assets/Scenes/TitleScene.unity
+- 앱 진입 씬: Assets/Scenes/StudioSplashScene.unity
 - 공식 전투 씬: Assets/Scenes/BattleScene.unity
-- Build Scene 순서: Index 0 OpeningScene, Index 1 TitleScene, Index 2 BattleScene
+- 최종 Build Scene 순서: Index 0 StudioSplashScene, Index 1 OpeningScene, Index 2 TitleScene, Index 3 BattleScene
 - 중복 루트 씬 Assets/BattleScene.unity는 삭제됐으며 다시 생성하거나 사용하지 않는다.
 - 초기 런타임은 AI/API 없이 로컬 단어 데이터로 동작한다. Windows Editor는 SQLite DB, Android 1차 APK는 JSON 단어 데이터를 사용한다.
 
 WordTower는 단순 단어 퀴즈가 아니라 전투 언어가 끝말잇기인 RPG를 지향한다. 전투 손맛, 보이는 성장, 단어 선택의 전략성을 보존한다.
+
+현재 전체 Scene Flow:
+
+    StudioSplashScene
+    → OpeningScene (최초 1회만)
+    → TitleScene
+    → BattleScene
+    → HOME
+    → TitleScene
+
+Opening Story를 이미 본 경우:
+
+    StudioSplashScene
+    → TitleScene
 
 ---
 
@@ -514,17 +528,69 @@ Audio 방향:
 - Chapter Clear는 향후 전용 Jingle 또는 Music으로 일반 Victory와 구분한다.
 - Boss/Chapter Clear 전용 Audio는 아직 제작·연결하지 않는다.
 
-### 9.2 Opening Story — 1차 구현 및 2차 연출 튜닝
+### 9.2 Studio Splash 1차 — 구현 완료
+
+Studio Splash는 게임 실행 직후 매번 약 3초 동안 `PLAY YOUR NEXT WORLD` 브랜드 로고와 영어 음성을 재생한 뒤, StoryProgress에 따라 Opening 또는 Title로 분기하는 최초 진입 Scene이다.
+
+구현:
+
+- Assets/Scripts/Brand/StudioSplashManager.cs
+- Assets/Scripts/Editor/StudioSplashSceneBuilder.cs
+- Assets/Scenes/StudioSplashScene.unity
+
+브랜드 에셋:
+
+- Assets/Art/Brand/Studio/play_your_next_world_logo.png
+- Assets/Audio/Brand/Studio/play_your_next_world_voice.mp3
+
+기본 흐름:
+
+    StudioSplashScene
+    → StoryProgressService.LoadOrCreate()
+    → hasSeenOpeningStory == false ? OpeningScene : TitleScene
+
+연출:
+
+- 1차 버전은 PLAY YOUR NEXT WORLD 전체 로고 PNG 1개를 사용한다.
+- 영어 음성 `Play Your Next World`를 재생한다.
+- 첫 프레임 로고 Flicker를 막기 위해 Awake에서 Canvas와 Alpha/Scale 초기값을 설정한다.
+- 0.0~0.35초는 어두운 배경과 약한 청백색 Glow를 유지한다.
+- 0.35~0.85초는 로고 Alpha 0→1, Scale 0.92→1.03, LightSweep 이동을 적용한다.
+- 0.85~1.15초는 로고 Scale 1.03→1.0으로 안정화한다.
+- 약 1.05초부터 영어 음성을 재생하며 음성이 끝나기 전 다음 Scene으로 넘어가지 않는다.
+- 마지막 약 0.35초는 전체 Fade Out 후 다음 Scene으로 이동한다.
+- 1차 StudioSplash에는 터치 Skip을 넣지 않고 Android Back/Escape도 별도로 처리하지 않는다.
+
+Build Scene 최종 순서:
+
+1. Assets/Scenes/StudioSplashScene.unity
+2. Assets/Scenes/OpeningScene.unity
+3. Assets/Scenes/TitleScene.unity
+4. Assets/Scenes/BattleScene.unity
+
+`StudioSplashSceneBuilder`는 `WordTower → Build Studio Splash Scene` 메뉴로 StudioSplashScene을 생성하고 위 Build Scene 순서를 설정한다. `OpeningSceneBuilder`도 같은 Build Scene 순서를 사용하도록 맞춘다.
+
+향후 고도화 후보:
+
+- X/O 개별 등장
+- X slash / O orbit
+- Particle System
+- Bloom / Shader
+- Whoosh / Impact SFX
+- Studio BGM sting
+
+### 9.3 Opening Story — 구현 완료 및 2차 연출 튜닝 완료
 
 오프닝 스토리는 WordTower 최초 실행 시 1회만 자동 재생하고, 완료 또는 Skip 후 TitleScene으로 진입하는 구조다. 기존 gameplay save(`wordtower_save.json`)와 분리된 `wordtower_story_progress.json`을 사용해 오프닝 시청 여부를 저장한다.
 
-현재 코드:
+구현:
 
 - Assets/Scripts/Story/StoryProgressData.cs
 - Assets/Scripts/Story/StoryProgressService.cs
 - Assets/Scripts/Story/OpeningStoryManager.cs
 - Assets/Scripts/Editor/OpeningSceneBuilder.cs
 - Assets/Scripts/Editor/OpeningStoryDebugMenu.cs
+- Assets/Scenes/OpeningScene.unity
 
 오프닝 에셋:
 
@@ -553,15 +619,14 @@ OpeningStoryManager는 `AudioSource.time`을 우선 기준으로 컷과 Motion�
 
 컷 전환은 약 0.3초 Cross Fade를 유지하되, 다음 컷을 Fade 시작 시점부터 alpha 0 상태로 준비하고 Zoom/Pan Motion도 함께 진행한다. Cross Fade 중에는 outgoing cut과 incoming cut이 모두 움직이며, 전환 완료 시 incoming cut의 Motion progress를 reset하지 않고 Audio Timeline 기준으로 이어간다. 새 컷 초반 약 0.45초는 Motion을 약하게 적용해 핵심 스토리 문장 가독성을 확보한다. Cut 8은 마지막 약 1.8초 동안 Motion을 멈춰 `WORD TOWER` 로고와 모험 시작 이미지를 안정적으로 보여준다.
 
-OpeningSceneBuilder는 `WordTower → Build Opening Scene` 메뉴로 OpeningScene만 생성하고 Build Scene 순서를 아래처럼 맞춘다.
+OpeningSceneBuilder는 `WordTower → Build Opening Scene` 메뉴로 OpeningScene을 생성하고 Build Scene 순서를 아래처럼 맞춘다.
 
-1. Assets/Scenes/OpeningScene.unity
-2. Assets/Scenes/TitleScene.unity
-3. Assets/Scenes/BattleScene.unity
+1. Assets/Scenes/StudioSplashScene.unity
+2. Assets/Scenes/OpeningScene.unity
+3. Assets/Scenes/TitleScene.unity
+4. Assets/Scenes/BattleScene.unity
 
 Editor 전용 디버그 메뉴 `WordTower → Debug → Reset Opening Story`는 `wordtower_story_progress.json`만 삭제해 다음 Play에서 Opening Story를 다시 최초 실행 상태로 재생하게 한다. gameplay save인 `wordtower_save.json`은 건드리지 않는다.
-
-현재 2차 튜닝은 런타임 코드와 문서만 수정했으며 OpeningScene 재생성이나 Builder 실행은 하지 않았다. Editor/Android에서 최종 연출감은 아직 확인 전이다.
 
 향후 TitleScene STORY 메뉴에서는 `forceReplay` 또는 별도 Story 선택 진입을 통해 이미 본 Opening도 다시 재생할 수 있게 확장한다. `opening_08_adventure_begins.png`는 향후 TitleScene 배경과 Seamless Transition 후보로 남긴다.
 
@@ -720,14 +785,23 @@ Debug 이동 시:
 
 ## 15. BattleSceneBuilder 규칙
 
-TitleScene 1차 구조:
+TitleScene 1차 리뉴얼 — 구현 완료:
 
-- TitleScene 1차 기능은 Unity에서 검증 완료됐으며 앱 진입, Save 유무별 시작/이어하기 표시, Title → Battle 이동과 종료가 정상 동작한다.
+- TitleScene은 `Assets/Art/UI/Title/wordtower_title_main.png`를 메인 배경 비주얼로 사용하는 9:16 모바일 타이틀 화면으로 리뉴얼됐다.
+- 배경 이미지는 Scene에 합성된 버튼/로고가 아니라 순수 배경으로 사용하고, `WORD TOWER` 타이틀, 서브타이틀, 메뉴 버튼은 Unity UI로 분리한다.
+- `TitleHeader` 아래 TMP_Text 기반 `WordTowerTitle`과 `Subtitle`을 배치한다. 향후 투명 PNG 로고가 확정되면 `WordTowerTitle` 영역만 교체할 수 있게 유지한다.
+- `MainMenu` 아래 기존 `StartButton`을 가장 큰 Primary 버튼으로 유지한다. Save가 없으면 `게임 시작`, Save가 있으면 `이어하기`로 표시한다.
+- `SecondaryMenu`에는 1차 placeholder 버튼 `StoryButton`, `CollectionButton`, `SettingsButton`을 둔다. STORY 상세, 도감, 설정 화면은 아직 구현하지 않고 Console log만 남긴다.
+- 기존 종료 기능은 `QuitButton`으로 유지하되 메인 메뉴 우선순위를 방해하지 않는 작은 보조 버튼으로 배치한다.
+- `VersionText`는 `Application.version` 기반으로 하단 중앙에 작게 표시한다.
+- 배경 위 UI 가독성을 위해 `ReadabilityOverlay`를 사용한다. 배경 이미지 자체를 과도하게 가리지 않는다.
 - `Assets/Scripts/Title/TitleManager.cs`가 Save 존재 확인, 시작 버튼 문구, BattleScene 이동, 종료와 TitleScene의 Android Back/Escape를 담당한다.
-- 시작 버튼은 하나만 사용하며 Save가 없으면 `게임 시작`, Save가 있으면 `이어하기`로 표시한다.
+- TitleManager는 STORY/도감/설정 placeholder 버튼 이벤트도 담당한다.
 - 실제 Save Load는 기존처럼 BattleScene 진입 후 `BattleManager.LoadGame()`이 담당한다.
-- `Assets/Scripts/Editor/TitleSceneBuilder.cs`는 `WordTower → Build Title Scene` 메뉴로 TitleScene만 독립 생성한다. BattleScene이나 BattleSceneBuilder를 호출하지 않는다.
-- TitleManager는 Scene 참조가 비어 있어도 동일한 최소 Title UI를 런타임에 생성하는 fallback을 갖는다. TitleSceneBuilder로 재생성하면 정적 UI 참조를 연결해 사용한다.
+- `Assets/Scripts/Editor/TitleSceneBuilder.cs`는 `WordTower → Build Title Scene` 메뉴로 TitleScene만 독립 생성한다. BattleScene, BattleSceneBuilder, OpeningSceneBuilder, StudioSplashSceneBuilder를 호출하지 않는다.
+- TitleManager는 Scene 참조가 비어 있어도 최소 Title UI를 런타임에 생성하는 fallback을 갖는다. TitleSceneBuilder로 재생성하면 정적 UI 참조를 연결해 사용한다.
+- TitleScene의 `게임 시작` / `이어하기`는 BattleScene 이동이 정상 동작하는 구조를 유지한다.
+- STORY / 도감 / 설정은 현재 placeholder이며, 다음 작업에서 STORY 다시보기 기능부터 연결할 예정이다.
 - BattleScene HOME/Back은 구현되어 있다. BattleSceneBuilder가 상단 `HomeButton`을 생성하고 BattleManager의 `ReturnToTitle()`이 현재 진행을 저장한 뒤 TitleScene으로 이동한다.
 - BattleScene Back 우선순위는 Android 키보드 닫기 → Shop 닫기 → Victory 이동 차단 → 일반 상태 Save 후 TitleScene 이동이다. 한 입력에서는 한 단계만 처리한다.
 - HOME/Back Scene 전환은 `isSceneTransitioning`으로 중복 실행을 막는다.
@@ -743,6 +817,15 @@ BattleScene 초기 화면 표시:
 - 초기화 예외 시에도 `finally`에서 Canvas를 다시 표시해 영구 빈 화면을 방지한다.
 - Scene과 BattleSceneBuilder는 이 해결을 위해 수정하거나 재실행하지 않는다.
 - 회귀 검증은 5층 이상 Save, 장착 장비, 9/10층 Sprite/Scale, Save 없는 새 게임과 Android Release APK에서 수행한다.
+
+BattleScene은 기존 전투, 저장, 상점, HOME → TitleScene 복귀 구조를 유지한다. 현재 Scene에는 `BattleCanvas`, `ShopButton`, `ShopPanel`, `HomeButton`, `AudioManager`가 포함되어 있으며 BattleSceneBuilder 실행 후 최신 Scene 상태가 정상 확인된 상태다.
+
+Scene Builder 운영 원칙:
+
+- StudioSplash / Opening / Title / Battle Scene은 모두 Builder 기반으로 관리한다.
+- Builder 코드가 변경된 경우 실제 Scene 반영을 위해 Unity Editor의 해당 `WordTower → Build ... Scene` 메뉴 실행이 필요할 수 있다.
+- Scene YAML을 직접 수정하지 않는다.
+- Hierarchy에만 수동 추가한 중요 UI는 Builder 재실행 시 사라질 수 있으므로 Builder와 런타임 참조를 함께 갱신한다.
 
 Assets/Scripts/Editor/BattleSceneBuilder.cs가 전투 UI의 소스 오브 트루스다.
 
@@ -763,11 +846,9 @@ Assets/Scripts/Editor/BattleSceneBuilder.cs가 전투 UI의 소스 오브 트루
 - FloorDebugPanel
 - DebugSaveResetButton
 
-Builder 수정 후 반드시 실행:
+BattleSceneBuilder 수정 후 반드시 실행:
 
     WordTower → Build Battle Scene
-
-Hierarchy에만 수동 추가한 중요 UI는 Builder 재실행 시 사라질 수 있다.
 
 알려진 정리 항목:
 
@@ -920,6 +1001,13 @@ Android 1차 실기기 대응은 완료됐다. 이후 Android 작업은 운영�
 - Scene 단위 AudioManager와 SFX/BGM AudioSource 분리, SfxId/PlayOneShot 기반 중첩 재생
 - HeroAttack, MonsterHit, Critical, MonsterSquash, MonsterAttack, MonsterDeath 실제 Combat SFX
 - Victory와 LevelUp 실제 Reward SFX 및 다중 레벨업 1회 재생
+- StudioSplashScene 1차 구현과 매 실행 진입 흐름
+- Opening Story 8컷, BGM, Audio Fade In/Out, Cross Fade, Zoom/Pan 연출
+- Opening 최초 1회 자동 재생과 Debug Reset
+- TitleScene 리뉴얼 Scene / Builder / TitleManager 메뉴 구조
+- Title 배경 `wordtower_title_main.png` 기반 9:16 UI 구조
+- Title STORY / 도감 / 설정 placeholder 버튼
+- StudioSplash → Opening/Title → Battle 전체 Scene Flow
 
 ---
 
@@ -929,11 +1017,19 @@ Android 1차 실기기 대응은 완료됐다. 이후 Android 작업은 운영�
 - 보스 전용 패턴 및 isBoss 기반 전투 분기
 - 인벤토리 UI
 - 11층 이후 확정 콘텐츠
+- Title STORY 메뉴 실제 구현
+- Opening Story 다시보기
+- 10층 / 20층 / ... 스토리 해금 구조
+- 도감 UI
+- 설정 UI
+- Studio Splash X/O 분리 애니메이션 고도화
+- Title WORD TOWER 투명 PNG 로고 고도화
+- Battle UI/연출 고도화
 - 운영용 대규모 한국어 단어 DB
 - 단어 뜻/도감/부적절 단어 관리
 - 운영용 Android SQLite와 대규모 DB 로딩 구조
 - Resources 복제 Sprite의 장기 로딩 구조 개선
-- 타이틀/메뉴/튜토리얼
+- 튜토리얼
 - Gold, Shop Buy, Equip, UI Button 실제 SFX
 - 실제 BGM AudioClip과 BGM 재생 로직
 - Settings/Volume UI와 Audio Mixer
@@ -945,17 +1041,20 @@ Android 1차 실기기 대응은 완료됐다. 이후 Android 작업은 운영�
 
 ## 20. 현재 권장 다음 작업
 
-전투 Polish, Equipment Visual, 핵심 Combat/Reward SFX, Android 일반 Release APK와 Galaxy 실기기 전투/모바일 키보드 검증까지 완료됐다. 다음 시작점은 상단 PlayerName 레벨 동기화의 Unity 회귀 확인이다. 그 뒤 작업 후보는 아래 순서이며 개발 상황에 따라 조정할 수 있다.
+StudioSplash, Opening Story, TitleScene 리뉴얼, BattleScene HOME/Shop/전투 흐름까지 기본 앱 진입 구조가 갖춰졌다. 다음 시작점은 Title의 STORY 메뉴를 실제 다시보기/해금 구조로 연결하는 작업이다. 그 뒤 작업 후보는 아래 순서이며 개발 상황에 따라 조정할 수 있다.
 
 권장 순서:
 
-1. 상단 PlayerName과 하단 LevelText의 새 게임/Save Load/레벨업/다음 층/Reset 동기화 확인
-2. Shop Buy SFX
-3. Equip SFX
-4. Button Click SFX
-5. Slime Chapter Clear Sequence 구현
-6. Chapter Clear Illustration 최종 제작 및 적용
-7. BGM 방향성 기획 및 구현
+1. Title STORY 메뉴 실제 구현
+2. Opening Story 다시보기 연결
+3. 10층 / 20층 / ... 스토리 해금 저장 구조
+4. 도감 UI
+5. 설정 UI
+6. Studio Splash X/O 분리 애니메이션 고도화
+7. Title WORD TOWER 투명 PNG 로고 고도화
+8. Battle UI/연출 고도화
+9. Shop Buy / Equip / Button Click SFX
+10. Slime Chapter Clear Sequence 구현
 
 BGM은 임시 곡을 먼저 붙이기보다 WordTower 고유의 음악적 Identity를 정한 후 진행한다. Main/Title Theme, Battle BGM, Boss BGM, Chapter Clear Music이 완전히 분리된 곡이 아니라 공통 Melody 또는 Motif를 공유하는 방향을 검토한다. 현재는 기획 단계다.
 

@@ -9,6 +9,8 @@ using UnityEngine.UI;
 
 public static class OpeningSceneBuilder
 {
+    private const string StudioSplashScenePath =
+        "Assets/Scenes/StudioSplashScene.unity";
     private const string OpeningScenePath = "Assets/Scenes/OpeningScene.unity";
     private const string TitleScenePath = "Assets/Scenes/TitleScene.unity";
     private const string BattleScenePath = "Assets/Scenes/BattleScene.unity";
@@ -461,6 +463,7 @@ public static class OpeningSceneBuilder
     {
         EditorBuildSettings.scenes = new[]
         {
+            new EditorBuildSettingsScene(StudioSplashScenePath, true),
             new EditorBuildSettingsScene(OpeningScenePath, true),
             new EditorBuildSettingsScene(TitleScenePath, true),
             new EditorBuildSettingsScene(BattleScenePath, true)

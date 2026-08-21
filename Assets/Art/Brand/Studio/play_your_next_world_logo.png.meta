@@ -1,0 +1,1027 @@
+fileFormatVersion: 2
+guid: e1af30b169a31334389ac4fcd1e579be
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -7580076721211980923
+    second: play_your_next_world_logo_0
+  - first:
+      213: 6146397900940464676
+    second: play_your_next_world_logo_1
+  - first:
+      213: 2644448197166005496
+    second: play_your_next_world_logo_2
+  - first:
+      213: -4471742823529634441
+    second: play_your_next_world_logo_3
+  - first:
+      213: -4276776690631512355
+    second: play_your_next_world_logo_4
+  - first:
+      213: 5623470371844184298
+    second: play_your_next_world_logo_5
+  - first:
+      213: 2364777793069241907
+    second: play_your_next_world_logo_6
+  - first:
+      213: 7591888487973450981
+    second: play_your_next_world_logo_7
+  - first:
+      213: -5259258975571779815
+    second: play_your_next_world_logo_8
+  - first:
+      213: 5578441797676519343
+    second: play_your_next_world_logo_9
+  - first:
+      213: 1314066071827812680
+    second: play_your_next_world_logo_10
+  - first:
+      213: -308525864218716494
+    second: play_your_next_world_logo_11
+  - first:
+      213: -10721538591665139
+    second: play_your_next_world_logo_12
+  - first:
+      213: -50421319226025948
+    second: play_your_next_world_logo_13
+  - first:
+      213: 6046774879792391837
+    second: play_your_next_world_logo_14
+  - first:
+      213: 9183136936428060819
+    second: play_your_next_world_logo_15
+  - first:
+      213: -4537657663829522406
+    second: play_your_next_world_logo_16
+  - first:
+      213: -9154178995419950200
+    second: play_your_next_world_logo_17
+  - first:
+      213: -3586924821312521050
+    second: play_your_next_world_logo_18
+  - first:
+      213: -6100294448311918764
+    second: play_your_next_world_logo_19
+  - first:
+      213: -2428781308123628805
+    second: play_your_next_world_logo_20
+  - first:
+      213: 7481506618284462623
+    second: play_your_next_world_logo_21
+  - first:
+      213: 6967730082320179583
+    second: play_your_next_world_logo_22
+  - first:
+      213: 811336704695473840
+    second: play_your_next_world_logo_23
+  - first:
+      213: 2608833537612001279
+    second: play_your_next_world_logo_24
+  - first:
+      213: -1455476639638985448
+    second: play_your_next_world_logo_25
+  - first:
+      213: 1716245900964691880
+    second: play_your_next_world_logo_26
+  - first:
+      213: 8903603143534260105
+    second: play_your_next_world_logo_27
+  - first:
+      213: 7140174736885314455
+    second: play_your_next_world_logo_28
+  - first:
+      213: -5720877122828820930
+    second: play_your_next_world_logo_29
+  - first:
+      213: 1740335599192325866
+    second: play_your_next_world_logo_30
+  - first:
+      213: 325850412124131545
+    second: play_your_next_world_logo_31
+  - first:
+      213: 7301557381520073585
+    second: play_your_next_world_logo_32
+  - first:
+      213: 4438507815892941730
+    second: play_your_next_world_logo_33
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: play_your_next_world_logo_0
+      rect:
+        serializedVersion: 2
+        x: 354
+        y: 680
+        width: 110
+        height: 102
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 583c3fd02682ec690800000000000000
+      internalID: -7580076721211980923
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_1
+      rect:
+        serializedVersion: 2
+        x: 514
+        y: 690
+        width: 96
+        height: 79
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42253cd63546c4550800000000000000
+      internalID: 6146397900940464676
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_2
+      rect:
+        serializedVersion: 2
+        x: 667
+        y: 712
+        width: 138
+        height: 93
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8fc700bdf97f2b420800000000000000
+      internalID: 2644448197166005496
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_3
+      rect:
+        serializedVersion: 2
+        x: 796
+        y: 756
+        width: 123
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7752d94289d21f1c0800000000000000
+      internalID: -4471742823529634441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_4
+      rect:
+        serializedVersion: 2
+        x: 1101
+        y: 688
+        width: 148
+        height: 98
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ddeec3b5246d5a4c0800000000000000
+      internalID: -4276776690631512355
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_5
+      rect:
+        serializedVersion: 2
+        x: 1268
+        y: 690
+        width: 182
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae8d4be32849a0e40800000000000000
+      internalID: 5623470371844184298
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1872
+        height: 724
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 336df98afd061d020800000000000000
+      internalID: 2364777793069241907
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_7
+      rect:
+        serializedVersion: 2
+        x: 1069
+        y: 698
+        width: 24
+        height: 49
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e4f8043b5ecb5960800000000000000
+      internalID: 7591888487973450981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_8
+      rect:
+        serializedVersion: 2
+        x: 1326
+        y: 708
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91f524393db5307b0800000000000000
+      internalID: -5259258975571779815
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_9
+      rect:
+        serializedVersion: 2
+        x: 1328
+        y: 712
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: faf43b6524b9a6d40800000000000000
+      internalID: 5578441797676519343
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_10
+      rect:
+        serializedVersion: 2
+        x: 1338
+        y: 718
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 84190be41208c3210800000000000000
+      internalID: 1314066071827812680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_11
+      rect:
+        serializedVersion: 2
+        x: 1346
+        y: 718
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b619337c55e7bbf0800000000000000
+      internalID: -308525864218716494
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_12
+      rect:
+        serializedVersion: 2
+        x: 1346
+        y: 707
+        width: 16
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d045cc441d8e9dff0800000000000000
+      internalID: -10721538591665139
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_13
+      rect:
+        serializedVersion: 2
+        x: 1354
+        y: 717
+        width: 12
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4281d6ac31edc4ff0800000000000000
+      internalID: -50421319226025948
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_14
+      rect:
+        serializedVersion: 2
+        x: 1358
+        y: 708
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d96e7ca47b57ae350800000000000000
+      internalID: 6046774879792391837
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_15
+      rect:
+        serializedVersion: 2
+        x: 1137
+        y: 676
+        width: 18
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 390409ba36e017f70800000000000000
+      internalID: 9183136936428060819
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_16
+      rect:
+        serializedVersion: 2
+        x: 1309
+        y: 690
+        width: 12
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a18cc1375600701c0800000000000000
+      internalID: -4537657663829522406
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_17
+      rect:
+        serializedVersion: 2
+        x: 1356
+        y: 690
+        width: 6
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 883d6af54b2d5f080800000000000000
+      internalID: -9154178995419950200
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_18
+      rect:
+        serializedVersion: 2
+        x: 1360
+        y: 688
+        width: 12
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6acb2ad11eea83ec0800000000000000
+      internalID: -3586924821312521050
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_19
+      rect:
+        serializedVersion: 2
+        x: 1344
+        y: 678
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45f941f1586675ba0800000000000000
+      internalID: -6100294448311918764
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_20
+      rect:
+        serializedVersion: 2
+        x: 504
+        y: 117
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bfabe2cb44c3b4ed0800000000000000
+      internalID: -2428781308123628805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_21
+      rect:
+        serializedVersion: 2
+        x: 514
+        y: 112
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f12549f61a6a3d760800000000000000
+      internalID: 7481506618284462623
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_22
+      rect:
+        serializedVersion: 2
+        x: 519
+        y: 111
+        width: 11
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f716f7fd79952b060800000000000000
+      internalID: 6967730082320179583
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_23
+      rect:
+        serializedVersion: 2
+        x: 922
+        y: 111
+        width: 16
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b61c9c2f62724b00800000000000000
+      internalID: 811336704695473840
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_24
+      rect:
+        serializedVersion: 2
+        x: 1342
+        y: 119
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fff2d7fb740743420800000000000000
+      internalID: 2608833537612001279
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_25
+      rect:
+        serializedVersion: 2
+        x: 1549
+        y: 111
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 815607b25bb1dcbe0800000000000000
+      internalID: -1455476639638985448
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_26
+      rect:
+        serializedVersion: 2
+        x: 1559
+        y: 113
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8af783acd8451d710800000000000000
+      internalID: 1716245900964691880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_27
+      rect:
+        serializedVersion: 2
+        x: 579
+        y: 95
+        width: 7
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 98f296fb2e3ff8b70800000000000000
+      internalID: 8903603143534260105
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_28
+      rect:
+        serializedVersion: 2
+        x: 1497
+        y: 103
+        width: 7
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 793744ac71ff61360800000000000000
+      internalID: 7140174736885314455
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_29
+      rect:
+        serializedVersion: 2
+        x: 954
+        y: 95
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3e112a319c5b90b0800000000000000
+      internalID: -5720877122828820930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_30
+      rect:
+        serializedVersion: 2
+        x: 1348
+        y: 53
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aee33dbb10ae62810800000000000000
+      internalID: 1740335599192325866
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_31
+      rect:
+        serializedVersion: 2
+        x: 1354
+        y: 51
+        width: 8
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9d0d2903937a58400800000000000000
+      internalID: 325850412124131545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_32
+      rect:
+        serializedVersion: 2
+        x: 378
+        y: 22
+        width: 17
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 173a2a0d0c7545560800000000000000
+      internalID: 7301557381520073585
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play_your_next_world_logo_33
+      rect:
+        serializedVersion: 2
+        x: 1172
+        y: 18
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2abf713a75fb89d30800000000000000
+      internalID: 4438507815892941730
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      play_your_next_world_logo_0: -7580076721211980923
+      play_your_next_world_logo_1: 6146397900940464676
+      play_your_next_world_logo_10: 1314066071827812680
+      play_your_next_world_logo_11: -308525864218716494
+      play_your_next_world_logo_12: -10721538591665139
+      play_your_next_world_logo_13: -50421319226025948
+      play_your_next_world_logo_14: 6046774879792391837
+      play_your_next_world_logo_15: 9183136936428060819
+      play_your_next_world_logo_16: -4537657663829522406
+      play_your_next_world_logo_17: -9154178995419950200
+      play_your_next_world_logo_18: -3586924821312521050
+      play_your_next_world_logo_19: -6100294448311918764
+      play_your_next_world_logo_2: 2644448197166005496
+      play_your_next_world_logo_20: -2428781308123628805
+      play_your_next_world_logo_21: 7481506618284462623
+      play_your_next_world_logo_22: 6967730082320179583
+      play_your_next_world_logo_23: 811336704695473840
+      play_your_next_world_logo_24: 2608833537612001279
+      play_your_next_world_logo_25: -1455476639638985448
+      play_your_next_world_logo_26: 1716245900964691880
+      play_your_next_world_logo_27: 8903603143534260105
+      play_your_next_world_logo_28: 7140174736885314455
+      play_your_next_world_logo_29: -5720877122828820930
+      play_your_next_world_logo_3: -4471742823529634441
+      play_your_next_world_logo_30: 1740335599192325866
+      play_your_next_world_logo_31: 325850412124131545
+      play_your_next_world_logo_32: 7301557381520073585
+      play_your_next_world_logo_33: 4438507815892941730
+      play_your_next_world_logo_4: -4276776690631512355
+      play_your_next_world_logo_5: 5623470371844184298
+      play_your_next_world_logo_6: 2364777793069241907
+      play_your_next_world_logo_7: 7591888487973450981
+      play_your_next_world_logo_8: -5259258975571779815
+      play_your_next_world_logo_9: 5578441797676519343
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
