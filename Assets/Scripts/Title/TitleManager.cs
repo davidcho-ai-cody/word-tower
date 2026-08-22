@@ -9,6 +9,7 @@ using UnityEngine.UI;
 public class TitleManager : MonoBehaviour
 {
     private const string BattleSceneName = "BattleScene";
+    private const string StorySceneName = "StoryScene";
 
     [SerializeField] private Button startButton;
     [SerializeField] private TMP_Text startButtonText;
@@ -20,7 +21,7 @@ public class TitleManager : MonoBehaviour
     [SerializeField] private TMP_FontAsset titleFont;
 
     private SaveService saveService;
-    private bool isLoadingBattleScene;
+    private bool isSceneTransitioning;
 
     void Awake()
     {
@@ -221,10 +222,10 @@ public class TitleManager : MonoBehaviour
 
     void StartOrContinueGame()
     {
-        if (isLoadingBattleScene)
+        if (isSceneTransitioning)
             return;
 
-        isLoadingBattleScene = true;
+        isSceneTransitioning = true;
 
         if (startButton != null)
             startButton.interactable = false;
@@ -234,7 +235,15 @@ public class TitleManager : MonoBehaviour
 
     void OnStoryClicked()
     {
-        Debug.Log("[WordTower] STORY menu will be implemented next.");
+        if (isSceneTransitioning)
+            return;
+
+        isSceneTransitioning = true;
+
+        if (storyButton != null)
+            storyButton.interactable = false;
+
+        SceneManager.LoadScene(StorySceneName);
     }
 
     void OnCollectionClicked()

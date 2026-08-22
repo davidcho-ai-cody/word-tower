@@ -15,7 +15,7 @@
 - 현재 확정·구현 콘텐츠: 1~10층 슬라임 챕터
 - 앱 진입 씬: Assets/Scenes/StudioSplashScene.unity
 - 공식 전투 씬: Assets/Scenes/BattleScene.unity
-- 최종 Build Scene 순서: Index 0 StudioSplashScene, Index 1 OpeningScene, Index 2 TitleScene, Index 3 BattleScene
+- 목표 Build Scene 순서: Index 0 StudioSplashScene, Index 1 OpeningScene, Index 2 TitleScene, Index 3 StoryScene, Index 4 StoryPlaybackScene, Index 5 BattleScene
 - 중복 루트 씬 Assets/BattleScene.unity는 삭제됐으며 다시 생성하거나 사용하지 않는다.
 - 초기 런타임은 AI/API 없이 로컬 단어 데이터로 동작한다. Windows Editor는 SQLite DB, Android 1차 APK는 JSON 단어 데이터를 사용한다.
 
@@ -29,6 +29,13 @@ WordTower는 단순 단어 퀴즈가 아니라 전투 언어가 끝말잇기인 
     → BattleScene
     → HOME
     → TitleScene
+
+Title STORY 흐름:
+
+    TitleScene
+    → StoryScene
+    → StoryPlaybackScene (해금 Story 다시보기)
+    → StoryScene
 
 Opening Story를 이미 본 경우:
 
@@ -561,14 +568,16 @@ Studio Splash는 게임 실행 직후 매번 약 3초 동안 `PLAY YOUR NEXT WOR
 - 마지막 약 0.35초는 전체 Fade Out 후 다음 Scene으로 이동한다.
 - 1차 StudioSplash에는 터치 Skip을 넣지 않고 Android Back/Escape도 별도로 처리하지 않는다.
 
-Build Scene 최종 순서:
+Builder 실행 후 목표 Build Scene 순서:
 
 1. Assets/Scenes/StudioSplashScene.unity
 2. Assets/Scenes/OpeningScene.unity
 3. Assets/Scenes/TitleScene.unity
-4. Assets/Scenes/BattleScene.unity
+4. Assets/Scenes/StoryScene.unity
+5. Assets/Scenes/StoryPlaybackScene.unity
+6. Assets/Scenes/BattleScene.unity
 
-`StudioSplashSceneBuilder`는 `WordTower → Build Studio Splash Scene` 메뉴로 StudioSplashScene을 생성하고 위 Build Scene 순서를 설정한다. `OpeningSceneBuilder`도 같은 Build Scene 순서를 사용하도록 맞춘다.
+`StudioSplashSceneBuilder`는 `WordTower → Build Studio Splash Scene` 메뉴로 StudioSplashScene을 생성하고 위 Build Scene 순서를 설정한다. `OpeningSceneBuilder`, `StorySceneBuilder`, `StoryPlaybackSceneBuilder`도 같은 Build Scene 순서를 사용하도록 맞춘다.
 
 향후 고도화 후보:
 
@@ -624,11 +633,188 @@ OpeningSceneBuilder는 `WordTower → Build Opening Scene` 메뉴로 OpeningScen
 1. Assets/Scenes/StudioSplashScene.unity
 2. Assets/Scenes/OpeningScene.unity
 3. Assets/Scenes/TitleScene.unity
-4. Assets/Scenes/BattleScene.unity
+4. Assets/Scenes/StoryScene.unity
+5. Assets/Scenes/StoryPlaybackScene.unity
+6. Assets/Scenes/BattleScene.unity
 
 Editor 전용 디버그 메뉴 `WordTower → Debug → Reset Opening Story`는 `wordtower_story_progress.json`만 삭제해 다음 Play에서 Opening Story를 다시 최초 실행 상태로 재생하게 한다. gameplay save인 `wordtower_save.json`은 건드리지 않는다.
 
 향후 TitleScene STORY 메뉴에서는 `forceReplay` 또는 별도 Story 선택 진입을 통해 이미 본 Opening도 다시 재생할 수 있게 확장한다. `opening_08_adventure_begins.png`는 향후 TitleScene 배경과 Seamless Transition 후보로 남긴다.
+
+### 9.4 STORY 메뉴 1차 / UI 2차 튜닝 — Builder 반영 완료
+
+TitleScene의 STORY 버튼은 `StoryScene` 이동으로 연결됐다. STORY 메뉴 1차는 프롤로그 다시보기와 10층 단위 잠금 챕터 목록을 제공하는 구조다.
+
+구현:
+
+- Assets/Scripts/Story/StoryMenuManager.cs
+- Assets/Scripts/Editor/StorySceneBuilder.cs
+- Assets/Scenes/StoryScene.unity
+
+STORY 배경:
+
+- Assets/Art/UI/Story/wordtower_story_background.png
+
+StorySceneBuilder 메뉴:
+
+    WordTower → Build Story Scene
+
+StoryScene UI:
+
+- 상단 `STORY`
+- 서브타이틀 `되찾은 단어의 기록`
+- 진행도 `되찾은 단어 0 / 10`
+- PrologueCard: unlocked
+- Chapter10Card ~ Chapter100Card: `???` locked
+- 세로 ScrollView 기반 목록
+- BackButton으로 TitleScene 복귀
+
+2차 UI 튜닝 생성 값:
+
+- 카드 높이는 176 → 200으로 늘려 텍스트 여백을 확보했다.
+- 카드 간격은 22 → 27로 늘려 잠긴 챕터 카드들이 덜 붙어 보이게 했다.
+- ScrollView 하단 padding은 36 → 88로 늘려 마지막 카드 아래로 배경 하단부가 보이도록 했다.
+- Chapter header, `???`, 설명, `LOCK` 텍스트 크기와 밝기를 높여 모바일 9:16 화면에서 가독성을 개선했다.
+- PrologueCard의 `PROLOGUE`, 제목, 설명 텍스트 크기를 키웠다.
+- Progress 값 `0 / 10`은 30 → 35로 키우고 Gold/Bold 강조를 유지한다.
+- ScrollView 구조와 StoryMenuManager 기능 로직은 변경하지 않았다.
+
+3차 UI 컬러 튜닝:
+
+- Prologue와 Chapter 01은 같은 Unlocked Story 시각 규칙을 사용한다.
+- Unlocked Story 카드는 밝은 베이지 대신 Dark Purple/Navy 배경과 얇은 Gold Border를 사용한다.
+- `PROLOGUE`, `CHAPTER 01`, `10F`, `PLAY`, Play icon 등 주요 accent는 Warm Gold 계열로 통일한다.
+- `빼앗긴 단어`, `사랑` 같은 해금 카드 제목은 Warm Ivory 계열을 사용한다.
+- 해금 카드 설명은 Soft Ivory 계열로 Locked description보다 밝게 표시한다.
+- Chapter 01 사랑 카드는 같은 Dark Purple/Navy 계열 안에서 아주 약한 Rose accent만 추가한다.
+- Chapter 02~10 Locked 카드는 기존 Dark Navy / Muted Purple / Dim Text 상태를 유지한다.
+- Prologue replay, Chapter 01 replay, StoryProgress, Progress 1/10, Scene 이동 기능 로직은 변경하지 않았다.
+
+현재 Unity Editor에서 `WordTower → Build Story Scene`을 실행하면 위 생성 값이 `Assets/Scenes/StoryScene.unity`에 반영된다.
+
+프롤로그 다시보기:
+
+    StoryScene
+    → PrologueCard 클릭
+    → OpeningStoryManager.RequestReplay()
+    → OpeningScene
+    → 자연 종료 / SKIP / Back
+    → TitleScene
+
+Opening 다시보기는 `hasSeenOpeningStory`를 false로 되돌리지 않는다. gameplay save와 `wordtower_story_progress.json` 초기화도 하지 않는다. 다음 앱 실행 시 Opening이 자동 재생되지 않아야 하며, 최초 시청 상태 초기화는 기존 Editor Debug 메뉴 `WordTower → Debug → Reset Opening Story`만 담당한다.
+
+Build Settings 목표 순서:
+
+1. Assets/Scenes/StudioSplashScene.unity
+2. Assets/Scenes/OpeningScene.unity
+3. Assets/Scenes/TitleScene.unity
+4. Assets/Scenes/StoryScene.unity
+5. Assets/Scenes/StoryPlaybackScene.unity
+6. Assets/Scenes/BattleScene.unity
+
+StorySceneBuilder나 Story UI 생성 값이 바뀐 경우 실제 Scene 반영을 위해 Unity Editor에서 `WordTower → Build Story Scene`을 실행해야 한다. Scene YAML 직접 수정은 하지 않는다.
+
+세계관 확장 방향:
+
+- 10층마다 마왕에게 빼앗긴 중요한 단어 하나를 되찾는다.
+- 핵심 단어 후보: 사랑, 우정, 희망, 배려, 꿈, 용기, 믿음, 웃음, 가족, 마음
+- 100층의 마지막 핵심은 `마음`이다.
+- 모든 단어를 되찾으면 마왕의 힘 또는 마왕성이 무너지는 방향이다.
+- 1차 UI에서는 잠긴 단어명을 공개하지 않고 `???`만 표시한다.
+
+### 9.5 10층 Slime King 클리어 스토리 — 소스/Builder 추가
+
+10층 Slime King을 최초로 처치하면 일반 Victory보다 먼저 8컷 Story Playback을 재생하고, 첫 번째 빼앗긴 단어 `사랑`을 되찾는다. 다시보기와 최초 클리어 보상은 분리한다.
+
+구현:
+
+- Assets/Scripts/Story/StoryCatalog.cs
+- Assets/Scripts/Story/StoryPlaybackManager.cs
+- Assets/Scripts/Editor/StoryPlaybackSceneBuilder.cs
+- Assets/Scenes/StoryPlaybackScene.unity은 Builder 실행으로 생성한다.
+
+StoryPlaybackSceneBuilder 메뉴:
+
+    WordTower → Build Story Playback Scene
+
+Story ID / Keyword:
+
+- Story ID: `floor_10_clear`
+- Keyword ID: `love`
+- 표시명: `사랑`
+- 의미: `누군가를 소중하게 생각하는 마음`
+
+8컷 이미지:
+
+- Assets/Art/Story/Floor10/floor10_01_battle_end.png
+- Assets/Art/Story/Floor10/floor10_02_mysterious_light.png
+- Assets/Art/Story/Floor10/floor10_03_love_crystal.png
+- Assets/Art/Story/Floor10/floor10_04_hero_holds_love.png
+- Assets/Art/Story/Floor10/floor10_05_slimes_reunite.png
+- Assets/Art/Story/Floor10/floor10_06_slime_king_remembers.png
+- Assets/Art/Story/Floor10/floor10_07_hero_next_journey.png
+- Assets/Art/Story/Floor10/floor10_08_demon_king.png
+
+10층 최초 클리어 흐름:
+
+    Slime King HP 0
+    → SlimeDeathSequence()
+    → floor_10_clear 미해금이면 StoryPlaybackScene
+    → 8컷 Story / SKIP 허용
+    → floor_10_clear unlock 저장
+    → 사랑 획득 Overlay, 1 / 10
+    → BattleScene 복귀
+    → 기존 WinBattle() 보상 지급
+    → VictoryPanel
+
+이미 `floor_10_clear`가 해금된 경우 10층 승리 시 Story를 자동 재생하지 않고 기존 Victory 흐름으로 바로 진행한다. Story replay는 보상, Gold, EXP, Save 진행도, unlock을 중복 적용하지 않는다.
+
+8컷 대사/타이밍:
+
+1. 전투의 끝, 약 3.0초: `마침내... / 슬라임킹을 쓰러뜨렸다.`
+2. 이상한 빛, 약 3.2초: `용사: ...이건 뭐지?`와 빛 내레이션
+3. 사랑의 결정, 약 3.2초: `용사: 이 글자는... / 사랑`
+4. 결정을 바라보는 용사, 약 3.5초: `용사: 사랑...?`
+5. 슬라임들의 기쁨, 약 3.5초: `슬라임킹: 이... 따뜻한 느낌은...`
+6. 마음을 되찾은 슬라임킹, 약 4.0초: `그게... 사랑이었어.`
+7. 용사의 깨달음, 약 4.2초: 단어가 아니라 마음을 빼앗겼다는 깨달음
+8. 마왕의 독백, 약 4.0초: 아직 아홉 개가 남아 있다는 암시
+
+StoryPlayback 연출:
+
+- Opening Story의 Cross Fade / Zoom / Pan 패턴을 재사용한다.
+- Cross Fade는 약 0.3초이며 outgoing / incoming 이미지 모두 Motion을 유지한다.
+- 하단 DialoguePanel은 TMP 기반 SpeakerName / DialogueText를 사용한다.
+- Story 완료 또는 Skip 시 최초 클리어일 때만 `빼앗긴 단어를 되찾았습니다 / 사랑 / 1 / 10` Overlay를 표시한다.
+
+StoryProgress:
+
+- `StoryProgressData.unlockedStoryIds`에 `floor_10_clear`를 1회만 추가한다.
+- Floor Story 진행도는 `floor_*_clear` 형태의 unlock 수로 계산한다.
+- 10층 클리어 후 STORY 메뉴 Progress는 `1 / 10`이다.
+- Chapter 01은 `CHAPTER 01 / 10F / 사랑 / 되찾은 첫 번째 단어 / ▶` 상태로 해금된다.
+
+Replay:
+
+    StoryScene
+    → Chapter 01 클릭
+    → StoryPlaybackManager.RequestReplay(floor_10_clear)
+    → StoryPlaybackScene
+    → 자연 종료 / SKIP / Back
+    → StoryScene
+
+Replay는 StoryProgress, Battle 진행, Victory 보상에 영향을 주지 않는다. 향후 20층~100층 Story도 `floor_20_clear`, `floor_30_clear` 같은 동일 패턴으로 확장한다.
+
+Build Settings 목표 순서:
+
+1. Assets/Scenes/StudioSplashScene.unity
+2. Assets/Scenes/OpeningScene.unity
+3. Assets/Scenes/TitleScene.unity
+4. Assets/Scenes/StoryScene.unity
+5. Assets/Scenes/StoryPlaybackScene.unity
+6. Assets/Scenes/BattleScene.unity
+
+StoryPlaybackSceneBuilder나 StoryPlayback UI 생성 값이 바뀐 경우 실제 Scene 반영을 위해 Unity Editor에서 `WordTower → Build Story Playback Scene`을 실행해야 한다. Scene YAML 직접 수정은 하지 않는다.
 
 ### 10층 이후 방향 — 미확정 후보
 
@@ -791,17 +977,17 @@ TitleScene 1차 리뉴얼 — 구현 완료:
 - 배경 이미지는 Scene에 합성된 버튼/로고가 아니라 순수 배경으로 사용하고, `WORD TOWER` 타이틀, 서브타이틀, 메뉴 버튼은 Unity UI로 분리한다.
 - `TitleHeader` 아래 TMP_Text 기반 `WordTowerTitle`과 `Subtitle`을 배치한다. 향후 투명 PNG 로고가 확정되면 `WordTowerTitle` 영역만 교체할 수 있게 유지한다.
 - `MainMenu` 아래 기존 `StartButton`을 가장 큰 Primary 버튼으로 유지한다. Save가 없으면 `게임 시작`, Save가 있으면 `이어하기`로 표시한다.
-- `SecondaryMenu`에는 1차 placeholder 버튼 `StoryButton`, `CollectionButton`, `SettingsButton`을 둔다. STORY 상세, 도감, 설정 화면은 아직 구현하지 않고 Console log만 남긴다.
+- `SecondaryMenu`에는 `StoryButton`, `CollectionButton`, `SettingsButton`을 둔다. STORY는 StoryScene 이동으로 연결됐고, 도감과 설정은 아직 placeholder로 Console log만 남긴다.
 - 기존 종료 기능은 `QuitButton`으로 유지하되 메인 메뉴 우선순위를 방해하지 않는 작은 보조 버튼으로 배치한다.
 - `VersionText`는 `Application.version` 기반으로 하단 중앙에 작게 표시한다.
 - 배경 위 UI 가독성을 위해 `ReadabilityOverlay`를 사용한다. 배경 이미지 자체를 과도하게 가리지 않는다.
 - `Assets/Scripts/Title/TitleManager.cs`가 Save 존재 확인, 시작 버튼 문구, BattleScene 이동, 종료와 TitleScene의 Android Back/Escape를 담당한다.
-- TitleManager는 STORY/도감/설정 placeholder 버튼 이벤트도 담당한다.
+- TitleManager는 STORY 버튼의 StoryScene 이동과 도감/설정 placeholder 버튼 이벤트도 담당한다.
 - 실제 Save Load는 기존처럼 BattleScene 진입 후 `BattleManager.LoadGame()`이 담당한다.
 - `Assets/Scripts/Editor/TitleSceneBuilder.cs`는 `WordTower → Build Title Scene` 메뉴로 TitleScene만 독립 생성한다. BattleScene, BattleSceneBuilder, OpeningSceneBuilder, StudioSplashSceneBuilder를 호출하지 않는다.
 - TitleManager는 Scene 참조가 비어 있어도 최소 Title UI를 런타임에 생성하는 fallback을 갖는다. TitleSceneBuilder로 재생성하면 정적 UI 참조를 연결해 사용한다.
 - TitleScene의 `게임 시작` / `이어하기`는 BattleScene 이동이 정상 동작하는 구조를 유지한다.
-- STORY / 도감 / 설정은 현재 placeholder이며, 다음 작업에서 STORY 다시보기 기능부터 연결할 예정이다.
+- STORY는 StoryScene 이동으로 연결됐으며, StorySceneBuilder 실행 후 프롤로그 다시보기 UI와 연결된다. 도감 / 설정은 현재 placeholder다.
 - BattleScene HOME/Back은 구현되어 있다. BattleSceneBuilder가 상단 `HomeButton`을 생성하고 BattleManager의 `ReturnToTitle()`이 현재 진행을 저장한 뒤 TitleScene으로 이동한다.
 - BattleScene Back 우선순위는 Android 키보드 닫기 → Shop 닫기 → Victory 이동 차단 → 일반 상태 Save 후 TitleScene 이동이다. 한 입력에서는 한 단계만 처리한다.
 - HOME/Back Scene 전환은 `isSceneTransitioning`으로 중복 실행을 막는다.
@@ -822,7 +1008,7 @@ BattleScene은 기존 전투, 저장, 상점, HOME → TitleScene 복귀 구조�
 
 Scene Builder 운영 원칙:
 
-- StudioSplash / Opening / Title / Battle Scene은 모두 Builder 기반으로 관리한다.
+- StudioSplash / Opening / Title / Story / Battle Scene은 모두 Builder 기반으로 관리한다.
 - Builder 코드가 변경된 경우 실제 Scene 반영을 위해 Unity Editor의 해당 `WordTower → Build ... Scene` 메뉴 실행이 필요할 수 있다.
 - Scene YAML을 직접 수정하지 않는다.
 - Hierarchy에만 수동 추가한 중요 UI는 Builder 재실행 시 사라질 수 있으므로 Builder와 런타임 참조를 함께 갱신한다.
@@ -1006,7 +1192,10 @@ Android 1차 실기기 대응은 완료됐다. 이후 Android 작업은 운영�
 - Opening 최초 1회 자동 재생과 Debug Reset
 - TitleScene 리뉴얼 Scene / Builder / TitleManager 메뉴 구조
 - Title 배경 `wordtower_title_main.png` 기반 9:16 UI 구조
-- Title STORY / 도감 / 설정 placeholder 버튼
+- Title STORY 버튼의 StoryScene 이동 코드
+- StoryScene 1차 StoryMenuManager / StorySceneBuilder 소스
+- Opening Story 다시보기용 `OpeningStoryManager.RequestReplay()`
+- Title 도감 / 설정 placeholder 버튼
 - StudioSplash → Opening/Title → Battle 전체 Scene Flow
 
 ---
@@ -1017,9 +1206,9 @@ Android 1차 실기기 대응은 완료됐다. 이후 Android 작업은 운영�
 - 보스 전용 패턴 및 isBoss 기반 전투 분기
 - 인벤토리 UI
 - 11층 이후 확정 콘텐츠
-- Title STORY 메뉴 실제 구현
-- Opening Story 다시보기
-- 10층 / 20층 / ... 스토리 해금 구조
+- StorySceneBuilder / StoryPlaybackSceneBuilder 실행과 Unity Scene 검증
+- Title STORY → StoryScene → Prologue / Chapter 01 다시보기 실제 Scene 검증
+- 20층 / 30층 / ... Story 해금 데이터 확장
 - 도감 UI
 - 설정 UI
 - Studio Splash X/O 분리 애니메이션 고도화
@@ -1041,20 +1230,23 @@ Android 1차 실기기 대응은 완료됐다. 이후 Android 작업은 운영�
 
 ## 20. 현재 권장 다음 작업
 
-StudioSplash, Opening Story, TitleScene 리뉴얼, BattleScene HOME/Shop/전투 흐름까지 기본 앱 진입 구조가 갖춰졌다. 다음 시작점은 Title의 STORY 메뉴를 실제 다시보기/해금 구조로 연결하는 작업이다. 그 뒤 작업 후보는 아래 순서이며 개발 상황에 따라 조정할 수 있다.
+StudioSplash, Opening Story, TitleScene 리뉴얼, BattleScene HOME/Shop/전투 흐름, STORY 메뉴, 10층 Slime King Story Playback 소스까지 기본 구조가 갖춰졌다. 다음 시작점은 Unity Editor에서 StorySceneBuilder와 StoryPlaybackSceneBuilder를 실행하고 Title/Story/Battle 통합 흐름을 검증하는 작업이다.
 
 권장 순서:
 
-1. Title STORY 메뉴 실제 구현
-2. Opening Story 다시보기 연결
-3. 10층 / 20층 / ... 스토리 해금 저장 구조
-4. 도감 UI
-5. 설정 UI
-6. Studio Splash X/O 분리 애니메이션 고도화
-7. Title WORD TOWER 투명 PNG 로고 고도화
-8. Battle UI/연출 고도화
-9. Shop Buy / Equip / Button Click SFX
-10. Slime Chapter Clear Sequence 구현
+1. Unity Editor에서 `WordTower → Build Story Scene` 실행
+2. Unity Editor에서 `WordTower → Build Story Playback Scene` 실행
+3. Build Settings가 StudioSplash, Opening, Title, Story, StoryPlayback, Battle 순서인지 확인
+4. Title → STORY → StoryScene → Prologue → Opening 다시보기 → Title 흐름 검증
+5. 10층 Slime King 최초 클리어 → StoryPlayback → 사랑 1/10 → Victory 흐름 검증
+6. StoryScene Chapter 01 replay와 보상 중복 없음 검증
+7. SKIP / Android Back / BackButton 회귀 확인
+8. 20층 / 30층 / ... Story 데이터 확장
+9. 도감 UI
+10. 설정 UI
+11. Studio Splash X/O 분리 애니메이션 고도화
+12. Title WORD TOWER 투명 PNG 로고 고도화
+13. Battle UI/연출 고도화
 
 BGM은 임시 곡을 먼저 붙이기보다 WordTower 고유의 음악적 Identity를 정한 후 진행한다. Main/Title Theme, Battle BGM, Boss BGM, Chapter Clear Music이 완전히 분리된 곡이 아니라 공통 Melody 또는 Motif를 공유하는 방향을 검토한다. 현재는 기획 단계다.
 

@@ -6,6 +6,7 @@ public class StoryProgressService
 {
     private const string SaveFileName = "wordtower_story_progress.json";
     public const string OpeningStoryId = "opening";
+    public const string Floor10ClearStoryId = "floor_10_clear";
 
     public string GetSavePath()
     {
@@ -85,15 +86,66 @@ public class StoryProgressService
         Save(storyProgress);
     }
 
-    private void UnlockStory(
+    public bool IsStoryUnlocked(string storyId)
+    {
+        StoryProgressData storyProgress = LoadOrCreate();
+        return IsStoryUnlocked(storyProgress, storyId);
+    }
+
+    public bool IsStoryUnlocked(
         StoryProgressData storyProgress,
         string storyId
     )
     {
+        if (storyProgress == null || string.IsNullOrEmpty(storyId))
+            return false;
+
+        EnsureDefaults(storyProgress);
+        return storyProgress.unlockedStoryIds.Contains(storyId);
+    }
+
+    public bool UnlockStoryAndSave(string storyId)
+    {
+        StoryProgressData storyProgress = LoadOrCreate();
+        bool didUnlock = UnlockStory(storyProgress, storyId);
+        Save(storyProgress);
+        return didUnlock;
+    }
+
+    public int GetUnlockedFloorStoryCount()
+    {
+        StoryProgressData storyProgress = LoadOrCreate();
+        EnsureDefaults(storyProgress);
+
+        int count = 0;
+        foreach (string storyId in storyProgress.unlockedStoryIds)
+        {
+            if (!string.IsNullOrEmpty(storyId) &&
+                storyId.StartsWith("floor_") &&
+                storyId.EndsWith("_clear"))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private bool UnlockStory(
+        StoryProgressData storyProgress,
+        string storyId
+    )
+    {
+        if (storyProgress == null || string.IsNullOrEmpty(storyId))
+            return false;
+
+        EnsureDefaults(storyProgress);
+
         if (storyProgress.unlockedStoryIds.Contains(storyId))
-            return;
+            return false;
 
         storyProgress.unlockedStoryIds.Add(storyId);
+        return true;
     }
 
     private void EnsureDefaults(StoryProgressData storyProgress)

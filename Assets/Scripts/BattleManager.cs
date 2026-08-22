@@ -21,6 +21,7 @@ public class BattleManager : MonoBehaviour
     private const float KingSlimeIdleCycle = 2.2f;
     private const float MonsterHitFlashDuration = 0.12f;
     private const float MonsterHitFlashAlpha = 0.15f;
+    private const string StoryPlaybackSceneName = "StoryPlaybackScene";
 
     [Header("Player")]
     public int playerHp = 100;
@@ -217,6 +218,17 @@ public class BattleManager : MonoBehaviour
             Debug.Log("Save Path: " + saveService.GetSavePath());
             yield return StartCoroutine(LoadFloorAndMonsterDataLists());
             LoadGame();
+            bool shouldShowPostStoryVictory =
+                StoryPlaybackManager.ConsumePendingBattleVictory(
+                    StoryCatalog.Floor10ClearStoryId,
+                    out int storyReturnFloor
+                );
+
+            if (shouldShowPostStoryVictory &&
+                FloorDataExists(storyReturnFloor))
+            {
+                currentFloor = storyReturnFloor;
+            }
 
             // 단어 DB 연결
             wordService = new WordService();
@@ -232,8 +244,16 @@ public class BattleManager : MonoBehaviour
 
             // 로드한 데이터 기준으로 전투 시작
             SetupBattle();
-            ResumeHeroIdle();
-            ResumeMonsterIdle();
+
+            if (shouldShowPostStoryVictory)
+            {
+                WinBattle();
+            }
+            else
+            {
+                ResumeHeroIdle();
+                ResumeMonsterIdle();
+            }
         }
         finally
         {
@@ -2438,6 +2458,9 @@ public class BattleManager : MonoBehaviour
             // 슬라임 사망 연출이 끝난 후 승리 처리
             yield return StartCoroutine(SlimeDeathSequence());
 
+            if (TryStartFirstFloor10ClearStory())
+                yield break;
+
             WinBattle();
             yield break;
         }
@@ -2826,6 +2849,47 @@ public class BattleManager : MonoBehaviour
     // ========================================
     // 전투 승리 처리
     // ========================================
+    bool TryStartFirstFloor10ClearStory()
+    {
+        if (currentFloor != 10 ||
+            currentFloorData == null ||
+            currentMonsterData == null ||
+            !currentFloorData.isBoss ||
+            currentMonsterData.id != "slime_king")
+        {
+            return false;
+        }
+
+        StoryProgressService storyProgressService =
+            new StoryProgressService();
+
+        if (storyProgressService.IsStoryUnlocked(
+            StoryCatalog.Floor10ClearStoryId
+        ))
+        {
+            return false;
+        }
+
+        PauseHeroIdle();
+        PauseMonsterIdle();
+        CloseMobileKeyboardAndRestorePanel();
+        battleEnded = true;
+        isSceneTransitioning = true;
+
+        if (wordInput != null)
+            wordInput.interactable = false;
+
+        if (attackButton != null)
+            attackButton.interactable = false;
+
+        UpdateShopButtonState();
+        StoryPlaybackManager.RequestFirstClearStory(
+            StoryCatalog.Floor10ClearStoryId
+        );
+        SceneManager.LoadScene(StoryPlaybackSceneName);
+        return true;
+    }
+
     void WinBattle()
     {
         PauseHeroIdle();

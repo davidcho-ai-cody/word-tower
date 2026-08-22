@@ -24,6 +24,8 @@ public class OpeningStoryManager : MonoBehaviour
         3.8f, 6.2f, 9.7f, 14f, 17.4f, 21.2f, 26f, 30.8f
     };
 
+    private static bool replayRequested;
+
     [SerializeField] private bool forceReplay = false;
     [SerializeField] private Canvas openingCanvas;
     [SerializeField] private Image storyImageA;
@@ -50,6 +52,11 @@ public class OpeningStoryManager : MonoBehaviour
     private int incomingCutIndex = -1;
     private float targetAudioVolume = 1f;
 
+    public static void RequestReplay()
+    {
+        replayRequested = true;
+    }
+
     void Awake()
     {
         if (openingCanvas != null)
@@ -62,8 +69,9 @@ public class OpeningStoryManager : MonoBehaviour
     {
         StoryProgressData storyProgress =
             storyProgressService.LoadOrCreate();
+        bool shouldForceReplay = forceReplay || ConsumeReplayRequest();
 
-        if (!forceReplay && storyProgress.hasSeenOpeningStory)
+        if (!shouldForceReplay && storyProgress.hasSeenOpeningStory)
         {
             LoadTitleScene();
             yield break;
@@ -89,6 +97,15 @@ public class OpeningStoryManager : MonoBehaviour
             audioSource.Play();
 
         yield return PlayStoryTimeline();
+    }
+
+    static bool ConsumeReplayRequest()
+    {
+        if (!replayRequested)
+            return false;
+
+        replayRequested = false;
+        return true;
     }
 
     void Update()
