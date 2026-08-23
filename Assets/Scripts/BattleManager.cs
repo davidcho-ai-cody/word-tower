@@ -86,6 +86,8 @@ public class BattleManager : MonoBehaviour
     private TMP_Text playerNameText;
     private TMP_Text expText;
     private TMP_Text goldText;
+    private Image expBarFill;
+    private RectTransform expBarFillRect;
     private TMP_FontAsset koreanFont;
 
     private TMP_Text floorTitleText;
@@ -147,6 +149,16 @@ public class BattleManager : MonoBehaviour
     private RectTransform weaponVisual;
     private TMP_Text criticalText;
     private TMP_Text levelUpText;
+    private GameObject levelUpOverlay;
+    private CanvasGroup levelUpOverlayGroup;
+    private RectTransform levelUpContent;
+    private RectTransform levelUpMagicCircle;
+    private Image levelUpMagicCircleImage;
+    private Coroutine levelUpEffectRoutine;
+    private TMP_Text newLevelText;
+    private TMP_Text hpIncreaseText;
+    private TMP_Text atkIncreaseText;
+    private TMP_Text legacyStatIncreaseText;
 
     // 슬라임이 맞는 순간 표시할 타격 이펙트
     private RectTransform impactEffect;
@@ -624,6 +636,8 @@ public class BattleManager : MonoBehaviour
         playerNameText = GameObject.Find("PlayerName")?.GetComponent<TMP_Text>();
         expText = GameObject.Find("ExpText")?.GetComponent<TMP_Text>();
         goldText = GameObject.Find("GoldText")?.GetComponent<TMP_Text>();
+        expBarFill = GameObject.Find("ExpBarFill")?.GetComponent<Image>();
+        expBarFillRect = expBarFill?.GetComponent<RectTransform>();
 
         wordInput = GameObject.Find("WordInput")?.GetComponent<TMP_InputField>();
         attackButton = GameObject.Find("AttackButton")?.GetComponent<Button>();
@@ -727,15 +741,7 @@ public class BattleManager : MonoBehaviour
         }
 
         if (battleCanvasTransform != null)
-        {
-            Transform levelUpTextTransform = battleCanvasTransform.Find("LevelUpText");
-
-            if (levelUpTextTransform != null)
-            {
-                levelUpText = levelUpTextTransform.GetComponent<TMP_Text>();
-                levelUpText.gameObject.SetActive(false);
-            }
-        }
+            FindLevelUpOverlay(battleCanvasTransform);
 
         if (battleCanvasTransform != null)
             FindShopUI(battleCanvasTransform);
@@ -846,6 +852,62 @@ public class BattleManager : MonoBehaviour
         if (floorDebugPanel != null)
             floorDebugPanel.SetActive(false);
 #endif
+    }
+
+    void FindLevelUpOverlay(Transform battleCanvasTransform)
+    {
+        Transform overlayTransform =
+            battleCanvasTransform.Find("LevelUpOverlay");
+
+        if (overlayTransform != null)
+        {
+            levelUpOverlay = overlayTransform.gameObject;
+            levelUpOverlayGroup =
+                overlayTransform.GetComponent<CanvasGroup>();
+            Transform contentTransform =
+                overlayTransform.Find("LevelUpContent");
+            Transform textRoot = contentTransform != null
+                ? contentTransform
+                : overlayTransform;
+
+            levelUpContent =
+                contentTransform?.GetComponent<RectTransform>();
+            levelUpText = textRoot
+                .Find("LevelUpText")
+                ?.GetComponent<TMP_Text>();
+            levelUpMagicCircle = textRoot
+                .Find("MagicCircleImage")
+                ?.GetComponent<RectTransform>();
+            levelUpMagicCircleImage =
+                levelUpMagicCircle != null
+                    ? levelUpMagicCircle.GetComponent<Image>()
+                    : null;
+            newLevelText = textRoot
+                .Find("NewLevelText")
+                ?.GetComponent<TMP_Text>();
+            hpIncreaseText = textRoot
+                .Find("HpIncreaseText")
+                ?.GetComponent<TMP_Text>();
+            atkIncreaseText = textRoot
+                .Find("AtkIncreaseText")
+                ?.GetComponent<TMP_Text>();
+            legacyStatIncreaseText = textRoot
+                .Find("StatIncreaseText")
+                ?.GetComponent<TMP_Text>();
+
+            ResetLevelUpUiState(false);
+
+            return;
+        }
+
+        Transform levelUpTextTransform =
+            battleCanvasTransform.Find("LevelUpText");
+
+        if (levelUpTextTransform != null)
+        {
+            levelUpText = levelUpTextTransform.GetComponent<TMP_Text>();
+            ResetLevelUpUiState(false);
+        }
     }
 
     void FindShopUI(Transform battleCanvas)
@@ -1057,6 +1119,7 @@ public class BattleManager : MonoBehaviour
             shopPanel.SetActive(false);
 
         StopAllCoroutines();
+        ResetLevelUpUiState(false);
 
         if (victoryPanel != null)
             victoryPanel.SetActive(false);
@@ -1073,9 +1136,6 @@ public class BattleManager : MonoBehaviour
         if (criticalText != null)
             criticalText.gameObject.SetActive(false);
 
-        if (levelUpText != null)
-            levelUpText.gameObject.SetActive(false);
-
         LoadFloorAndMonsterData();
         ResetBattleForNextFloor();
         ApplyEquipmentVisuals();
@@ -1084,6 +1144,46 @@ public class BattleManager : MonoBehaviour
             RefreshShopUI("");
 
         Debug.Log("Save 데이터 초기화 완료");
+    }
+
+    void ResetLevelUpUiState(bool stopRoutine = true)
+    {
+        if (stopRoutine && levelUpEffectRoutine != null)
+            StopCoroutine(levelUpEffectRoutine);
+
+        levelUpEffectRoutine = null;
+
+        if (levelUpOverlay != null)
+            levelUpOverlay.SetActive(false);
+
+        if (levelUpOverlayGroup != null)
+            levelUpOverlayGroup.alpha = 0f;
+
+        if (levelUpContent != null)
+        {
+            levelUpContent.localScale = Vector3.one;
+            levelUpContent.localRotation = Quaternion.identity;
+        }
+
+        if (levelUpMagicCircle != null)
+        {
+            levelUpMagicCircle.localScale = Vector3.one;
+            levelUpMagicCircle.localRotation = Quaternion.identity;
+        }
+
+        SetImageAlpha(levelUpMagicCircleImage, 0.84f);
+        SetTextAlpha(levelUpText, 1f);
+        SetTextAlpha(newLevelText, 1f);
+        SetTextAlpha(hpIncreaseText, 1f);
+        SetTextAlpha(atkIncreaseText, 1f);
+
+        bool useLegacyStats =
+            (hpIncreaseText == null || atkIncreaseText == null) &&
+            legacyStatIncreaseText != null;
+        SetTextAlpha(legacyStatIncreaseText, useLegacyStats ? 1f : 0f);
+
+        if (levelUpOverlay == null && levelUpText != null)
+            levelUpText.gameObject.SetActive(false);
     }
 
     void ValidateStartingItems()
@@ -2769,17 +2869,55 @@ public class BattleManager : MonoBehaviour
         criticalText.gameObject.SetActive(false);
     }
 
-    IEnumerator LevelUpTextEffect()
+    IEnumerator LevelUpTextEffect(
+        int reachedLevel,
+        int hpIncrease,
+        int attackIncrease
+    )
     {
         if (levelUpText == null)
             yield break;
 
+        if (levelUpEffectRoutine != null)
+        {
+            StopCoroutine(levelUpEffectRoutine);
+            levelUpEffectRoutine = null;
+        }
+
+        if (levelUpOverlay != null)
+        {
+            levelUpEffectRoutine = StartCoroutine(
+                LevelUpOverlayEffect(
+                    reachedLevel,
+                    hpIncrease,
+                    attackIncrease
+                )
+            );
+            Coroutine runningRoutine = levelUpEffectRoutine;
+            yield return runningRoutine;
+            if (levelUpEffectRoutine == runningRoutine)
+                levelUpEffectRoutine = null;
+        }
+        else
+        {
+            levelUpEffectRoutine = StartCoroutine(
+                LegacyLevelUpTextEffect(reachedLevel)
+            );
+            Coroutine runningRoutine = levelUpEffectRoutine;
+            yield return runningRoutine;
+            if (levelUpEffectRoutine == runningRoutine)
+                levelUpEffectRoutine = null;
+        }
+    }
+
+    IEnumerator LegacyLevelUpTextEffect(int reachedLevel)
+    {
         RectTransform rect = levelUpText.GetComponent<RectTransform>();
         Vector2 originalPosition = rect.anchoredPosition;
         Vector3 originalScale = Vector3.one;
         Color originalColor = new Color(1f, 0.82f, 0.20f, 1f);
 
-        levelUpText.text = $"LEVEL UP!\nLV.{playerLevel}";
+        levelUpText.text = $"LEVEL UP!\nLV.{reachedLevel}";
         levelUpText.gameObject.SetActive(true);
         rect.anchoredPosition = originalPosition;
         rect.localScale = new Vector3(0.55f, 0.55f, 1f);
@@ -2835,7 +2973,224 @@ public class BattleManager : MonoBehaviour
         levelUpText.gameObject.SetActive(false);
     }
 
-    IEnumerator LevelUpRewardEffectAfterDelay(int rewardFloor)
+    IEnumerator LevelUpOverlayEffect(
+        int reachedLevel,
+        int hpIncrease,
+        int attackIncrease
+    )
+    {
+        RectTransform levelTextRect =
+            levelUpText.GetComponent<RectTransform>();
+        Vector3 originalScale = Vector3.one;
+        Vector3 originalContentScale = Vector3.one;
+        const float magicCircleMaxAlpha = 0.84f;
+
+        if (newLevelText != null)
+            newLevelText.text = $"LV. {reachedLevel}";
+
+        if (hpIncreaseText != null)
+            hpIncreaseText.text =
+                hpIncrease > 0 ? $"HP +{hpIncrease}" : "";
+        if (atkIncreaseText != null)
+            atkIncreaseText.text =
+                attackIncrease > 0 ? $"ATK +{attackIncrease}" : "";
+        bool useLegacyStats =
+            (hpIncreaseText == null || atkIncreaseText == null) &&
+            legacyStatIncreaseText != null;
+
+        if (legacyStatIncreaseText != null)
+            legacyStatIncreaseText.text =
+                useLegacyStats
+                    ? $"HP +{hpIncrease}\nATK +{attackIncrease}"
+                    : "";
+
+        levelUpOverlay.SetActive(true);
+        if (levelUpOverlayGroup != null)
+            levelUpOverlayGroup.alpha = 0f;
+
+        levelTextRect.localScale = Vector3.one;
+        SetTextAlpha(levelUpText, 1f);
+        SetTextAlpha(newLevelText, 1f);
+        SetTextAlpha(hpIncreaseText, 1f);
+        SetTextAlpha(atkIncreaseText, 1f);
+        SetTextAlpha(legacyStatIncreaseText, useLegacyStats ? 1f : 0f);
+        SetImageAlpha(levelUpMagicCircleImage, 0f);
+
+        if (levelUpContent != null)
+        {
+            originalContentScale = levelUpContent.localScale;
+            levelUpContent.localScale = new Vector3(0.65f, 0.65f, 1f);
+            levelUpContent.localRotation = Quaternion.identity;
+        }
+
+        if (levelUpMagicCircle != null)
+        {
+            levelUpMagicCircle.localScale = Vector3.one;
+            levelUpMagicCircle.localRotation =
+                Quaternion.Euler(0f, 0f, -2f);
+        }
+
+        float elapsed = 0f;
+        float fadeInDuration = 0.2f;
+
+        while (elapsed < fadeInDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / fadeInDuration);
+
+            if (levelUpOverlayGroup != null)
+                levelUpOverlayGroup.alpha = t;
+
+            SetImageAlpha(levelUpMagicCircleImage, magicCircleMaxAlpha * t);
+
+            if (levelUpContent != null)
+            {
+                levelUpContent.localScale = Vector3.Lerp(
+                    new Vector3(0.65f, 0.65f, 1f),
+                    new Vector3(1.05f, 1.05f, 1f),
+                    t
+                );
+            }
+
+            if (levelUpMagicCircle != null)
+            {
+                levelUpMagicCircle.localRotation =
+                    Quaternion.Euler(0f, 0f, Mathf.Lerp(-2f, 0f, t));
+            }
+
+            yield return null;
+        }
+
+        if (levelUpOverlayGroup != null)
+            levelUpOverlayGroup.alpha = 1f;
+        SetImageAlpha(levelUpMagicCircleImage, magicCircleMaxAlpha);
+
+        elapsed = 0f;
+        float settleDuration = 0.25f;
+
+        while (elapsed < settleDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / settleDuration);
+            if (levelUpContent != null)
+            {
+                levelUpContent.localScale = Vector3.Lerp(
+                    new Vector3(1.05f, 1.05f, 1f),
+                    Vector3.one,
+                    t
+                );
+            }
+            if (levelUpMagicCircle != null)
+            {
+                levelUpMagicCircle.localRotation =
+                    Quaternion.Euler(0f, 0f, 0f);
+            }
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(0.25f);
+
+        elapsed = 0f;
+        float pulseDuration = 0.55f;
+
+        while (elapsed < pulseDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / pulseDuration);
+
+            if (levelUpMagicCircle != null)
+            {
+                float pulse = Mathf.Sin(t * Mathf.PI) * 0.035f;
+                if (levelUpContent != null)
+                {
+                    levelUpContent.localScale =
+                        new Vector3(1f + pulse, 1f + pulse, 1f);
+                }
+                else
+                {
+                    levelUpMagicCircle.localScale =
+                        new Vector3(1f + pulse, 1f + pulse, 1f);
+                }
+                levelUpMagicCircle.localRotation =
+                    Quaternion.Euler(0f, 0f, Mathf.Lerp(0f, 1f, t));
+            }
+
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(0.2f);
+
+        elapsed = 0f;
+        float fadeOutDuration = 0.5f;
+
+        while (elapsed < fadeOutDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / fadeOutDuration);
+
+            if (levelUpOverlayGroup != null)
+                levelUpOverlayGroup.alpha = 1f - t;
+
+            if (levelUpContent != null)
+            {
+                levelUpContent.localScale = Vector3.Lerp(
+                    new Vector3(1.03f, 1.03f, 1f),
+                    new Vector3(1.12f, 1.12f, 1f),
+                    t
+                );
+            }
+
+            yield return null;
+        }
+
+        levelTextRect.localScale = originalScale;
+        if (levelUpOverlayGroup != null)
+            levelUpOverlayGroup.alpha = 0f;
+        if (levelUpContent != null)
+        {
+            levelUpContent.localScale = originalContentScale;
+            levelUpContent.localRotation = Quaternion.identity;
+        }
+        if (levelUpMagicCircle != null)
+        {
+            levelUpMagicCircle.localScale = Vector3.one;
+            levelUpMagicCircle.localRotation = Quaternion.identity;
+        }
+        SetImageAlpha(levelUpMagicCircleImage, magicCircleMaxAlpha);
+        SetTextAlpha(levelUpText, 1f);
+        SetTextAlpha(newLevelText, 1f);
+        SetTextAlpha(hpIncreaseText, 1f);
+        SetTextAlpha(atkIncreaseText, 1f);
+        SetTextAlpha(legacyStatIncreaseText, useLegacyStats ? 1f : 0f);
+        levelUpOverlay.SetActive(false);
+    }
+
+    void SetImageAlpha(Image image, float alpha)
+    {
+        if (image == null)
+            return;
+
+        Color color = image.color;
+        color.a = alpha;
+        image.color = color;
+    }
+
+    void SetTextAlpha(TMP_Text text, float alpha)
+    {
+        if (text == null)
+            return;
+
+        Color color = text.color;
+        color.a = alpha;
+        text.color = color;
+    }
+
+    IEnumerator LevelUpRewardEffectAfterDelay(
+        int rewardFloor,
+        int reachedLevel,
+        int hpIncrease,
+        int attackIncrease
+    )
     {
         yield return new WaitForSeconds(LevelUpRewardDelay);
 
@@ -2843,7 +3198,22 @@ public class BattleManager : MonoBehaviour
             yield break;
 
         PlaySfx(SfxId.LevelUp);
-        yield return StartCoroutine(LevelUpTextEffect());
+        yield return StartCoroutine(
+            LevelUpTextEffect(reachedLevel, hpIncrease, attackIncrease)
+        );
+
+        if (!battleEnded || currentFloor != rewardFloor)
+            yield break;
+
+        ShowVictoryPanelAndSfx();
+    }
+
+    void ShowVictoryPanelAndSfx()
+    {
+        if (victoryPanel != null)
+            victoryPanel.SetActive(true);
+
+        PlaySfx(SfxId.Victory);
     }
 
     // ========================================
@@ -2897,9 +3267,13 @@ public class BattleManager : MonoBehaviour
         battleEnded = true;
 
         // JSON 데이터 기준 보상 지급
+        int oldMaxHp = playerMaxHp;
+        int oldAttack = playerBaseAttack;
         bool didLevelUp =
             playerProgress.AddExp(currentMonsterData.expReward);
         playerProgress.AddGold(currentMonsterData.goldReward);
+        int hpIncrease = playerMaxHp - oldMaxHp;
+        int attackIncrease = playerBaseAttack - oldAttack;
 
         SaveGame();
 
@@ -2926,16 +3300,20 @@ public class BattleManager : MonoBehaviour
         }
 
         // 승리 패널 표시
-        if (victoryPanel != null)
-            victoryPanel.SetActive(true);
-
-        PlaySfx(SfxId.Victory);
-
         if (didLevelUp)
         {
             StartCoroutine(
-                LevelUpRewardEffectAfterDelay(currentFloor)
+                LevelUpRewardEffectAfterDelay(
+                    currentFloor,
+                    playerLevel,
+                    hpIncrease,
+                    attackIncrease
+                )
             );
+        }
+        else
+        {
+            ShowVictoryPanelAndSfx();
         }
     }
 
@@ -2983,6 +3361,7 @@ public class BattleManager : MonoBehaviour
         PauseMonsterIdle();
         ResetMonsterHitFlash();
         StopAllCoroutines();
+        ResetLevelUpUiState(false);
 
         if (victoryPanel != null)
             victoryPanel.SetActive(false);
@@ -2998,9 +3377,6 @@ public class BattleManager : MonoBehaviour
 
         if (criticalText != null)
             criticalText.gameObject.SetActive(false);
-
-        if (levelUpText != null)
-            levelUpText.gameObject.SetActive(false);
 
         if (playerVisual != null)
             playerVisual.anchoredPosition = debugPlayerOriginalPosition;
@@ -3150,18 +3526,41 @@ public class BattleManager : MonoBehaviour
         }
 
         if (levelText != null)
-            levelText.text = $"LV.{playerLevel}";
+            levelText.text = $"{playerLevel}";
 
         if (playerNameText != null)
             playerNameText.text = $"LV.{playerLevel} 용사";
 
         if (expText != null)
-            expText.text = $"EXP {exp} / {requiredExp}";
+        {
+            float expRatio = GetExpRatio();
+            expText.text = $"{exp} / {requiredExp} ({expRatio:P0})";
+        }
+
+        if (expBarFill != null)
+            expBarFill.fillAmount = GetExpRatio();
+
+        if (expBarFillRect != null)
+        {
+            float expRatio = GetExpRatio();
+            expBarFillRect.gameObject.SetActive(expRatio > 0.001f);
+            expBarFillRect.anchorMin = new Vector2(0f, 0f);
+            expBarFillRect.anchorMax = new Vector2(expRatio, 1f);
+            expBarFillRect.offsetMin = new Vector2(4f, 6f);
+            expBarFillRect.offsetMax = new Vector2(-4f, -6f);
+        }
 
         if (goldText != null)
-            goldText.text = $"GOLD {gold}";
+            goldText.text = $"{gold:N0}";
 
         UpdateShopButtonState();
+    }
+
+    float GetExpRatio()
+    {
+        return requiredExp > 0
+            ? Mathf.Clamp01((float)exp / requiredExp)
+            : 0f;
     }
 
     void ShowDamageText(RectTransform target, int damage)

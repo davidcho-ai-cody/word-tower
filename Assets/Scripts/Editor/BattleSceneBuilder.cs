@@ -1,31 +1,79 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using TMPro;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
+using UnityEngine.SceneManagement;
 
 public static class BattleSceneBuilder
 {
+    private const string BattleScenePath = "Assets/Scenes/BattleScene.unity";
+    private const string BattleHudFramePath =
+        "Assets/Art/UI/Battle/battle_hud_frame.png";
+    private const string BattleScreenFramePath =
+        "Assets/Art/UI/Battle/battle_screen_frame.png";
+    private const string LevelUpMagicCirclePath =
+        "Assets/Art/UI/Battle/levelup_magic_circle.png";
+
     private static readonly Color BackgroundColor = new Color(0.08f, 0.10f, 0.16f);
     private static readonly Color PanelColor = new Color(0.13f, 0.16f, 0.23f);
     private static readonly Color PlayerColor = new Color(0.25f, 0.55f, 1.00f);
     private static readonly Color SlimeColor = new Color(0.35f, 0.85f, 0.40f);
     private static readonly Color HpColor = new Color(0.20f, 0.85f, 0.35f);
     private static readonly Color ButtonColor = new Color(0.90f, 0.32f, 0.18f);
+    private static readonly Color HudBackgroundColor =
+        new Color(0.07f, 0.06f, 0.16f, 0.94f);
+    private static readonly Color HudGoldColor =
+        new Color(1.00f, 0.76f, 0.28f, 1f);
+    private static readonly Color HudIvoryColor =
+        new Color(0.98f, 0.94f, 0.84f, 1f);
+    private static readonly Color ExpFillColor =
+        new Color(0.28f, 0.86f, 0.38f, 1f);
     private static TMP_FontAsset KoreanFont;
+    private static Sprite battleHudFrameSprite;
+    private static Sprite battleScreenFrameSprite;
+    private static Sprite levelUpMagicCircleSprite;
 
     [MenuItem("WordTower/Build Battle Scene")]
     public static void BuildBattleScene()
     {
+        Scene battleScene = EditorSceneManager.OpenScene(
+            BattleScenePath,
+            OpenSceneMode.Single
+        );
 
         KoreanFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
             "Assets/Fonts/NotoSansKR-Regular SDF.asset"
         );
 
+        ImportBattleUiSprite(BattleHudFramePath);
+        ImportBattleUiSprite(BattleScreenFramePath);
+        ImportBattleUiSprite(LevelUpMagicCirclePath);
+
+        battleHudFrameSprite =
+            AssetDatabase.LoadAssetAtPath<Sprite>(BattleHudFramePath);
+        battleScreenFrameSprite =
+            AssetDatabase.LoadAssetAtPath<Sprite>(BattleScreenFramePath);
+        levelUpMagicCircleSprite =
+            AssetDatabase.LoadAssetAtPath<Sprite>(LevelUpMagicCirclePath);
+
         if (KoreanFont == null)
         {
             Debug.LogError("한글 TMP 폰트를 찾을 수 없습니다.");
+            return;
+        }
+
+        if (battleHudFrameSprite == null ||
+            battleScreenFrameSprite == null ||
+            levelUpMagicCircleSprite == null)
+        {
+            Debug.LogError(
+                "Battle UI PNG Sprite 로드 실패: " +
+                $"{BattleHudFramePath}, {BattleScreenFramePath}, " +
+                $"{LevelUpMagicCirclePath}"
+            );
             return;
         }
 
@@ -68,14 +116,25 @@ public static class BattleSceneBuilder
         CreateVictoryPanel(canvas.transform); // 승리패널
         CreateShopUI(canvas.transform);
         CreateHomeButton(canvas.transform);
-        CreateLevelUpText(canvas.transform);
+        CreateBattleScreenDecoration(canvas.transform);
         CreateFloorDebugPanel(canvas.transform);
+        CreateLevelUpOverlay(canvas.transform);
 
         Selection.activeGameObject = canvas.gameObject;
 
         EditorUtility.SetDirty(canvas.gameObject);
+        EditorSceneManager.MarkSceneDirty(battleScene);
 
-        Debug.Log("WordTower Battle Scene 생성 완료!");
+        if (!EditorSceneManager.SaveScene(battleScene, BattleScenePath))
+        {
+            Debug.LogError($"BattleScene 저장 실패: {BattleScenePath}");
+            return;
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        Debug.Log($"WordTower Battle Scene 생성 완료: {BattleScenePath}");
     }
 
     private static void ClearScene()
@@ -642,40 +701,128 @@ public static class BattleSceneBuilder
         GameObject status = CreatePanel(
             parent,
             "StatusPanel",
-            new Color(0.10f, 0.12f, 0.18f),
-            new Vector2(0.5f, 0.075f),
-            new Vector2(950, 150)
+            Color.clear,
+            new Vector2(0.5f, 0.078f),
+            new Vector2(970f, 486f)
         );
+        status.GetComponent<Image>().raycastTarget = false;
+
+        Image hudFrame = CreateSpriteImage(
+            status.transform,
+            "HudFrameImage",
+            battleHudFrameSprite,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(970f, 486f),
+            true
+        );
+        hudFrame.raycastTarget = false;
+
+        CreateText(
+            status.transform,
+            "LevelLabel",
+            "LV.",
+            30,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(110f, 38f)
+        ).color = HudGoldColor;
+        status.transform.Find("LevelLabel")
+            .GetComponent<RectTransform>().anchoredPosition =
+            new Vector2(-382f, 40f);
 
         CreateText(
             status.transform,
             "LevelText",
-            "LV.1",
-            32,
+            "1",
+            66,
             FontStyles.Bold,
-            new Vector2(0.12f, 0.65f),
-            new Vector2(180, 50)
+            new Vector2(0.5f, 0.5f),
+            new Vector2(130f, 74f)
+        ).color = HudIvoryColor;
+        status.transform.Find("LevelText")
+            .GetComponent<RectTransform>().anchoredPosition =
+            new Vector2(-382f, -18f);
+
+        CreateText(
+            status.transform,
+            "ExpLabel",
+            "EXP",
+            28,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(120f, 36f)
+        ).color = HudGoldColor;
+        status.transform.Find("ExpLabel")
+            .GetComponent<RectTransform>().anchoredPosition =
+            new Vector2(-130f, 48f);
+
+        GameObject expBarBackground = CreatePanel(
+            status.transform,
+            "ExpBarBackground",
+            new Color(0.02f, 0.015f, 0.045f, 0.68f),
+            new Vector2(0.5f, 0.5f),
+            new Vector2(448f, 34f)
         );
+        expBarBackground.GetComponent<RectTransform>().anchoredPosition =
+            new Vector2(-54f, -2f);
+        expBarBackground.GetComponent<Image>().raycastTarget = false;
+
+        GameObject expBarFill = CreatePanel(
+            expBarBackground.transform,
+            "ExpBarFill",
+            new Color(1f, 0.78f, 0.22f, 0.96f),
+            new Vector2(0f, 0.5f),
+            new Vector2(0f, 0f)
+        );
+        RectTransform expFillRect = expBarFill.GetComponent<RectTransform>();
+        expFillRect.anchorMin = new Vector2(0f, 0f);
+        expFillRect.anchorMax = new Vector2(0f, 1f);
+        expFillRect.pivot = new Vector2(0f, 0.5f);
+        expFillRect.offsetMin = new Vector2(4f, 6f);
+        expFillRect.offsetMax = new Vector2(-4f, -6f);
+        Image expFillImage = expBarFill.GetComponent<Image>();
+        expFillImage.type = Image.Type.Simple;
+        expFillImage.fillAmount = 1f;
+        expFillImage.raycastTarget = false;
 
         CreateText(
             status.transform,
             "ExpText",
-            "EXP 0 / 100",
-            28,
-            FontStyles.Normal,
-            new Vector2(0.44f, 0.65f),
-            new Vector2(350, 50)
-        );
+            "0 / 100",
+            25,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(380f, 36f)
+        ).color = HudIvoryColor;
+        status.transform.Find("ExpText")
+            .GetComponent<RectTransform>().anchoredPosition =
+            new Vector2(-54f, -46f);
+
+        CreateText(
+            status.transform,
+            "GoldLabel",
+            "GOLD",
+            24,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(150f, 34f)
+        ).color = HudIvoryColor;
+        status.transform.Find("GoldLabel")
+            .GetComponent<RectTransform>().anchoredPosition =
+            new Vector2(356f, 36f);
 
         CreateText(
             status.transform,
             "GoldText",
-            "GOLD 0",
-            28,
+            "0",
+            44,
             FontStyles.Bold,
-            new Vector2(0.80f, 0.65f),
-            new Vector2(250, 50)
-        );
+            new Vector2(0.5f, 0.5f),
+            new Vector2(180f, 58f)
+        ).color = HudGoldColor;
+        status.transform.Find("GoldText")
+            .GetComponent<RectTransform>().anchoredPosition =
+            new Vector2(356f, -16f);
     }
 
     // ========================================
@@ -847,20 +994,146 @@ public static class BattleSceneBuilder
             .GetComponent<TMP_Text>().fontSize = 22;
     }
 
-    private static void CreateLevelUpText(Transform parent)
+    private static void CreateLevelUpOverlay(Transform parent)
     {
-        TextMeshProUGUI levelUpText = CreateText(
+        GameObject overlay = CreatePanel(
             parent,
-            "LevelUpText",
-            "LEVEL UP!",
-            76,
-            FontStyles.Bold,
-            new Vector2(0.5f, 0.58f),
-            new Vector2(700f, 180f)
+            "LevelUpOverlay",
+            Color.clear,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(1080f, 1920f)
+        );
+        CanvasGroup overlayGroup = overlay.AddComponent<CanvasGroup>();
+        overlayGroup.alpha = 0f;
+
+        CreatePanel(
+            overlay.transform,
+            "DimBackground",
+            new Color(0.01f, 0.005f, 0.03f, 0.62f),
+            new Vector2(0.5f, 0.5f),
+            new Vector2(1080f, 1920f)
         );
 
-        levelUpText.color = new Color(1f, 0.82f, 0.20f, 1f);
-        levelUpText.gameObject.SetActive(false);
+        GameObject content = CreatePanel(
+            overlay.transform,
+            "LevelUpContent",
+            Color.clear,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(740f, 740f)
+        );
+        content.GetComponent<Image>().raycastTarget = false;
+
+        Image magicCircle = CreateSpriteImage(
+            content.transform,
+            "MagicCircleImage",
+            levelUpMagicCircleSprite,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(740f, 740f),
+            true
+        );
+        magicCircle.color = new Color(1f, 1f, 1f, 0.84f);
+        magicCircle.raycastTarget = false;
+
+        TextMeshProUGUI levelUpText = CreateText(
+            content.transform,
+            "LevelUpText",
+            "LEVEL UP!",
+            72,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(560f, 90f)
+        );
+        ConfigureLevelUpText(levelUpText, new Vector2(0f, 135f));
+        levelUpText.color = new Color(1f, 0.8352941f, 0.3098039f, 1f);
+        Shadow levelUpShadow = levelUpText.gameObject.AddComponent<Shadow>();
+        levelUpShadow.effectColor = new Color(0f, 0f, 0f, 0.72f);
+        levelUpShadow.effectDistance = new Vector2(4f, -4f);
+
+        TextMeshProUGUI newLevelText = CreateText(
+            content.transform,
+            "NewLevelText",
+            "LV. 2",
+            88,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(460f, 110f)
+        );
+        ConfigureLevelUpText(newLevelText, new Vector2(0f, 15f));
+        newLevelText.color = HudIvoryColor;
+        Shadow newLevelShadow = newLevelText.gameObject.AddComponent<Shadow>();
+        newLevelShadow.effectColor = new Color(0f, 0f, 0f, 0.66f);
+        newLevelShadow.effectDistance = new Vector2(3f, -3f);
+
+        TextMeshProUGUI hpIncreaseText = CreateText(
+            content.transform,
+            "HpIncreaseText",
+            "HP +10",
+            32,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(360f, 52f)
+        );
+        ConfigureLevelUpText(hpIncreaseText, new Vector2(0f, -80f));
+        hpIncreaseText.color = new Color(0.88f, 1f, 0.72f, 1f);
+        Shadow hpShadow = hpIncreaseText.gameObject.AddComponent<Shadow>();
+        hpShadow.effectColor = new Color(0f, 0f, 0f, 0.64f);
+        hpShadow.effectDistance = new Vector2(2f, -2f);
+
+        TextMeshProUGUI atkIncreaseText = CreateText(
+            content.transform,
+            "AtkIncreaseText",
+            "ATK +2",
+            32,
+            FontStyles.Bold,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(360f, 52f)
+        );
+        ConfigureLevelUpText(atkIncreaseText, new Vector2(0f, -125f));
+        atkIncreaseText.color = new Color(0.88f, 1f, 0.72f, 1f);
+        Shadow atkShadow = atkIncreaseText.gameObject.AddComponent<Shadow>();
+        atkShadow.effectColor = new Color(0f, 0f, 0f, 0.64f);
+        atkShadow.effectDistance = new Vector2(2f, -2f);
+
+        overlay.SetActive(false);
+    }
+
+    private static void ConfigureLevelUpText(
+        TextMeshProUGUI text,
+        Vector2 anchoredPosition
+    )
+    {
+        RectTransform rect = text.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = anchoredPosition;
+        rect.localScale = Vector3.one;
+        rect.localRotation = Quaternion.identity;
+
+        text.alignment = TextAlignmentOptions.Center;
+        text.enableAutoSizing = false;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.overflowMode = TextOverflowModes.Overflow;
+        text.margin = Vector4.zero;
+    }
+
+    private static void CreateBattleScreenDecoration(Transform parent)
+    {
+        Image decoration = CreateSpriteImage(
+            parent,
+            "BattleScreenDecoration",
+            battleScreenFrameSprite,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(1080f, 1920f),
+            false
+        );
+
+        RectTransform rect = decoration.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = new Vector2(14f, 210f);
+        rect.offsetMax = new Vector2(-14f, -14f);
+        decoration.raycastTarget = false;
     }
 
     private static void CreateFloorDebugPanel(Transform parent)
@@ -993,6 +1266,78 @@ public static class BattleSceneBuilder
         image.color = color;
 
         return obj;
+    }
+
+    private static void AddOutline(
+        GameObject target,
+        Color color,
+        Vector2 distance
+    )
+    {
+        Outline outline = target.GetComponent<Outline>();
+
+        if (outline == null)
+            outline = target.AddComponent<Outline>();
+
+        outline.effectColor = color;
+        outline.effectDistance = distance;
+        outline.useGraphicAlpha = true;
+    }
+
+    private static void ImportBattleUiSprite(string path)
+    {
+        AssetDatabase.ImportAsset(path);
+
+        TextureImporter importer =
+            AssetImporter.GetAtPath(path) as TextureImporter;
+
+        if (importer == null)
+        {
+            Debug.LogError($"Battle UI PNG Importer를 찾을 수 없습니다: {path}");
+            return;
+        }
+
+        importer.textureType = TextureImporterType.Sprite;
+        importer.spriteImportMode = SpriteImportMode.Single;
+        importer.alphaIsTransparency = true;
+        importer.mipmapEnabled = false;
+        importer.wrapMode = TextureWrapMode.Clamp;
+        importer.filterMode = FilterMode.Bilinear;
+        importer.textureCompression = TextureImporterCompression.Compressed;
+        importer.SaveAndReimport();
+    }
+
+    private static Image CreateSpriteImage(
+        Transform parent,
+        string name,
+        Sprite sprite,
+        Vector2 anchor,
+        Vector2 size,
+        bool preserveAspect
+    )
+    {
+        GameObject obj = new GameObject(
+            name,
+            typeof(RectTransform),
+            typeof(Image)
+        );
+
+        obj.transform.SetParent(parent, false);
+
+        RectTransform rect = obj.GetComponent<RectTransform>();
+        rect.anchorMin = anchor;
+        rect.anchorMax = anchor;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = size;
+
+        Image image = obj.GetComponent<Image>();
+        image.sprite = sprite;
+        image.color = Color.white;
+        image.preserveAspect = preserveAspect;
+        image.raycastTarget = false;
+
+        return image;
     }
 
     private static void CreateGroundShadow(

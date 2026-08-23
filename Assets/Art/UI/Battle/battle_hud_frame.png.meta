@@ -1,0 +1,2379 @@
+fileFormatVersion: 2
+guid: af5aa3cb7e38a964ca175acf24614c72
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -5122189428702984925
+    second: battle_hud_frame_0
+  - first:
+      213: 6335515113390206645
+    second: battle_hud_frame_1
+  - first:
+      213: 8657076779928789051
+    second: battle_hud_frame_2
+  - first:
+      213: 196612880837153052
+    second: battle_hud_frame_3
+  - first:
+      213: -8059453248282965065
+    second: battle_hud_frame_4
+  - first:
+      213: -6328820339246815199
+    second: battle_hud_frame_5
+  - first:
+      213: 6317532857463108054
+    second: battle_hud_frame_6
+  - first:
+      213: 4855966425262743909
+    second: battle_hud_frame_7
+  - first:
+      213: -1242546952360910911
+    second: battle_hud_frame_8
+  - first:
+      213: -6224898618682372830
+    second: battle_hud_frame_9
+  - first:
+      213: 8143642157493826887
+    second: battle_hud_frame_10
+  - first:
+      213: -5638686852192235958
+    second: battle_hud_frame_11
+  - first:
+      213: 7853381663512250476
+    second: battle_hud_frame_12
+  - first:
+      213: 7340693474643935147
+    second: battle_hud_frame_13
+  - first:
+      213: 6401749233886079745
+    second: battle_hud_frame_14
+  - first:
+      213: 5137022801941406829
+    second: battle_hud_frame_15
+  - first:
+      213: -1307674383610164836
+    second: battle_hud_frame_16
+  - first:
+      213: 1349578206059392287
+    second: battle_hud_frame_17
+  - first:
+      213: -5053265757328085555
+    second: battle_hud_frame_18
+  - first:
+      213: -3688655865282800734
+    second: battle_hud_frame_19
+  - first:
+      213: 2245741417572808826
+    second: battle_hud_frame_20
+  - first:
+      213: -5972488236328229661
+    second: battle_hud_frame_21
+  - first:
+      213: -3189513715386680086
+    second: battle_hud_frame_22
+  - first:
+      213: 7895392957125918731
+    second: battle_hud_frame_23
+  - first:
+      213: 1911301724851077104
+    second: battle_hud_frame_24
+  - first:
+      213: 4291130819224678090
+    second: battle_hud_frame_25
+  - first:
+      213: -7767786588458427617
+    second: battle_hud_frame_26
+  - first:
+      213: 8301711414862450853
+    second: battle_hud_frame_27
+  - first:
+      213: 1382678236856180615
+    second: battle_hud_frame_28
+  - first:
+      213: 4952017686674975527
+    second: battle_hud_frame_29
+  - first:
+      213: 7081560659703223562
+    second: battle_hud_frame_30
+  - first:
+      213: -2322029967885481170
+    second: battle_hud_frame_31
+  - first:
+      213: -3055388860259369520
+    second: battle_hud_frame_32
+  - first:
+      213: -1079102015056010492
+    second: battle_hud_frame_33
+  - first:
+      213: 2945988509777408742
+    second: battle_hud_frame_34
+  - first:
+      213: -8567195824059951635
+    second: battle_hud_frame_35
+  - first:
+      213: -7555010519842261533
+    second: battle_hud_frame_36
+  - first:
+      213: -480846529086327156
+    second: battle_hud_frame_37
+  - first:
+      213: -8220580228247689928
+    second: battle_hud_frame_38
+  - first:
+      213: -5700351210273368542
+    second: battle_hud_frame_39
+  - first:
+      213: 4174504507226827460
+    second: battle_hud_frame_40
+  - first:
+      213: -5232311204667396690
+    second: battle_hud_frame_41
+  - first:
+      213: 711446962386331237
+    second: battle_hud_frame_42
+  - first:
+      213: -8763050830665865690
+    second: battle_hud_frame_43
+  - first:
+      213: -9164482804777616404
+    second: battle_hud_frame_44
+  - first:
+      213: 4107735358428373918
+    second: battle_hud_frame_45
+  - first:
+      213: -4866147885136319943
+    second: battle_hud_frame_46
+  - first:
+      213: -6084300462504881241
+    second: battle_hud_frame_47
+  - first:
+      213: -4021768620278791072
+    second: battle_hud_frame_48
+  - first:
+      213: -2538911169800293077
+    second: battle_hud_frame_49
+  - first:
+      213: -2002181440875282308
+    second: battle_hud_frame_50
+  - first:
+      213: 8305682780711369900
+    second: battle_hud_frame_51
+  - first:
+      213: -2875727214971550965
+    second: battle_hud_frame_52
+  - first:
+      213: -794846366797349682
+    second: battle_hud_frame_53
+  - first:
+      213: 7076741160826969330
+    second: battle_hud_frame_54
+  - first:
+      213: 6849082825378771110
+    second: battle_hud_frame_55
+  - first:
+      213: 7646437567297646736
+    second: battle_hud_frame_56
+  - first:
+      213: -4853214647923669715
+    second: battle_hud_frame_57
+  - first:
+      213: 2260325775172652975
+    second: battle_hud_frame_58
+  - first:
+      213: -5581802805463375934
+    second: battle_hud_frame_59
+  - first:
+      213: -3830696002520521919
+    second: battle_hud_frame_60
+  - first:
+      213: -7910052812134137355
+    second: battle_hud_frame_61
+  - first:
+      213: -2089923334773034098
+    second: battle_hud_frame_62
+  - first:
+      213: -3214984411896010596
+    second: battle_hud_frame_63
+  - first:
+      213: 481573709297234230
+    second: battle_hud_frame_64
+  - first:
+      213: 4317944260588873092
+    second: battle_hud_frame_65
+  - first:
+      213: 3297809699876334831
+    second: battle_hud_frame_66
+  - first:
+      213: 3982159530273962534
+    second: battle_hud_frame_67
+  - first:
+      213: -4809062713599908506
+    second: battle_hud_frame_68
+  - first:
+      213: 760067769799246566
+    second: battle_hud_frame_69
+  - first:
+      213: -2888368749730327559
+    second: battle_hud_frame_70
+  - first:
+      213: 7262077117516211706
+    second: battle_hud_frame_71
+  - first:
+      213: -8996798913010293096
+    second: battle_hud_frame_72
+  - first:
+      213: -6038422201930941100
+    second: battle_hud_frame_73
+  - first:
+      213: 8035309774737177622
+    second: battle_hud_frame_74
+  - first:
+      213: -8740429502667528675
+    second: battle_hud_frame_75
+  - first:
+      213: -4595819505930513890
+    second: battle_hud_frame_76
+  - first:
+      213: 6840544186269191855
+    second: battle_hud_frame_77
+  - first:
+      213: 8797731328982043710
+    second: battle_hud_frame_78
+  - first:
+      213: -5960431499219837125
+    second: battle_hud_frame_79
+  - first:
+      213: -6756471354219881132
+    second: battle_hud_frame_80
+  - first:
+      213: -892086960850567768
+    second: battle_hud_frame_81
+  - first:
+      213: -8649935485658416731
+    second: battle_hud_frame_82
+  - first:
+      213: -2387804655026413392
+    second: battle_hud_frame_83
+  - first:
+      213: -8615414735730367620
+    second: battle_hud_frame_84
+  - first:
+      213: -3204952830252394440
+    second: battle_hud_frame_85
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: battle_hud_frame_0
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 23
+        width: 1734
+        height: 763
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 325c5e56ad35ae8b0800000000000000
+      internalID: -5122189428702984925
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_1
+      rect:
+        serializedVersion: 2
+        x: 555
+        y: 684
+        width: 16
+        height: 184
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5beedbabd654ce750800000000000000
+      internalID: 6335515113390206645
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_2
+      rect:
+        serializedVersion: 2
+        x: 894
+        y: 741
+        width: 56
+        height: 110
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b3020f4d67d142870800000000000000
+      internalID: 8657076779928789051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_3
+      rect:
+        serializedVersion: 2
+        x: 937
+        y: 738
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c1190989f528ab200800000000000000
+      internalID: 196612880837153052
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_4
+      rect:
+        serializedVersion: 2
+        x: 949
+        y: 700
+        width: 35
+        height: 50
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7bbc934b8f1172090800000000000000
+      internalID: -8059453248282965065
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_5
+      rect:
+        serializedVersion: 2
+        x: 990
+        y: 727
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1282de7de638b28a0800000000000000
+      internalID: -6328820339246815199
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_6
+      rect:
+        serializedVersion: 2
+        x: 1360
+        y: 682
+        width: 74
+        height: 165
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d172f189a26ca750800000000000000
+      internalID: 6317532857463108054
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_7
+      rect:
+        serializedVersion: 2
+        x: 854
+        y: 717
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 561620b5cbbd36340800000000000000
+      internalID: 4855966425262743909
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_8
+      rect:
+        serializedVersion: 2
+        x: 991
+        y: 719
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1cf98cf412691cee0800000000000000
+      internalID: -1242546952360910911
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_9
+      rect:
+        serializedVersion: 2
+        x: 1056
+        y: 725
+        width: 7
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22d0e9eefa7bc99a0800000000000000
+      internalID: -6224898618682372830
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_10
+      rect:
+        serializedVersion: 2
+        x: 1009
+        y: 713
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 745b0573567040170800000000000000
+      internalID: 8143642157493826887
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_11
+      rect:
+        serializedVersion: 2
+        x: 728
+        y: 692
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a4e8a67de2c5fb1b0800000000000000
+      internalID: -5638686852192235958
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_12
+      rect:
+        serializedVersion: 2
+        x: 1015
+        y: 700
+        width: 10
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c68c6339301dcfc60800000000000000
+      internalID: 7853381663512250476
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_13
+      rect:
+        serializedVersion: 2
+        x: 1023
+        y: 683
+        width: 10
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: baffd2192d16fd560800000000000000
+      internalID: 7340693474643935147
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_14
+      rect:
+        serializedVersion: 2
+        x: 1166
+        y: 694
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 10ba8e2a20597d850800000000000000
+      internalID: 6401749233886079745
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_15
+      rect:
+        serializedVersion: 2
+        x: 475
+        y: 681
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d64acc0750f5a4740800000000000000
+      internalID: 5137022801941406829
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_16
+      rect:
+        serializedVersion: 2
+        x: 475
+        y: 678
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c99c90393153adde0800000000000000
+      internalID: -1307674383610164836
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_17
+      rect:
+        serializedVersion: 2
+        x: 498
+        y: 678
+        width: 23
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f1d67c06a3aaab210800000000000000
+      internalID: 1349578206059392287
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_18
+      rect:
+        serializedVersion: 2
+        x: 1019
+        y: 682
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dcd60da21913fd9b0800000000000000
+      internalID: -5053265757328085555
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_19
+      rect:
+        serializedVersion: 2
+        x: 1134
+        y: 662
+        width: 26
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a3582ba8034fccc0800000000000000
+      internalID: -3688655865282800734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_20
+      rect:
+        serializedVersion: 2
+        x: 1157
+        y: 676
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a783fcbbbe97a2f10800000000000000
+      internalID: 2245741417572808826
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_21
+      rect:
+        serializedVersion: 2
+        x: 1183
+        y: 660
+        width: 35
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e4e478b7957d1da0800000000000000
+      internalID: -5972488236328229661
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_22
+      rect:
+        serializedVersion: 2
+        x: 1239
+        y: 675
+        width: 15
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aecf324bc229cb3d0800000000000000
+      internalID: -3189513715386680086
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_23
+      rect:
+        serializedVersion: 2
+        x: 1253
+        y: 643
+        width: 38
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b008c9b1012129d60800000000000000
+      internalID: 7895392957125918731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_24
+      rect:
+        serializedVersion: 2
+        x: 1676
+        y: 662
+        width: 30
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0fff650dace468a10800000000000000
+      internalID: 1911301724851077104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_25
+      rect:
+        serializedVersion: 2
+        x: 449
+        y: 658
+        width: 42
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ace2e94aeb82d8b30800000000000000
+      internalID: 4291130819224678090
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_26
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 675
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f1b54e7d047433490800000000000000
+      internalID: -7767786588458427617
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_27
+      rect:
+        serializedVersion: 2
+        x: 558
+        y: 671
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a09ea62c8a953370800000000000000
+      internalID: 8301711414862450853
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_28
+      rect:
+        serializedVersion: 2
+        x: 1408
+        y: 650
+        width: 30
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 78fd97ad782403310800000000000000
+      internalID: 1382678236856180615
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_29
+      rect:
+        serializedVersion: 2
+        x: 1158
+        y: 666
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 72ba6bf59d919b440800000000000000
+      internalID: 4952017686674975527
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_30
+      rect:
+        serializedVersion: 2
+        x: 1213
+        y: 664
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a05ddf876e1c64260800000000000000
+      internalID: 7081560659703223562
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_31
+      rect:
+        serializedVersion: 2
+        x: 1346
+        y: 660
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e2bcf5efb0e76cfd0800000000000000
+      internalID: -2322029967885481170
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_32
+      rect:
+        serializedVersion: 2
+        x: 1392
+        y: 651
+        width: 17
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ddfd8d05041995d0800000000000000
+      internalID: -3055388860259369520
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_33
+      rect:
+        serializedVersion: 2
+        x: 1396
+        y: 664
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 403ad244f624601f0800000000000000
+      internalID: -1079102015056010492
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_34
+      rect:
+        serializedVersion: 2
+        x: 1698
+        y: 660
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e23aade0f042e820800000000000000
+      internalID: 2945988509777408742
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_35
+      rect:
+        serializedVersion: 2
+        x: 1491
+        y: 652
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de552b9f9c43b1980800000000000000
+      internalID: -8567195824059951635
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_36
+      rect:
+        serializedVersion: 2
+        x: 1690
+        y: 659
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e5767ad5f5372790800000000000000
+      internalID: -7555010519842261533
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_37
+      rect:
+        serializedVersion: 2
+        x: 467
+        y: 644
+        width: 13
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c86745221a0b359f0800000000000000
+      internalID: -480846529086327156
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_38
+      rect:
+        serializedVersion: 2
+        x: 1279
+        y: 636
+        width: 17
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 83562bf36d1aaed80800000000000000
+      internalID: -8220580228247689928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_39
+      rect:
+        serializedVersion: 2
+        x: 1338
+        y: 628
+        width: 13
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22610b8a6c844e0b0800000000000000
+      internalID: -5700351210273368542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_40
+      rect:
+        serializedVersion: 2
+        x: 1438
+        y: 628
+        width: 20
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4caa58a5bb1dee930800000000000000
+      internalID: 4174504507226827460
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_41
+      rect:
+        serializedVersion: 2
+        x: 1432
+        y: 630
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eade08b6ea81367b0800000000000000
+      internalID: -5232311204667396690
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_42
+      rect:
+        serializedVersion: 2
+        x: 455
+        y: 212
+        width: 14
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 566619d2e319fd900800000000000000
+      internalID: 711446962386331237
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_43
+      rect:
+        serializedVersion: 2
+        x: 459
+        y: 189
+        width: 40
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6262879b2b3636680800000000000000
+      internalID: -8763050830665865690
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_44
+      rect:
+        serializedVersion: 2
+        x: 530
+        y: 233
+        width: 11
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cebfd0fc17731d080800000000000000
+      internalID: -9164482804777616404
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_45
+      rect:
+        serializedVersion: 2
+        x: 530
+        y: 205
+        width: 37
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e936f667b8b910930800000000000000
+      internalID: 4107735358428373918
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_46
+      rect:
+        serializedVersion: 2
+        x: 560
+        y: 223
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93a6ee9c748f77cb0800000000000000
+      internalID: -4866147885136319943
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_47
+      rect:
+        serializedVersion: 2
+        x: 659
+        y: 225
+        width: 21
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a3d6a127f8309ba0800000000000000
+      internalID: -6084300462504881241
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_48
+      rect:
+        serializedVersion: 2
+        x: 514
+        y: 197
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06448738fbecf28c0800000000000000
+      internalID: -4021768620278791072
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_49
+      rect:
+        serializedVersion: 2
+        x: 532
+        y: 197
+        width: 11
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2538c72eb9f3ccd0800000000000000
+      internalID: -2538911169800293077
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_50
+      rect:
+        serializedVersion: 2
+        x: 596
+        y: 205
+        width: 20
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c70cfb86692d634e0800000000000000
+      internalID: -2002181440875282308
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_51
+      rect:
+        serializedVersion: 2
+        x: 675
+        y: 207
+        width: 29
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cac3161db76b34370800000000000000
+      internalID: 8305682780711369900
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_52
+      rect:
+        serializedVersion: 2
+        x: 747
+        y: 200
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b0382b0955d5718d0800000000000000
+      internalID: -2875727214971550965
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_53
+      rect:
+        serializedVersion: 2
+        x: 772
+        y: 196
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eccb800d07328f4f0800000000000000
+      internalID: -794846366797349682
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_54
+      rect:
+        serializedVersion: 2
+        x: 788
+        y: 207
+        width: 11
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2fc1a727792a53260800000000000000
+      internalID: 7076741160826969330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_55
+      rect:
+        serializedVersion: 2
+        x: 1078
+        y: 201
+        width: 7
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a03eebaa84dc0f50800000000000000
+      internalID: 6849082825378771110
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_56
+      rect:
+        serializedVersion: 2
+        x: 1233
+        y: 190
+        width: 29
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0907af3747a9d1a60800000000000000
+      internalID: 7646437567297646736
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_57
+      rect:
+        serializedVersion: 2
+        x: 1384
+        y: 191
+        width: 21
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d2589cbbdfae5acb0800000000000000
+      internalID: -4853214647923669715
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_58
+      rect:
+        serializedVersion: 2
+        x: 1432
+        y: 206
+        width: 16
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: faf43d9115a4e5f10800000000000000
+      internalID: 2260325775172652975
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_59
+      rect:
+        serializedVersion: 2
+        x: 519
+        y: 196
+        width: 12
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cf931e0ce37982b0800000000000000
+      internalID: -5581802805463375934
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_60
+      rect:
+        serializedVersion: 2
+        x: 540
+        y: 190
+        width: 9
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14361471842a6dac0800000000000000
+      internalID: -3830696002520521919
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_61
+      rect:
+        serializedVersion: 2
+        x: 618
+        y: 187
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f14a2a60e8d93290800000000000000
+      internalID: -7910052812134137355
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_62
+      rect:
+        serializedVersion: 2
+        x: 665
+        y: 176
+        width: 19
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e83bd07ccc91ff2e0800000000000000
+      internalID: -2089923334773034098
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_63
+      rect:
+        serializedVersion: 2
+        x: 733
+        y: 196
+        width: 9
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c98258a06b41263d0800000000000000
+      internalID: -3214984411896010596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_64
+      rect:
+        serializedVersion: 2
+        x: 739
+        y: 192
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 63134d3bcb4eea600800000000000000
+      internalID: 481573709297234230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_65
+      rect:
+        serializedVersion: 2
+        x: 741
+        y: 198
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48526547d6b6ceb30800000000000000
+      internalID: 4317944260588873092
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_66
+      rect:
+        serializedVersion: 2
+        x: 751
+        y: 186
+        width: 6
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fec67f1137c24cd20800000000000000
+      internalID: 3297809699876334831
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_67
+      rect:
+        serializedVersion: 2
+        x: 1152
+        y: 196
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62a7ae09ef8734730800000000000000
+      internalID: 3982159530273962534
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_68
+      rect:
+        serializedVersion: 2
+        x: 1354
+        y: 182
+        width: 15
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6652d4501f6c24db0800000000000000
+      internalID: -4809062713599908506
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_69
+      rect:
+        serializedVersion: 2
+        x: 1368
+        y: 192
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e28b101c9d4c8a00800000000000000
+      internalID: 760067769799246566
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_70
+      rect:
+        serializedVersion: 2
+        x: 1378
+        y: 196
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f31cf3ece37ae7d0800000000000000
+      internalID: -2888368749730327559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_71
+      rect:
+        serializedVersion: 2
+        x: 332
+        y: 176
+        width: 12
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af5eb0989a418c460800000000000000
+      internalID: 7262077117516211706
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_72
+      rect:
+        serializedVersion: 2
+        x: 343
+        y: 182
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 896a6624e03f42380800000000000000
+      internalID: -8996798913010293096
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_73
+      rect:
+        serializedVersion: 2
+        x: 518
+        y: 189
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45df2121007333ca0800000000000000
+      internalID: -6038422201930941100
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_74
+      rect:
+        serializedVersion: 2
+        x: 546
+        y: 184
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61cfe6fcaa7238f60800000000000000
+      internalID: 8035309774737177622
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_75
+      rect:
+        serializedVersion: 2
+        x: 572
+        y: 176
+        width: 23
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d1668251da1c3b680800000000000000
+      internalID: -8740429502667528675
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_76
+      rect:
+        serializedVersion: 2
+        x: 747
+        y: 183
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e125331528e5830c0800000000000000
+      internalID: -4595819505930513890
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_77
+      rect:
+        serializedVersion: 2
+        x: 754
+        y: 176
+        width: 35
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fae40f4d1be7eee50800000000000000
+      internalID: 6840544186269191855
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_78
+      rect:
+        serializedVersion: 2
+        x: 1432
+        y: 184
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3ccc450802d71a70800000000000000
+      internalID: 8797731328982043710
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_79
+      rect:
+        serializedVersion: 2
+        x: 1636
+        y: 174
+        width: 19
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b3fd3f4912b484da0800000000000000
+      internalID: -5960431499219837125
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_80
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 176
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45d1f94c9113c32a0800000000000000
+      internalID: -6756471354219881132
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_81
+      rect:
+        serializedVersion: 2
+        x: 451
+        y: 172
+        width: 18
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ad7eb5b2abae93f0800000000000000
+      internalID: -892086960850567768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_82
+      rect:
+        serializedVersion: 2
+        x: 796
+        y: 159
+        width: 31
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a9b84f418145f780800000000000000
+      internalID: -8649935485658416731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_83
+      rect:
+        serializedVersion: 2
+        x: 1072
+        y: 171
+        width: 9
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b060204150dcded0800000000000000
+      internalID: -2387804655026413392
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_84
+      rect:
+        serializedVersion: 2
+        x: 473
+        y: 146
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c73202cb1f5ef6880800000000000000
+      internalID: -8615414735730367620
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: battle_hud_frame_85
+      rect:
+        serializedVersion: 2
+        x: 355
+        y: 136
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8385ce6a168b583d0800000000000000
+      internalID: -3204952830252394440
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      battle_hud_frame_0: -5122189428702984925
+      battle_hud_frame_1: 6335515113390206645
+      battle_hud_frame_10: 8143642157493826887
+      battle_hud_frame_11: -5638686852192235958
+      battle_hud_frame_12: 7853381663512250476
+      battle_hud_frame_13: 7340693474643935147
+      battle_hud_frame_14: 6401749233886079745
+      battle_hud_frame_15: 5137022801941406829
+      battle_hud_frame_16: -1307674383610164836
+      battle_hud_frame_17: 1349578206059392287
+      battle_hud_frame_18: -5053265757328085555
+      battle_hud_frame_19: -3688655865282800734
+      battle_hud_frame_2: 8657076779928789051
+      battle_hud_frame_20: 2245741417572808826
+      battle_hud_frame_21: -5972488236328229661
+      battle_hud_frame_22: -3189513715386680086
+      battle_hud_frame_23: 7895392957125918731
+      battle_hud_frame_24: 1911301724851077104
+      battle_hud_frame_25: 4291130819224678090
+      battle_hud_frame_26: -7767786588458427617
+      battle_hud_frame_27: 8301711414862450853
+      battle_hud_frame_28: 1382678236856180615
+      battle_hud_frame_29: 4952017686674975527
+      battle_hud_frame_3: 196612880837153052
+      battle_hud_frame_30: 7081560659703223562
+      battle_hud_frame_31: -2322029967885481170
+      battle_hud_frame_32: -3055388860259369520
+      battle_hud_frame_33: -1079102015056010492
+      battle_hud_frame_34: 2945988509777408742
+      battle_hud_frame_35: -8567195824059951635
+      battle_hud_frame_36: -7555010519842261533
+      battle_hud_frame_37: -480846529086327156
+      battle_hud_frame_38: -8220580228247689928
+      battle_hud_frame_39: -5700351210273368542
+      battle_hud_frame_4: -8059453248282965065
+      battle_hud_frame_40: 4174504507226827460
+      battle_hud_frame_41: -5232311204667396690
+      battle_hud_frame_42: 711446962386331237
+      battle_hud_frame_43: -8763050830665865690
+      battle_hud_frame_44: -9164482804777616404
+      battle_hud_frame_45: 4107735358428373918
+      battle_hud_frame_46: -4866147885136319943
+      battle_hud_frame_47: -6084300462504881241
+      battle_hud_frame_48: -4021768620278791072
+      battle_hud_frame_49: -2538911169800293077
+      battle_hud_frame_5: -6328820339246815199
+      battle_hud_frame_50: -2002181440875282308
+      battle_hud_frame_51: 8305682780711369900
+      battle_hud_frame_52: -2875727214971550965
+      battle_hud_frame_53: -794846366797349682
+      battle_hud_frame_54: 7076741160826969330
+      battle_hud_frame_55: 6849082825378771110
+      battle_hud_frame_56: 7646437567297646736
+      battle_hud_frame_57: -4853214647923669715
+      battle_hud_frame_58: 2260325775172652975
+      battle_hud_frame_59: -5581802805463375934
+      battle_hud_frame_6: 6317532857463108054
+      battle_hud_frame_60: -3830696002520521919
+      battle_hud_frame_61: -7910052812134137355
+      battle_hud_frame_62: -2089923334773034098
+      battle_hud_frame_63: -3214984411896010596
+      battle_hud_frame_64: 481573709297234230
+      battle_hud_frame_65: 4317944260588873092
+      battle_hud_frame_66: 3297809699876334831
+      battle_hud_frame_67: 3982159530273962534
+      battle_hud_frame_68: -4809062713599908506
+      battle_hud_frame_69: 760067769799246566
+      battle_hud_frame_7: 4855966425262743909
+      battle_hud_frame_70: -2888368749730327559
+      battle_hud_frame_71: 7262077117516211706
+      battle_hud_frame_72: -8996798913010293096
+      battle_hud_frame_73: -6038422201930941100
+      battle_hud_frame_74: 8035309774737177622
+      battle_hud_frame_75: -8740429502667528675
+      battle_hud_frame_76: -4595819505930513890
+      battle_hud_frame_77: 6840544186269191855
+      battle_hud_frame_78: 8797731328982043710
+      battle_hud_frame_79: -5960431499219837125
+      battle_hud_frame_8: -1242546952360910911
+      battle_hud_frame_80: -6756471354219881132
+      battle_hud_frame_81: -892086960850567768
+      battle_hud_frame_82: -8649935485658416731
+      battle_hud_frame_83: -2387804655026413392
+      battle_hud_frame_84: -8615414735730367620
+      battle_hud_frame_85: -3204952830252394440
+      battle_hud_frame_9: -6224898618682372830
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

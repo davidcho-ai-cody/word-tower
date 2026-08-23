@@ -140,11 +140,13 @@ Victory 연결 흐름:
 
 UI:
 
-- LevelText: LV.{playerLevel}
+- LevelText: {playerLevel}
 - PlayerName: LV.{playerLevel} 용사
-- ExpText: EXP {exp} / {requiredExp}
-- LevelUpTextEffect(): LEVEL UP!과 도달 레벨을 팝업으로 표시하고 상승/페이드아웃
-- LevelUpText는 BattleSceneBuilder가 생성
+- ExpText: {exp} / {requiredExp}
+- ExpBarFill: EXP 진행률 fillAmount
+- GoldText: {gold:N0}
+- LevelUpTextEffect(): LevelUpOverlay로 도달 레벨과 실제 HP/ATK 증가량을 표시
+- LevelUpOverlay는 BattleSceneBuilder가 생성
 - 상단 PlayerName은 과거 Scene의 `LV.1 용사` 정적 문자열만 사용해 레벨업 후 갱신되지 않았다. 현재는 BattleManager가 PlayerName TMP_Text를 참조하고 `UpdateUI()`에서 하단 LevelText와 같은 PlayerProgressData.playerLevel 기준으로 동기화한다.
 
 주의:
@@ -925,9 +927,88 @@ Debug 이동 시:
 - 데미지 숫자 상승/페이드아웃
 - 몬스터 사망: 점프, 회전, 축소, 드리프트
 - 플레이어 한방단어 CRITICAL! 텍스트
-- LEVEL UP! 텍스트
+- LEVEL UP! Overlay
 
 시각 테스트된 타이밍과 공용 오브젝트 이름은 관련 작업이 아니면 변경하지 않는다.
+
+### 13.1 Battle HUD / Level Up Overlay — PNG 적용 완료
+
+BattleScene의 전투 HUD는 WordTower 전용 PNG가 디자인을 담당하고, Unity TMP/UI가 실제 데이터를 표시하는 구조다.
+
+적용 에셋:
+
+- `Assets/Art/UI/Battle/battle_screen_frame.png`
+- `Assets/Art/UI/Battle/battle_hud_frame.png`
+- `Assets/Art/UI/Battle/levelup_magic_circle.png`
+
+Builder 기준 Hierarchy:
+
+    BattleCanvas
+    ├─ Background
+    ├─ 기존 전투 UI
+    ├─ StatusPanel
+    │  ├─ HudFrameImage
+    │  ├─ LevelLabel
+    │  ├─ LevelText
+    │  ├─ ExpLabel
+    │  ├─ ExpBarBackground
+    │  │  └─ ExpBarFill
+    │  ├─ ExpText
+    │  ├─ GoldLabel
+    │  └─ GoldText
+    ├─ BattleScreenDecoration
+    └─ LevelUpOverlay
+       ├─ DimBackground
+       └─ LevelUpContent
+          ├─ MagicCircleImage
+          ├─ LevelUpText
+          ├─ NewLevelText
+          ├─ HpIncreaseText
+          └─ AtkIncreaseText
+
+HUD 원칙:
+
+- PNG는 Dark Navy / Purple / Antique Gold / Purple Jewel 장식과 프레임을 담당한다.
+- `LevelText`, `ExpText`, `GoldText`는 BattleManager의 PlayerProgress 기반 값으로 갱신한다.
+- PNG에는 숫자와 진행 데이터가 박혀 있지 않다.
+- 기존 임시 `HudOuterBorder`, `HudInnerBorder`, Corner Accent, Level icon shape, Gold coin shape는 더 이상 생성하지 않는다.
+- `BattleScreenDecoration`은 `Image.raycastTarget = false`라 입력을 막지 않는다.
+- `battle_screen_frame.png`는 전체 화면 Overscan 장식이 아니라 전투/입력 영역을 감싸는 Screen Frame으로 사용한다.
+- Screen Frame은 `anchorMin=(0,0)`, `anchorMax=(1,1)`, `offsetMin=(14,210)`, `offsetMax=(-14,-14)`, `preserveAspect=false` 기준으로 하단 HUD 영역 위에서 끝난다.
+- 기존 `offsetMin=(-28,-28)`, `offsetMax=(28,28)` Overscan 방식은 폐기했다.
+- `battle_hud_frame.png`는 원본 비율을 유지하고 하단 `StatusPanel`에 배치하는 상태 HUD 전용 프레임이다.
+- Screen Frame 하단 장식과 HUD Frame은 겹치지 않게 별도 세로 영역으로 분리한다.
+
+EXP Gauge:
+
+- `ExpBarFill`은 PNG 중앙 게이지 안쪽에 배치된 Unity Image다.
+- EXP 비율은 `Mathf.Clamp01((float)exp / requiredExp)` 기준이다.
+- `Image.fillAmount` 값은 갱신하되 실제 표시 폭은 `ExpBarFill` RectTransform의 `anchorMax.x`가 ratio를 직접 반영한다.
+- `0 / required`는 fill을 숨기고, 25/50/100%는 실제 폭이 달라져야 한다.
+
+Level Up Overlay:
+
+- `levelup_magic_circle.png`가 Gold/Purple 마법진, Glow, 보석 장식을 담당한다.
+- `LEVEL UP!`, `LV. X`, `HP +N`, `ATK +N`은 Unity TMP 4개로 분리해 표시한다.
+- Level Up TMP는 MagicCircleImage 중심을 기준으로 `LEVEL UP!` / `LV. X` / `HP +N` / `ATK +N` 4단 중앙 정렬을 사용한다. `LV. X`는 중앙에서 가장 크게 강조한다.
+- `LevelUpContent`는 화면 중앙 `740 x 740` 기준점이며 `MagicCircleImage`와 같은 중심을 사용한다. TMP 로컬 위치는 `LEVEL UP! (0,+135)`, `LV. X (0,+15)`, `HP (0,-80)`, `ATK (0,-125)`이다.
+- Level Up TMP 최종 기준은 `LEVEL UP!` font 72 / rect 560x90, `LV. X` font 88 / rect 460x110, `HP` font 32 / rect 360x52, `ATK` font 32 / rect 360x52이며 세부 좌표는 모두 LevelUpContent 기준 local anchoredPosition이다.
+- Level Up TMP는 모두 anchor/pivot center, Auto Size OFF, Word Wrap OFF, Overflow, margin 0을 사용해 줄바꿈과 클리핑을 방지한다.
+- 레벨업 시 기존 PlayerProgressService 결과를 사용하고, 새 레벨과 실제 증가량을 표시한다.
+
+    hpIncrease = newMaxHp - oldMaxHp
+    attackIncrease = newAttack - oldAttack
+
+- 연출은 fullscreen Dim 위에서 `LevelUpContent` scale pop/pulse, MagicCircleImage rotation/alpha fade, 공통 CanvasGroup fade로 구성한다. TMP 텍스트는 회전하지 않는다.
+- Level Up TMP 개별 Fade는 간헐적 미표시를 막기 위해 사용하지 않는다. LevelUp 시작 시 `LEVEL UP!`, `LV. X`, `HP +N`, `ATK +N` alpha를 모두 1로 초기화하고, 이후 표시 중에는 TMP 개별 alpha를 다시 변경하지 않는다.
+- Level Up Coroutine은 중복 실행 시 이전 연출을 중단하고 새 연출 상태를 재초기화해 이전 alpha 상태가 다음 레벨업에 영향을 주지 않게 한다.
+- Save Reset과 Debug Floor 이동은 `StopAllCoroutines()` 이후 LevelUp 전용 상태를 다시 초기화한다. Overlay는 비활성, CanvasGroup alpha는 0, TMP alpha는 1, LevelUp Coroutine handle은 null 상태가 기본이다.
+- 모든 Level Up 텍스트가 함께 보이는 hold 구간을 최소 약 0.7초 확보한다.
+- 한 보상에서 여러 레벨이 올라도 최종 Level 기준으로 한 번만 표시하고, 누적 HP/ATK 증가량을 보여준다.
+- 레벨업이 발생하면 `LevelUpOverlay`가 끝난 뒤 `VictoryPanel`을 표시해 두 UI가 동시에 보이지 않게 한다.
+- 레벨업이 없으면 기존처럼 VictoryPanel을 바로 표시한다.
+
+기존 단어 입력, 공격, EXP/Gold/Level 계산, Save/Load, Shop, HOME, Story, 10층 Slime King Story 흐름은 변경하지 않는다. 향후 Shop, 도감, 설정 UI도 같은 Dark Navy / Gold / Purple Jewel 팔레트를 확장 적용한다.
 
 ### Audio System 7단계
 
