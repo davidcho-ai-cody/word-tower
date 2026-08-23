@@ -15,7 +15,7 @@
 - 현재 확정·구현 콘텐츠: 1~10층 슬라임 챕터
 - 앱 진입 씬: Assets/Scenes/StudioSplashScene.unity
 - 공식 전투 씬: Assets/Scenes/BattleScene.unity
-- 목표 Build Scene 순서: Index 0 StudioSplashScene, Index 1 OpeningScene, Index 2 TitleScene, Index 3 StoryScene, Index 4 StoryPlaybackScene, Index 5 BattleScene
+- 목표 Build Scene 순서: Index 0 StudioSplashScene, Index 1 OpeningScene, Index 2 TitleScene, Index 3 StoryScene, Index 4 StoryPlaybackScene, Index 5 ShopScene, Index 6 BattleScene
 - 중복 루트 씬 Assets/BattleScene.unity는 삭제됐으며 다시 생성하거나 사용하지 않는다.
 - 초기 런타임은 AI/API 없이 로컬 단어 데이터로 동작한다. Windows Editor는 SQLite DB, Android 1차 APK는 JSON 단어 데이터를 사용한다.
 
@@ -26,6 +26,8 @@ WordTower는 단순 단어 퀴즈가 아니라 전투 언어가 끝말잇기인 
     StudioSplashScene
     → OpeningScene (최초 1회만)
     → TitleScene
+    → BattleScene
+    → ShopScene
     → BattleScene
     → HOME
     → TitleScene
@@ -421,45 +423,62 @@ Shop 구매와 장착은 분리되어 있다. 구매는 Gold 차감과 ownedItem
 
 ---
 
-## 8.2 Shop System 1단계 — 구현 완료
+## 8.2 Shop System 1단계 — Fullscreen ShopScene 전환
 
 구현:
 
-- BattleScene 위에 Modal Shop Panel을 띄운다.
-- BattleSceneBuilder가 ShopButton / ShopPanel / 탭 / 아이템 목록 컨테이너를 생성한다.
-- BattleManager가 ItemService와 PlayerProgressService를 사용해 아이템 목록과 구매 상태를 표시한다.
+- BattleScene의 ShopButton은 팝업을 열지 않고 현재 진행을 저장한 뒤 `ShopScene`으로 이동한다.
+- ShopScene은 StoryScene처럼 독립적인 9:16 전체화면 메뉴로 운영한다.
+- ShopSceneManager가 ItemService / PlayerProgressService / SaveService를 사용해 기존 구매, 장착, Gold, Save 규칙을 재사용한다.
+- ShopSceneBuilder가 ShopCanvas / Background / Header / Tabs / ItemScrollView / BackButton / PNG Template을 생성한다.
+- BattleSceneBuilder는 BattleScene에 ShopButton만 생성하고, 더 이상 BattleScene 내부 ShopPanel을 생성하지 않는다.
+
+구현 파일:
+
+- Assets/Scripts/Shop/ShopSceneManager.cs
+- Assets/Scripts/Editor/ShopSceneBuilder.cs
+- Assets/Scenes/ShopScene.unity는 Unity Editor에서 `WordTower → Build Shop Scene` 실행으로 생성한다.
 
 Shop UI 구조:
 
-- ShopButton
-- ShopPanel
-- ShopTitle
-- ShopCloseButton
-- ShopCurrentGold
-- ShopMessage
-- ShopTabWeapon
-- ShopTabArmor
-- ShopTabAccessory
-- ShopTabEtc
-- ShopItemListContent
+- BattleScene: ShopButton
+- ShopScene / ShopCanvas / ShopRoot
+- Background: `Assets/Art/UI/Shop/shop_background.png`
+- Header: GoldText, MessageText
+- TabArea: WeaponTab, ArmorTab, AccessoryTab
+- ItemScrollView / Viewport / Content
+- BackButton
+- ItemCardTemplate / ItemCardEquippedTemplate / BuyButtonTemplate
 
 탭:
 
-- Weapon: 현재 데이터 있음
-- Armor: 현재 데이터 있음
-- Accessory: 향후 확장용, 현재 비활성
-- Etc: 향후 확장용, 현재 비활성
+- Weapon: 1차 실제 콘텐츠. `wood_sword_01`, `iron_sword_01`을 표시한다.
+- Armor: UI 전환만 제공하며 1차에서는 `준비 중` 표시
+- Accessory: UI 전환만 제공하며 1차에서는 `준비 중` 표시
 
-Shop을 열 수 있는 상태:
+Shop PNG:
+
+- `Assets/Art/UI/Shop/shop_background.png`
+- `Assets/Art/UI/Shop/shop_tab_active.png`
+- `Assets/Art/UI/Shop/shop_tab_inactive.png`
+- `Assets/Art/UI/Shop/shop_item_card.png`
+- `Assets/Art/UI/Shop/shop_item_card_equipped.png`
+- `Assets/Art/UI/Shop/shop_buy_button.png`
+
+Shop 카드:
+
+- 미장착 카드는 `shop_item_card.png`, 장착중 카드는 `shop_item_card_equipped.png`를 사용한다.
+- 카드에는 아이템 Sprite, 이름, ATK, 가격, 상태 버튼을 TMP/UI로 표시한다.
+- 미보유는 `구매`, 보유 미장착은 `장착`, 현재 장비는 비활성 `장착 중` 버튼으로 표시한다.
+
+BattleScene에서 ShopScene으로 이동할 수 있는 상태:
 
 - battleEnded가 false
-- Shop이 이미 열려 있지 않음
+- Scene 전환 중이 아님
 - WordInput과 AttackButton이 interactable
 - VictoryPanel이 표시 중이 아님
 
-공격 애니메이션, 몬스터 턴, 사망 연출, Victory 처리 중에는 입력 버튼이 잠겨 있으므로 ShopButton도 비활성화된다. Time.timeScale은 사용하지 않는다.
-
-Shop이 열리면 WordInput과 AttackButton을 잠그고, 닫으면 전투가 종료되지 않은 경우 플레이어 입력 상태로 복구한다.
+공격 애니메이션, 몬스터 턴, 사망 연출, Victory 처리 중에는 입력 버튼이 잠겨 있으므로 ShopButton도 비활성화된다. Shop 진입 시 BattleManager는 SaveGame() 후 `SceneManager.LoadScene("ShopScene")`을 호출한다.
 
 구매 규칙:
 
@@ -470,6 +489,27 @@ Shop이 열리면 WordInput과 AttackButton을 잠그고, 닫으면 전투가 �
 - price = 0인 기본 장비는 기본 ownedItemIds에 포함되므로 구매 대상이 아니다.
 
 구매와 장착은 분리한다. 미보유 아이템은 구매 버튼, 보유한 미장착 아이템은 장착 버튼, 현재 장비는 비활성 장착 중 버튼으로 표시한다. Weapon/Armor만 타입에 맞게 장착할 수 있으며 장착 변경은 즉시 Save하고 Shop UI와 장비 외형을 갱신한다.
+
+ShopScene의 BackButton과 Android Back/Escape는 Save 후 `BattleScene`으로 복귀한다. BattleScene 복귀 후 BattleManager가 Save를 다시 읽고 장착 무기 외형과 Final Attack을 반영한다.
+
+ShopScene UI 표시 안정화:
+
+- `shop_background.png`에 이미 포함된 SHOP 로고와 겹치지 않도록 별도 SHOP Title TMP와 Subtitle TMP는 생성하지 않는다.
+- GoldText와 MessageText만 Header에 동적 TMP로 유지한다.
+- WeaponTab / ArmorTab / AccessoryTab은 각각 `Background` Image와 Full Stretch `Label` TMP를 자식으로 둔다.
+- BackButton도 `Background` Image와 Full Stretch `Label("닫기")` TMP 구조를 사용한다.
+- 아이템 목록 Content 이름은 `ShopItemListContent`로 고정해 런타임 검색 충돌을 피한다.
+- 초기 무기 탭에는 `WoodenSwordCard`, `IronSwordCard` 2개가 표시되어야 한다.
+- Viewport에는 Stencil 기반 일반 `Mask`를 사용하지 않고 `RectMask2D`만 사용한다. 일반 Mask가 TMP와 카드 렌더링을 통째로 가리는 문제가 확인됐다.
+- 카드/버튼 PNG는 inactive Template을 `GameObject.Find()`로 찾지 않고, ShopSceneBuilder가 ShopSceneManager에 Sprite 참조를 직렬화해 전달한다.
+- Shop 아이템 카드는 새 가로형 `shop_item_card.png` / `shop_item_card_equipped.png` 기준으로 940x320 크기를 사용한다.
+- 카드 내부는 왼쪽 무기 아이콘, 중앙 이름/설명, 하단 ATK/Gold, 우측 상태 버튼 구조로 배치한다.
+
+주의:
+
+- Unity batchmode가 라이선스 재연결에서 지연될 수 있다. Scene 파일이 없는 PC에서는 Unity Editor에서 `WordTower → Build Shop Scene`을 수동 실행해 `Assets/Scenes/ShopScene.unity`와 Build Settings 반영을 완료한다.
+- OpeningSceneBuilder / StorySceneBuilder / StoryPlaybackSceneBuilder / StudioSplashSceneBuilder의 Build Settings 배열은 ShopScene을 StoryPlaybackScene과 BattleScene 사이에 포함하도록 갱신한다.
+- TitleSceneBuilder는 기존처럼 TitleScene만 독립 생성하며 Build Settings를 변경하지 않는다.
 
 Equipment Visual:
 
@@ -577,9 +617,10 @@ Builder 실행 후 목표 Build Scene 순서:
 3. Assets/Scenes/TitleScene.unity
 4. Assets/Scenes/StoryScene.unity
 5. Assets/Scenes/StoryPlaybackScene.unity
-6. Assets/Scenes/BattleScene.unity
+6. Assets/Scenes/ShopScene.unity
+7. Assets/Scenes/BattleScene.unity
 
-`StudioSplashSceneBuilder`는 `WordTower → Build Studio Splash Scene` 메뉴로 StudioSplashScene을 생성하고 위 Build Scene 순서를 설정한다. `OpeningSceneBuilder`, `StorySceneBuilder`, `StoryPlaybackSceneBuilder`도 같은 Build Scene 순서를 사용하도록 맞춘다.
+`StudioSplashSceneBuilder`는 `WordTower → Build Studio Splash Scene` 메뉴로 StudioSplashScene을 생성하고 위 Build Scene 순서를 설정한다. `OpeningSceneBuilder`, `StorySceneBuilder`, `StoryPlaybackSceneBuilder`, `ShopSceneBuilder`도 같은 Build Scene 순서를 사용하도록 맞춘다.
 
 향후 고도화 후보:
 
@@ -637,7 +678,8 @@ OpeningSceneBuilder는 `WordTower → Build Opening Scene` 메뉴로 OpeningScen
 3. Assets/Scenes/TitleScene.unity
 4. Assets/Scenes/StoryScene.unity
 5. Assets/Scenes/StoryPlaybackScene.unity
-6. Assets/Scenes/BattleScene.unity
+6. Assets/Scenes/ShopScene.unity
+7. Assets/Scenes/BattleScene.unity
 
 Editor 전용 디버그 메뉴 `WordTower → Debug → Reset Opening Story`는 `wordtower_story_progress.json`만 삭제해 다음 Play에서 Opening Story를 다시 최초 실행 상태로 재생하게 한다. gameplay save인 `wordtower_save.json`은 건드리지 않는다.
 
@@ -712,7 +754,8 @@ Build Settings 목표 순서:
 3. Assets/Scenes/TitleScene.unity
 4. Assets/Scenes/StoryScene.unity
 5. Assets/Scenes/StoryPlaybackScene.unity
-6. Assets/Scenes/BattleScene.unity
+6. Assets/Scenes/ShopScene.unity
+7. Assets/Scenes/BattleScene.unity
 
 StorySceneBuilder나 Story UI 생성 값이 바뀐 경우 실제 Scene 반영을 위해 Unity Editor에서 `WordTower → Build Story Scene`을 실행해야 한다. Scene YAML 직접 수정은 하지 않는다.
 
@@ -814,7 +857,8 @@ Build Settings 목표 순서:
 3. Assets/Scenes/TitleScene.unity
 4. Assets/Scenes/StoryScene.unity
 5. Assets/Scenes/StoryPlaybackScene.unity
-6. Assets/Scenes/BattleScene.unity
+6. Assets/Scenes/ShopScene.unity
+7. Assets/Scenes/BattleScene.unity
 
 StoryPlaybackSceneBuilder나 StoryPlayback UI 생성 값이 바뀐 경우 실제 Scene 반영을 위해 Unity Editor에서 `WordTower → Build Story Playback Scene`을 실행해야 한다. Scene YAML 직접 수정은 하지 않는다.
 
@@ -1085,11 +1129,11 @@ BattleScene 초기 화면 표시:
 - Scene과 BattleSceneBuilder는 이 해결을 위해 수정하거나 재실행하지 않는다.
 - 회귀 검증은 5층 이상 Save, 장착 장비, 9/10층 Sprite/Scale, Save 없는 새 게임과 Android Release APK에서 수행한다.
 
-BattleScene은 기존 전투, 저장, 상점, HOME → TitleScene 복귀 구조를 유지한다. 현재 Scene에는 `BattleCanvas`, `ShopButton`, `ShopPanel`, `HomeButton`, `AudioManager`가 포함되어 있으며 BattleSceneBuilder 실행 후 최신 Scene 상태가 정상 확인된 상태다.
+BattleScene은 기존 전투, 저장, SHOP → ShopScene, HOME → TitleScene 복귀 구조를 유지한다. BattleSceneBuilder 기준으로 전투 씬에는 `BattleCanvas`, `ShopButton`, `HomeButton`, `AudioManager`가 포함되며 ShopPanel은 더 이상 생성하지 않는다.
 
 Scene Builder 운영 원칙:
 
-- StudioSplash / Opening / Title / Story / Battle Scene은 모두 Builder 기반으로 관리한다.
+- StudioSplash / Opening / Title / Story / Shop / Battle Scene은 모두 Builder 기반으로 관리한다.
 - Builder 코드가 변경된 경우 실제 Scene 반영을 위해 Unity Editor의 해당 `WordTower → Build ... Scene` 메뉴 실행이 필요할 수 있다.
 - Scene YAML을 직접 수정하지 않는다.
 - Hierarchy에만 수동 추가한 중요 UI는 Builder 재실행 시 사라질 수 있으므로 Builder와 런타임 참조를 함께 갱신한다.
@@ -1109,7 +1153,6 @@ Assets/Scripts/Editor/BattleSceneBuilder.cs가 전투 UI의 소스 오브 트루
 - ImpactEffect / CriticalImpactEffect / CriticalText
 - LevelUpText
 - ShopButton
-- ShopPanel
 - FloorDebugPanel
 - DebugSaveResetButton
 

@@ -21,6 +21,9 @@ EditorBuildSettings:
     path: Assets/Scenes/StoryPlaybackScene.unity
     guid: f9598183ccb86b34ba9f37117f784d50
   - enabled: 1
+    path: Assets/Scenes/ShopScene.unity
+    guid: 845b4dd4b82d23f4b91abec4a542aa60
+  - enabled: 1
     path: Assets/Scenes/BattleScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
   m_configObjects:

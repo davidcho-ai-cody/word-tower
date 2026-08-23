@@ -895,70 +895,6 @@ public static class BattleSceneBuilder
 
         shopButton.transform.Find("Label")
             .GetComponent<TMP_Text>().fontSize = 28;
-
-        GameObject panel = CreatePanel(
-            parent,
-            "ShopPanel",
-            new Color(0.06f, 0.07f, 0.10f, 0.96f),
-            new Vector2(0.5f, 0.5f),
-            new Vector2(900f, 1120f)
-        );
-
-        CreateText(
-            panel.transform,
-            "ShopTitle",
-            "SHOP",
-            58,
-            FontStyles.Bold,
-            new Vector2(0.5f, 0.92f),
-            new Vector2(500f, 90f)
-        );
-
-        Button closeButton = CreateButton(
-            panel.transform,
-            "ShopCloseButton",
-            "닫기",
-            new Vector2(0.87f, 0.92f),
-            new Vector2(150f, 65f)
-        );
-
-        closeButton.transform.Find("Label")
-            .GetComponent<TMP_Text>().fontSize = 24;
-
-        CreateText(
-            panel.transform,
-            "ShopCurrentGold",
-            "GOLD 0",
-            32,
-            FontStyles.Bold,
-            new Vector2(0.18f, 0.84f),
-            new Vector2(260f, 60f)
-        );
-
-        CreateText(
-            panel.transform,
-            "ShopMessage",
-            "",
-            26,
-            FontStyles.Bold,
-            new Vector2(0.62f, 0.84f),
-            new Vector2(460f, 60f)
-        );
-
-        CreateShopTabButton(panel.transform, "ShopTabWeapon", "Weapon", 0.16f);
-        CreateShopTabButton(panel.transform, "ShopTabArmor", "Armor", 0.38f);
-        CreateShopTabButton(panel.transform, "ShopTabAccessory", "Accessory", 0.62f);
-        CreateShopTabButton(panel.transform, "ShopTabEtc", "Etc", 0.84f);
-
-        CreatePanel(
-            panel.transform,
-            "ShopItemListContent",
-            new Color(0.10f, 0.12f, 0.18f, 0.80f),
-            new Vector2(0.5f, 0.42f),
-            new Vector2(820f, 680f)
-        );
-
-        panel.SetActive(false);
     }
 
     private static void CreateHomeButton(Transform parent)
@@ -973,25 +909,6 @@ public static class BattleSceneBuilder
 
         homeButton.transform.Find("Label")
             .GetComponent<TMP_Text>().fontSize = 28;
-    }
-
-    private static void CreateShopTabButton(
-        Transform parent,
-        string name,
-        string label,
-        float anchorX
-    )
-    {
-        Button button = CreateButton(
-            parent,
-            name,
-            label,
-            new Vector2(anchorX, 0.75f),
-            new Vector2(180f, 60f)
-        );
-
-        button.transform.Find("Label")
-            .GetComponent<TMP_Text>().fontSize = 22;
     }
 
     private static void CreateLevelUpOverlay(Transform parent)

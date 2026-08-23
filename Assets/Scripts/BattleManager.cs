@@ -21,6 +21,7 @@ public class BattleManager : MonoBehaviour
     private const float KingSlimeIdleCycle = 2.2f;
     private const float MonsterHitFlashDuration = 0.12f;
     private const float MonsterHitFlashAlpha = 0.15f;
+    private const string ShopSceneName = "ShopScene";
     private const string StoryPlaybackSceneName = "StoryPlaybackScene";
 
     [Header("Player")]
@@ -116,6 +117,11 @@ public class BattleManager : MonoBehaviour
     private Button shopArmorTabButton;
     private Button shopAccessoryTabButton;
     private Button shopEtcTabButton;
+    private Sprite shopTabActiveSprite;
+    private Sprite shopTabInactiveSprite;
+    private Sprite shopItemCardSprite;
+    private Sprite shopItemCardEquippedSprite;
+    private Sprite shopBuyButtonSprite;
     private bool isShopOpen = false;
     private bool isSceneTransitioning = false;
     private ItemType currentShopTab = ItemType.Weapon;
@@ -299,12 +305,6 @@ public class BattleManager : MonoBehaviour
             return;
         }
 #endif
-
-        if (isShopOpen || (shopPanel != null && shopPanel.activeSelf))
-        {
-            CloseShop();
-            return;
-        }
 
         if (IsVictoryPanelOpen())
         {
@@ -937,6 +937,20 @@ public class BattleManager : MonoBehaviour
                 .Find("ShopTabAccessory")?.GetComponent<Button>();
             shopEtcTabButton = shopPanelTransform
                 .Find("ShopTabEtc")?.GetComponent<Button>();
+
+            shopTabActiveSprite =
+                shopWeaponTabButton?.GetComponent<Image>()?.sprite;
+            shopTabInactiveSprite =
+                shopArmorTabButton?.GetComponent<Image>()?.sprite;
+            shopItemCardSprite = shopPanelTransform
+                .Find("ShopItemCardTemplate")
+                ?.GetComponent<Image>()?.sprite;
+            shopItemCardEquippedSprite = shopPanelTransform
+                .Find("ShopItemCardEquippedTemplate")
+                ?.GetComponent<Image>()?.sprite;
+            shopBuyButtonSprite = shopPanelTransform
+                .Find("ShopBuyButtonTemplate")
+                ?.GetComponent<Image>()?.sprite;
         }
 
         if (shopButton != null)
@@ -956,7 +970,9 @@ public class BattleManager : MonoBehaviour
             );
 
         if (shopAccessoryTabButton != null)
-            shopAccessoryTabButton.interactable = false;
+            shopAccessoryTabButton.onClick.AddListener(
+                () => SelectShopTab(ItemType.Unknown)
+            );
 
         if (shopEtcTabButton != null)
             shopEtcTabButton.interactable = false;
@@ -1245,6 +1261,7 @@ public class BattleManager : MonoBehaviour
     bool CanOpenShop()
     {
         return !battleEnded &&
+            !isSceneTransitioning &&
             !isShopOpen &&
             wordInput != null &&
             attackButton != null &&
@@ -1259,19 +1276,9 @@ public class BattleManager : MonoBehaviour
             return;
 
         CloseMobileKeyboardAndRestorePanel();
-        isShopOpen = true;
-
-        if (shopPanel != null)
-            shopPanel.SetActive(true);
-
-        if (wordInput != null)
-            wordInput.interactable = false;
-
-        if (attackButton != null)
-            attackButton.interactable = false;
-
-        UpdateShopButtonState();
-        RefreshShopUI("");
+        isSceneTransitioning = true;
+        SaveGame();
+        SceneManager.LoadScene(ShopSceneName);
     }
 
     void CloseShop()
@@ -1304,6 +1311,8 @@ public class BattleManager : MonoBehaviour
 
     void RefreshShopUI(string message)
     {
+        RefreshShopTabs();
+
         if (shopCurrentGoldText != null)
             shopCurrentGoldText.text = $"GOLD {gold}";
 
@@ -1315,7 +1324,26 @@ public class BattleManager : MonoBehaviour
         if (shopItemListContent == null || itemService == null)
             return;
 
+        if (currentShopTab != ItemType.Weapon)
+        {
+            CreateShopText(
+                shopItemListContent,
+                "ShopEmptyText",
+                "준비 중",
+                34,
+                FontStyles.Bold,
+                new Vector2(0.5f, 0.55f),
+                new Vector2(700f, 90f)
+            );
+
+            return;
+        }
+
         List<ItemData> items = itemService.GetItemsByType(currentShopTab);
+        items = items.FindAll(
+            item => item.id == "wood_sword_01" ||
+                item.id == "iron_sword_01"
+        );
 
         if (items.Count == 0)
         {
@@ -1336,6 +1364,41 @@ public class BattleManager : MonoBehaviour
             CreateShopItemRow(items[i], i);
     }
 
+    void RefreshShopTabs()
+    {
+        SetShopTabState(shopWeaponTabButton, currentShopTab == ItemType.Weapon);
+        SetShopTabState(shopArmorTabButton, currentShopTab == ItemType.Armor);
+        SetShopTabState(
+            shopAccessoryTabButton,
+            currentShopTab == ItemType.Unknown
+        );
+    }
+
+    void SetShopTabState(Button button, bool isActive)
+    {
+        if (button == null)
+            return;
+
+        Image image = button.GetComponent<Image>();
+        if (image != null)
+        {
+            Sprite sprite = isActive
+                ? shopTabActiveSprite
+                : shopTabInactiveSprite;
+            if (sprite != null)
+                image.sprite = sprite;
+            image.color = Color.white;
+            image.preserveAspect = true;
+        }
+
+        TMP_Text label = button.transform
+            .Find("Label")?.GetComponent<TMP_Text>();
+        if (label != null)
+            label.color = isActive
+                ? new Color(1f, 0.84f, 0.35f, 1f)
+                : new Color(0.80f, 0.75f, 0.88f, 1f);
+    }
+
     void ClearShopItemList()
     {
         if (shopItemListContent == null)
@@ -1347,58 +1410,94 @@ public class BattleManager : MonoBehaviour
 
     void CreateShopItemRow(ItemData item, int index)
     {
-        float y = 0.86f - (index * 0.22f);
+        float y = 0.78f - (index * 0.30f);
+        bool ownsItem = playerProgress.OwnsItem(item.id);
+        bool isEquipped = ownsItem && IsItemEquipped(item);
 
         GameObject row = CreateShopPanel(
             shopItemListContent,
             $"ShopItem_{item.id}",
-            new Color(0.16f, 0.18f, 0.25f, 0.95f),
+            Color.white,
             new Vector2(0.5f, y),
-            new Vector2(760f, 125f)
+            new Vector2(760f, 205f)
         );
+        Image rowImage = row.GetComponent<Image>();
+        rowImage.sprite = isEquipped
+            ? shopItemCardEquippedSprite
+            : shopItemCardSprite;
+        rowImage.color = Color.white;
+        rowImage.preserveAspect = true;
+        rowImage.raycastTarget = false;
+
+        Sprite itemSprite = LoadRuntimeSprite(item.spritePath);
+        if (itemSprite != null)
+        {
+            Image icon = CreateShopImage(
+                row.transform,
+                "ItemIcon",
+                itemSprite,
+                new Vector2(0.16f, 0.52f),
+                new Vector2(118f, 118f),
+                true
+            );
+            icon.raycastTarget = false;
+        }
 
         string statText = GetItemStatText(item);
-        CreateShopText(
+        TMP_Text nameText = CreateShopText(
             row.transform,
             "Name",
             item.name,
-            28,
+            30,
             FontStyles.Bold,
-            new Vector2(0.18f, 0.66f),
-            new Vector2(230f, 45f)
+            new Vector2(0.38f, 0.68f),
+            new Vector2(280f, 48f)
         );
+        nameText.alignment = TextAlignmentOptions.MidlineLeft;
+        nameText.color = new Color(1f, 0.90f, 0.60f, 1f);
 
-        CreateShopText(
+        TMP_Text descriptionText = CreateShopText(
             row.transform,
             "Description",
             item.description,
-            20,
+            19,
             FontStyles.Normal,
-            new Vector2(0.33f, 0.29f),
-            new Vector2(430f, 50f)
+            new Vector2(0.43f, 0.40f),
+            new Vector2(410f, 48f)
         );
+        descriptionText.alignment = TextAlignmentOptions.MidlineLeft;
+        descriptionText.color = new Color(0.86f, 0.83f, 0.94f, 1f);
 
-        CreateShopText(
+        TMP_Text statLabel = CreateShopText(
             row.transform,
             "Stat",
             statText,
+            23,
+            FontStyles.Bold,
+            new Vector2(0.64f, 0.68f),
+            new Vector2(190f, 46f)
+        );
+        statLabel.color = new Color(0.68f, 1f, 0.58f, 1f);
+
+        TMP_Text priceText = CreateShopText(
+            row.transform,
+            "Price",
+            $"{item.price} Gold",
             22,
             FontStyles.Bold,
-            new Vector2(0.51f, 0.66f),
-            new Vector2(180f, 45f)
+            new Vector2(0.64f, 0.38f),
+            new Vector2(190f, 42f)
         );
-
-        bool ownsItem = playerProgress.OwnsItem(item.id);
+        priceText.color = new Color(1f, 0.78f, 0.28f, 1f);
 
         if (ownsItem)
         {
-            bool isEquipped = IsItemEquipped(item);
             Button equipButton = CreateShopButton(
                 row.transform,
                 "EquipButton",
                 isEquipped ? "장착 중" : "장착",
                 new Vector2(0.82f, 0.50f),
-                new Vector2(210f, 70f)
+                new Vector2(190f, 68f)
             );
 
             equipButton.interactable = !isEquipped;
@@ -1414,9 +1513,9 @@ public class BattleManager : MonoBehaviour
         Button buyButton = CreateShopButton(
             row.transform,
             "BuyButton",
-            $"구매 {item.price}G",
+            "구매",
             new Vector2(0.82f, 0.50f),
-            new Vector2(210f, 70f)
+            new Vector2(190f, 68f)
         );
 
         buyButton.onClick.AddListener(() => TryBuyItem(item.id));
@@ -1702,6 +1801,39 @@ public class BattleManager : MonoBehaviour
         return text;
     }
 
+    Image CreateShopImage(
+        Transform parent,
+        string name,
+        Sprite sprite,
+        Vector2 anchor,
+        Vector2 size,
+        bool preserveAspect
+    )
+    {
+        GameObject obj = new GameObject(
+            name,
+            typeof(RectTransform),
+            typeof(Image)
+        );
+
+        obj.transform.SetParent(parent, false);
+
+        RectTransform rect = obj.GetComponent<RectTransform>();
+        rect.anchorMin = anchor;
+        rect.anchorMax = anchor;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = size;
+
+        Image image = obj.GetComponent<Image>();
+        image.sprite = sprite;
+        image.color = Color.white;
+        image.preserveAspect = preserveAspect;
+        image.raycastTarget = false;
+
+        return image;
+    }
+
     Button CreateShopButton(
         Transform parent,
         string name,
@@ -1713,14 +1845,22 @@ public class BattleManager : MonoBehaviour
         GameObject obj = CreateShopPanel(
             parent,
             name,
-            new Color(0.90f, 0.32f, 0.18f),
+            Color.white,
             anchor,
             size
         );
 
+        Image image = obj.GetComponent<Image>();
+        if (shopBuyButtonSprite != null)
+        {
+            image.sprite = shopBuyButtonSprite;
+            image.preserveAspect = true;
+        }
+        image.color = Color.white;
+
         Button button = obj.AddComponent<Button>();
 
-        CreateShopText(
+        TMP_Text labelText = CreateShopText(
             obj.transform,
             "Label",
             label,
@@ -1729,6 +1869,7 @@ public class BattleManager : MonoBehaviour
             new Vector2(0.5f, 0.5f),
             size
         );
+        labelText.color = new Color(0.24f, 0.08f, 0.03f, 1f);
 
         return button;
     }

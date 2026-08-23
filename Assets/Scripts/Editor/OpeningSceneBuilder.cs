@@ -16,6 +16,7 @@ public static class OpeningSceneBuilder
     private const string StoryScenePath = "Assets/Scenes/StoryScene.unity";
     private const string StoryPlaybackScenePath =
         "Assets/Scenes/StoryPlaybackScene.unity";
+    private const string ShopScenePath = "Assets/Scenes/ShopScene.unity";
     private const string BattleScenePath = "Assets/Scenes/BattleScene.unity";
     private const string KoreanFontPath =
         "Assets/Fonts/NotoSansKR-Regular SDF.asset";
@@ -471,6 +472,7 @@ public static class OpeningSceneBuilder
             new EditorBuildSettingsScene(TitleScenePath, true),
             new EditorBuildSettingsScene(StoryScenePath, true),
             new EditorBuildSettingsScene(StoryPlaybackScenePath, true),
+            new EditorBuildSettingsScene(ShopScenePath, true),
             new EditorBuildSettingsScene(BattleScenePath, true)
         };
     }
